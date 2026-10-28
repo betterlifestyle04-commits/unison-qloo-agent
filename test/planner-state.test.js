@@ -56,3 +56,21 @@ test('copied plan labels relative scores and demo evidence honestly',()=>{
   assert.match(summary,/fictional demo/i);
   assert.match(summary,/relative-fit estimates/i);
 });
+
+test('decision styles change tradeoffs without modifying observed source evidence',()=>{
+  const source={
+    ...plan,
+    ranked:[
+      {id:'safe',name:'Safe',score:71.5,minimum:64,average:75,coverage:1,sufficient:true,vetoed:false,signals:{a:64,b:86}},
+      {id:'popular',name:'Popular',score:70.5,minimum:55,average:88,coverage:1,sufficient:true,vetoed:false,signals:{a:55,b:99}}
+    ]
+  };
+  const protective=applyVetoLocally(source,[],'protective');
+  const average=applyVetoLocally(source,[],'average');
+  assert.equal(protective.ranked[0].id,'safe');
+  assert.equal(average.ranked[0].id,'popular');
+  assert.equal(source.ranked[0].score,71.5);
+  assert.equal(protective.decisionStyle,'protective');
+  assert.equal(average.decisionStyle,'average');
+  assert.ok(average.trace.some(step=>/no new Qloo request/i.test(step.detail)));
+});
