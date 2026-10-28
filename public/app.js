@@ -1,7 +1,8 @@
+import {starterGroups,normalizeBrief,encodeShareBrief,decodeShareBrief,applyVetoLocally,buildGroupSummary} from './planner-state.js';
 const $=selector=>document.querySelector(selector);
 const people=$('#people'),template=$('#person-template'),form=$('#plan-form'),results=$('#results'),error=$('#form-error'),submitBtn=$('#submit-plan'),statusBadge=$('#mode-status');
 const starters=[['Maya','Studio Ghibli'],['Jon','Anthony Bourdain'],['Priya','Knives Out']];
-const app={configured:false,requesting:false,lastInput:null,lastResult:null,showAll:false,hasChangedMode:false};
+const app={configured:false,requesting:false,lastInput:null,lastResult:null,showAll:false,hasChangedMode:false,baseResult:null,hashLoaded:false};
 const escape=value=>{const element=document.createElement('span');element.textContent=String(value??'');return element.innerHTML;};
 const number=value=>Number.isFinite(value)?String(Math.round(value)):null;
 const initial=value=>String(value||'?').trim().slice(0,1).toUpperCase();
@@ -61,6 +62,7 @@ function card(item,index,data){
   const label=item.vetoed?'VETOED':item.sufficient?'OPTION '+(index+1):'MORE EVIDENCE';
   const kind=escape(item.kind||item.category|| (data.domain==='movies'?'Movie':'Place'));
   const note=item.note||item.address||'';
+  const mapUrl=data.mode==='live'&&data.domain==='places'?'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent([item.name,item.address||data.city].filter(Boolean).join(' ')):null;
   return `<article class="card ${item.vetoed?'vetoed':''}" aria-label="${title}">
     <div class="card-top"><span class="rank-pill">${label}</span><strong>${val}<small>${item.score===null?'':'/100'}</small></strong></div>
     <h4>${title}</h4><p class="candidate-meta">${kind}${item.price?' · '+escape('Price tier '+item.price):''}</p>${note?`<p class="candidate-note">${escape(note)}</p>`:''}
@@ -69,6 +71,7 @@ function card(item,index,data){
     <div class="stat-row"><span class="label">Average fit</span>${fitBar(item.average)}</div>
     <div class="stat-row"><span class="label">Coverage</span><span class="bar" aria-hidden="true"><i style="width:${Math.round((item.coverage||0)*100)}%"></i></span><span class="value">${Math.round((item.coverage||0)*100)}%</span></div>
     ${listPeople(item,data)}
+    ${mapUrl?`<a class="map-link" href="${escape(mapUrl)}" target="_blank" rel="noopener noreferrer">↗ Search for this place on Google Maps</a>`:''}
     <p class="card-explanation">${escape(item.explanation||'')}</p>
     <button class="veto" data-veto="${escape(item.id)}" aria-pressed="${Boolean(item.vetoed)}">${item.vetoed?'↶ Restore option':'× Not for our group'}</button>
   </article>`;
@@ -77,22 +80,30 @@ function render(data){
   app.lastResult=data;
   const approved=data.ranked.filter(item=>item.sufficient&&!item.vetoed);
   const top=approved[0],count=approved.length;
+  const leastMatched=top?data.people.find(p=>top.signals?.[p.id]===top.minimum):null;
   const show=data.ranked.slice(0,app.showAll?data.ranked.length:6);
   const status=data.mode==='live'?'Qloo API · Live evidence':'Demo · Simulated evidence';
   results.innerHTML=`<div class="result-topline"><div><p class="overline">${escape(status)}</p><h3>${top?'Your best shared match':'We need a little more evidence'}</h3><p class="result-sub">${escape(data.domain==='places'?(data.city?'Planning for '+data.city:'No city selected'):'Movie night')} · ${data.people.length} people · ${count} fully covered option${count===1?'':'s'}</p></div><div class="result-actions"><button id="copy-plan" class="text-button" type="button" ${top?'':'disabled'}>Copy plan ↗</button><button id="reset-veto" class="text-button" type="button">Clear vetoes</button></div></div>
     <div class="source-banner ${data.mode==='live'?'live':''}"><strong>${escape(sourceName(data))}.</strong> ${escape(data.disclaimer)}</div>
     ${data.needsMoreEvidence?`<div class="notice" role="status">${escape(data.nextAction||'Evidence is incomplete. Add another preference.')}</div>`:''}
     ${top?`<article class="winner"><div class="winner-inner"><p class="eyebrow">✳ THE BEST CURRENT COMPROMISE</p><h3>${escape(top.name)}</h3><div class="winner-meta"><span>${escape(data.domain==='movies'?'Movie recommendation':'Place recommendation')}</span><span>${escape(data.mode==='live'?'Qloo candidates':'Fictional demo candidates')}</span>${data.city&&data.domain==='places'?'<span>'+escape(data.city)+'</span>':''}</div><p>${escape(top.note||top.address||'Recommended based on the available cross-person taste signals.')}</p><div class="winner-stats"><div><strong>${escape(top.score)}</strong><small>UNISON relative score / 100</small></div><div><strong>${number(top.minimum)}</strong><small>Lowest relative fit</small></div><div><strong>${Math.round(top.coverage*100)}%</strong><small>Signal coverage</small></div></div></div></article>`:''}
+    ${top?`<div class="compromise-context"><span class="context-icon">◎</span><span><strong>What makes this a compromise?</strong><small>${escape(leastMatched?leastMatched.name+' has the lowest relative fit at '+number(top.minimum)+'/100. UNISON considers this alongside the group average when ranking options.':'UNISON compares each participant using relative-fit evidence.')}</small></span></div>`:''}
     <div class="cards-heading"><h4>Explore the shortlist</h4><small>${data.ranked.length} candidate${data.ranked.length===1?'':'s'}</small></div>
     <div class="cards">${show.map((item,i)=>card(item,i,data)).join('')}</div>
     ${data.ranked.length>6?`<button id="show-all" class="add-person" type="button">${app.showAll?'Show fewer options':'Show all '+data.ranked.length+' options'} <span aria-hidden="true">↓</span></button>`:''}
     <details class="trace"><summary>How UNISON reached this decision · ${data.trace.length} steps</summary><ol>${data.trace.map(step=>`<li><strong>${escape(step.step)}</strong> — ${escape(step.detail)}${step.requests?.length?`<span class="trace-url">${step.requests.map(request=>escape(request.url+(request.cached?' (cached)':''))).join(' · ')}</span>`:''}</li>`).join('')}</ol></details>`;
-  results.querySelectorAll('[data-veto]').forEach(button=>button.addEventListener('click',()=>{const vetoes=new Set(app.lastInput.vetoes);vetoes.has(button.dataset.veto)?vetoes.delete(button.dataset.veto):vetoes.add(button.dataset.veto);app.lastInput.vetoes=[...vetoes];submitPlan(app.lastInput,{preserveScroll:true});}));
-  $('#reset-veto')?.addEventListener('click',()=>{app.lastInput.vetoes=[];submitPlan(app.lastInput,{preserveScroll:true});});
+  // Vetoes only re-rank existing evidence locally: no Qloo quota spent on each click.
+  results.querySelectorAll('[data-veto]').forEach(button=>button.addEventListener('click',()=>{
+    const vetoes=new Set(app.lastInput.vetoes||[]);
+    vetoes.has(button.dataset.veto)?vetoes.delete(button.dataset.veto):vetoes.add(button.dataset.veto);
+    app.lastInput.vetoes=[...vetoes];
+    render(app.lastInput.vetoes.length?applyVetoLocally(app.baseResult,app.lastInput.vetoes):app.baseResult);
+  }));
+  $('#reset-veto')?.addEventListener('click',()=>{app.lastInput.vetoes=[];render(app.baseResult);});
   $('#show-all')?.addEventListener('click',()=>{app.showAll=!app.showAll;render(data);});
   $('#copy-plan')?.addEventListener('click',async()=>{
     if(!top)return;
-    const text=[`UNISON — ${data.city||'Group'} ${data.domain==='movies'?'movie night':'outing'}`,`Top pick: ${top.name}`,`UNISON relative fit: ${top.score}/100 · evidence coverage: ${Math.round(top.coverage*100)}%`,...approved.slice(1,4).map((o,i)=>`Alternative ${i+1}: ${o.name}`),data.disclaimer,'https://unison-qloo.onrender.com'].join('\n');
+    const text=buildGroupSummary(data);
     try{await navigator.clipboard.writeText(text);$('#copy-plan').textContent='Copied ✓';}catch{ $('#copy-plan').textContent='Copy unavailable';}
   });
 }
@@ -105,6 +116,7 @@ async function submitPlan(input,{preserveScroll=false}={}){
     const response=await fetch('/api/plan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(input)});
     let data;try{data=await response.json();}catch{throw new Error('The planner returned an unexpected response. Please try again.');}
     if(!response.ok)throw new Error(data.error||'We could not create this plan.');
+    app.baseResult=data;
     render(data);
     if(!preserveScroll&&window.innerWidth<821)$('#results-heading').scrollIntoView({behavior:'smooth',block:'start'});
   }catch(e){
@@ -112,7 +124,48 @@ async function submitPlan(input,{preserveScroll=false}={}){
     results.innerHTML=`<div class="empty"><span class="eyebrow">SOMETHING TO ADJUST</span><h3>Let's try another route.</h3><p>${escape(e.message)}</p><p>Check the city and cultural references, or switch to demo mode to explore how UNISON works.</p></div>`;
   }finally{app.requesting=false;submitBtn.disabled=false;$('#submit-label').textContent=currentDomain()==='places'?'Find our common ground':'Find our movie night';results.setAttribute('aria-busy','false');}
 }
-form.addEventListener('submit',event=>{event.preventDefault();const input=brief();input.vetoes=sameBrief(input,app.lastInput)?[...(app.lastInput?.vetoes||[])]:[];app.showAll=false;submitPlan(input);});
+form.addEventListener('submit',event=>{event.preventDefault();const input=brief();input.vetoes=[];app.showAll=false;submitPlan(input);});
+function applyBrief(raw){
+  const input=normalizeBrief(raw);
+  const source=starterGroups.find(p=>p.id===raw.id);
+  form.querySelector('input[name=domain][value='+input.domain+']').checked=true;
+  const requestedMode=input.mode==='live'&&app.configured?'live':'demo';
+  form.querySelector('input[name=mode][value='+requestedMode+']').checked=true;
+  if(source||app.hashLoaded)app.hasChangedMode=true;
+  $('#city').value=input.city;
+  $('#budget').value=input.budget;
+  people.replaceChildren();
+  input.people.forEach(p=>addPerson([p.name,p.favorites.join(', ')]));
+  app.lastInput=null;app.lastResult=null;app.baseResult=null;app.showAll=false;
+  showError();updateFormPresentation();
+}
+document.querySelectorAll('[data-preset]').forEach(button=>button.addEventListener('click',()=>{
+  const preset=starterGroups.find(item=>item.id===button.dataset.preset);
+  if(!preset)return;
+  applyBrief({...preset,mode:app.configured?'live':'demo'});
+  $('#share-message').textContent='Loaded '+preset.label+'. Edit the names and tastes to make it yours.';
+  form.scrollIntoView({behavior:'smooth',block:'start'});
+}));
+$('#share-brief').addEventListener('click',async()=>{
+  const message=$('#share-message');
+  try{
+    const input=normalizeBrief(brief());
+    const url=location.origin+location.pathname+'#plan='+encodeShareBrief(input);
+    await navigator.clipboard.writeText(url);
+    message.textContent='Group setup link copied. Anyone with the link can see these names and favorites.';
+  }catch(e){message.textContent=e.message?.includes('clipboard')?'Clipboard unavailable; try another browser.':'Could not create a link. Check the participant names and favorites.';}
+});
+try{
+  if(location.hash.startsWith('#plan=')){
+    app.hashLoaded=true;
+    applyBrief(decodeShareBrief(location.hash));
+    $('#share-message').textContent='Shared group loaded. Review the preferences before generating a plan.';
+    history.replaceState(null,'',location.pathname+location.search);
+  }
+}catch{
+  $('#share-message').textContent='That group link could not be opened. You can still create a new plan.';
+}
+
 updateFormPresentation();
 fetch('/api/status',{cache:'no-store'}).then(r=>r.json()).then(status=>{
   app.configured=Boolean(status.configured);
@@ -121,5 +174,6 @@ fetch('/api/status',{cache:'no-store'}).then(r=>r.json()).then(status=>{
   const live=$('#live-choice input');
   live.disabled=!app.configured;$('#live-choice').classList.toggle('disabled',!app.configured);
   if(app.configured&&!app.hasChangedMode){live.checked=true;}
+  if(!app.configured&&live.checked){form.querySelector('input[name=mode][value=demo]').checked=true;}
   updateFormPresentation();
 }).catch(()=>{statusBadge.classList.add('offline');statusBadge.innerHTML='<span class="status-dot"></span>Service unavailable · Demo only';$('#live-choice input').disabled=true;$('#live-choice').classList.add('disabled');updateFormPresentation();});
