@@ -5,7 +5,7 @@ import {fileURLToPath} from 'node:url';
 import {runAgent} from './src/agent.js';
 import {isLiveConfigured} from './src/qloo.js';
 const root=path.join(path.dirname(fileURLToPath(import.meta.url)),'public');
-const files=new Map([['/','index.html'],['/app.js','app.js'],['/styles.css','styles.css']]);
+const files=new Map([['/','index.html'],['/app.js','app.js'],['/planner-state.js','planner-state.js'],['/styles.css','styles.css']]);
 const MIME={'.html':'text/html; charset=utf-8','.js':'application/javascript; charset=utf-8','.css':'text/css; charset=utf-8'};
 const requestWindows=new Map(); let activePlans=0;
 function allowPlan(req){const ip=req.socket.remoteAddress||'unknown',now=Date.now(),window=requestWindows.get(ip)||{started:now,count:0};if(now-window.started>60_000){window.started=now;window.count=0;}window.count++;requestWindows.set(ip,window);return window.count<=20;}
