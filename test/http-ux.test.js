@@ -18,3 +18,15 @@ test('malformed participant structures fail safely with a 400 response',async()=
     assert.ok(JSON.parse(answer.body).error);
   }
 });
+
+test('live cultural search is unavailable without a server-side key',async()=>{
+  const r=await request('/api/taste-lookup?q=Interstellar');
+  assert.equal(r.response.status,503);
+  assert.match(JSON.parse(r.body).error,/not currently available/i);
+});
+test('session-only vote utilities are served with the correct MIME type',async()=>{
+  const r=await request('/ballot.js');
+  assert.equal(r.response.status,200);
+  assert.match(r.response.headers.get('content-type'),/javascript/);
+  assert.match(r.body,/summarizeBallot/);
+});
