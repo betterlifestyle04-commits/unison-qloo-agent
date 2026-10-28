@@ -3,6 +3,7 @@ import {ballotChoices,updateBallot,summarizeBallot,winningAgreement} from './bal
 const $=selector=>document.querySelector(selector);
 const people=$('#people'),template=$('#person-template'),form=$('#plan-form'),results=$('#results'),error=$('#form-error'),submitBtn=$('#submit-plan'),statusBadge=$('#mode-status');
 const starters=[['Maya','Studio Ghibli'],['Jon','Anthony Bourdain'],['Priya','Knives Out']];
+const selectedByPerson=new WeakMap();
 const app={configured:false,requesting:false,lastInput:null,lastResult:null,showAll:false,hasChangedMode:false,baseResult:null,hashLoaded:false,decisionStyle:'balanced',ballots:{},lookupBusy:false};
 const escape=value=>{const element=document.createElement('span');element.textContent=String(value??'');return element.innerHTML.replace(/\"/g,'&quot;').replace(/'/g,'&#39;');};
 const number=value=>Number.isFinite(value)?String(Math.round(value)):null;
@@ -26,10 +27,16 @@ function updateGroup(){
   [...people.querySelectorAll('.person')].forEach((row,index)=>{const input=row.querySelector('[data-field=name]');row.querySelector('.person-avatar').textContent=initial(input.value);row.querySelector('.remove').setAttribute('aria-label','Remove '+(input.value.trim()||'person '+(index+1)));row.querySelector('.remove').disabled=people.children.length<=2;});
   updateTasteOwners();
 }
-function addPerson(values=['','']){
+function addPerson(values=['',''],chosenEntities=[]){
   const node=template.content.firstElementChild.cloneNode(true);
   const name=node.querySelector('[data-field=name]'),favorite=node.querySelector('[data-field=favorite]');
   name.value=values[0];favorite.value=values[1];
+  selectedByPerson.set(node,new Map(chosenEntities.map(item=>[item.name.toLowerCase(),item])));
+  favorite.addEventListener('input',()=>{
+    const stillListed=new Set(favorite.value.split(',').map(x=>x.trim().toLowerCase()).filter(Boolean));
+    const saved=selectedByPerson.get(node);
+    for(const key of saved.keys())if(!stillListed.has(key))saved.delete(key);
+  });
   name.addEventListener('input',updateGroup);
   node.querySelector('.remove').addEventListener('click',()=>{if(people.children.length<=2){showError('A group needs at least two people.');return;}node.remove();updateGroup();});
   people.append(node);updateGroup();
@@ -62,18 +69,20 @@ async function lookupTaste(){
     const payload=await response.json();
     if(!response.ok)throw new Error(payload.error||'Qloo search is currently unavailable.');
     if(!Array.isArray(payload.matches)||!payload.matches.length){lookupMessage('No result found. Try a more specific title or artist name.');return;}
-    lookupResults.innerHTML='<p>Select a matching Qloo name to add it to your chosen participant.</p>'+
-      payload.matches.slice(0,5).map(item=>`<button type="button" class="taste-match" data-add-taste="${escape(item.name)}"><strong>${escape(item.name)}</strong><span>${escape(String(item.type||'Cultural entity').replace(/^urn:entity:/,''))}</span></button>`).join('');
+    lookupResults.innerHTML='<p>Select a matching Qloo entity. The selected type and exact ID will be kept for that participant.</p>'+
+      payload.matches.slice(0,5).map(item=>`<button type="button" class="taste-match" data-add-taste="${escape(item.name)}" data-entity-id="${escape(item.id)}" data-entity-type="${escape(item.type||'')}"><strong>${escape(item.name)}</strong><span>${escape(String(item.type||'Cultural entity').replace(/^urn:entity:/,''))}</span></button>`).join('');
     lookupResults.querySelectorAll('[data-add-taste]').forEach(button=>button.addEventListener('click',()=>{
       const person=[...people.querySelectorAll('.person')][Number($('#taste-owner').value)];
       const input=person?.querySelector('[data-field=favorite]');if(!input)return;
       const chosen=button.dataset.addTaste;
+      const entity={name:chosen,id:button.dataset.entityId,type:button.dataset.entityType};
       if(chosen.includes(',')){lookupMessage('This title contains a comma and cannot be appended automatically. Copy its name into the favorites field manually.');return;}
       const favorites=input.value.split(',').map(x=>x.trim()).filter(Boolean);
-      if(favorites.some(f=>f.toLowerCase()===chosen.toLowerCase())){lookupMessage(chosen+' is already listed.');return;}
-      if(favorites.length>=3){lookupMessage('This participant already has three favorites. Remove one before adding another.');return;}
-      input.value=[...favorites,chosen].join(', ');
-      lookupMessage('Added '+chosen+'. Generate a new live plan to use this reference.');
+      const existing=favorites.some(f=>f.toLowerCase()===chosen.toLowerCase());
+      if(!existing&&favorites.length>=3){lookupMessage('This participant already has three favorites. Remove one before adding another.');return;}
+      if(!existing)input.value=[...favorites,chosen].join(', ');
+      selectedByPerson.get(person).set(chosen.toLowerCase(),entity);
+      lookupMessage('Selected Qloo '+(entity.type.replace(/^urn:entity:/,'')||'entity')+' “'+chosen+'”. Its exact ID will be used for this participant in the next live plan.');
       input.focus();
     }));
   }catch(e){lookupMessage(e.message||'Could not search Qloo.');}
@@ -86,7 +95,12 @@ document.querySelectorAll('.city-quick').forEach(button=>button.addEventListener
 function brief(){
   const data=new FormData(form);
   return {domain:data.get('domain'),mode:data.get('mode'),city:String(data.get('city')||'').trim(),budget:data.get('budget')||'any',
-    people:[...people.querySelectorAll('.person')].map(row=>({name:row.querySelector('[data-field=name]').value.trim(),favorites:row.querySelector('[data-field=favorite]').value.split(',').map(s=>s.trim()).filter(Boolean).slice(0,3)}))};
+    people:[...people.querySelectorAll('.person')].map(row=>{
+      const favorites=row.querySelector('[data-field=favorite]').value.split(',').map(value=>value.trim()).filter(Boolean).slice(0,3);
+      const saved=selectedByPerson.get(row)||new Map();
+      const selectedEntities=favorites.map(name=>saved.get(name.toLowerCase())).filter(Boolean);
+      return {name:row.querySelector('[data-field=name]').value.trim(),favorites,...(selectedEntities.length?{selectedEntities}:{})};
+    })};
 }
 function validate(input){
   if(input.people.some(p=>!p.name||!p.favorites.length))return 'Give every participant a name and at least one favorite.';
@@ -237,7 +251,7 @@ function applyBrief(raw){
   $('#city').value=input.city;
   $('#budget').value=input.budget;
   people.replaceChildren();
-  input.people.forEach(p=>addPerson([p.name,p.favorites.join(', ')]));
+  input.people.forEach(p=>addPerson([p.name,p.favorites.join(', ')],p.selectedEntities||[]));
   app.lastInput=null;app.lastResult=null;app.baseResult=null;app.ballots={};app.showAll=false;
   results.innerHTML='<div class="empty"><span class="eyebrow">READY FOR YOUR GROUP</span><h3>Different tastes, one plan.</h3><p>Review the group brief and select Find our common ground to create a new shortlist.</p></div>';
   showError();updateFormPresentation();
