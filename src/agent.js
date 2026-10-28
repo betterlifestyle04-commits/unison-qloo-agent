@@ -3,6 +3,8 @@ import {explainCandidate,rankCandidates} from './rank.js';
 import {insights,isLiveConfigured,searchFavorite} from './qloo.js';
 
 const fail=(message,status=400)=>{throw Object.assign(new Error(message),{status});};
+// One consistent ordinal estimate for every participant; native Qloo affinity is kept separate.
+export const rankFitEstimate=index=>Math.max(20,100-(index*8));
 const idFor=(name,index)=>`${name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'person'}-${index+1}`;
 function validate(input){
   if(!input||typeof input!=='object')fail('A plan request is required.');
@@ -22,20 +24,22 @@ async function liveEvidence(people,domain,city,budget,trace){
   const perPerson=await Promise.all(resolved.map(async person=>{const response=await insights(person.entities.map(entity=>entity.id),domain,{city,budget,shortlist});trace.push({step:'Qloo shortlist evaluation tool',kind:'qloo',detail:`Evaluated the shared ${shortlist.length}-option shortlist for ${person.name}.`,requests:[{url:response.url,cached:response.cached}]});return {person,results:response.results};}));
   const candidates=new Map();
   perPerson.forEach(({person,results})=>results.forEach((item,index)=>{
-    if(!candidates.has(item.id))candidates.set(item.id,{...item,signals:{},signalKinds:{},evidence:'Observed Qloo candidate. Affinity is used when returned; otherwise the displayed relative signal is UNISON rank-derived context.'});
-    candidates.get(item.id).signals[person.id]=item.affinity??Math.max(20,100-(index*10));
-    candidates.get(item.id).signalKinds[person.id]=item.affinity===null?'relative-rank heuristic':'observed Qloo affinity';
+    if(!candidates.has(item.id))candidates.set(item.id,{...item,signals:{},signalKinds:{},observedAffinityByPerson:{},evidence:'Observed Qloo candidate. All UNISON fit estimates use the same relative ordinal scale; native Qloo affinity is kept separate.'});
+    candidates.get(item.id).signals[person.id]=rankFitEstimate(index);
+    candidates.get(item.id).signalKinds[person.id]='UNISON ordinal fit estimate';
+    if(item.affinity!==null)candidates.get(item.id).observedAffinityByPerson[person.id]=item.affinity;
   }));
   return [...candidates.values()];
 }
 export async function runAgent(input){
   const {people,domain,mode,city,budget,vetoes}=validate(input);
   if(mode==='live'&&!isLiveConfigured())fail('Live Qloo mode is not configured. Add QLOO_API_KEY securely or choose clearly labeled demo mode.',503);
+  if(mode==='live'&&domain==='places'&&!city)fail('Choose a city before requesting live place recommendations.',422);
   const trace=[{step:'Plan',kind:'local',detail:`Collect up to three favorites per person, then seek a ${budget==='any'?'practical':budget}-budget ${domain==='places'?'place':'movie'} compromise.`}];
   const candidates=mode==='live'?await liveEvidence(people,domain,city,budget,trace):demoEvidence(people,domain,{city,budget});
   if(!candidates.length)fail('No simulated options match that budget. Try a different practical constraint.',422);
   const ranked=rankCandidates(candidates,people,vetoes).map(candidate=>({...candidate,explanation:explainCandidate(candidate,people)}));
-  trace.push({step:mode==='demo'?'Simulated evidence tool':'Evidence merge',kind:mode==='demo'?'demo':'local',detail:mode==='demo'?'Mapped favorites to a deterministic fictional taste scenario. No Qloo request was made.':'Merged independent Qloo result lists; absent results remain unknown.'},{step:'Evaluation',kind:'local',detail:'Ranked with 0.55 × minimum observed fit + 0.35 × observed average + 0.10 × coverage. Missing stays unknown.'},{step:vetoes.length?'Replan after veto':'Control check',kind:'local',detail:vetoes.length?`Removed ${vetoes.length} vetoed option(s) and re-ranked the remaining trade-offs.`:'No veto changed this plan.'});
+  trace.push({step:mode==='demo'?'Simulated evidence tool':'Evidence merge',kind:mode==='demo'?'demo':'local',detail:mode==='demo'?'Mapped favorites to a deterministic fictional taste scenario. No Qloo request was made.':'Merged independent Qloo result lists; absent results remain unknown.'},{step:'Evaluation',kind:'local',detail:'Ranked consistently using UNISON ordinal relative-fit estimates. Native Qloo affinity is never blended with derived scores. Missing evidence stays unknown.'},{step:vetoes.length?'Replan after veto':'Control check',kind:'local',detail:vetoes.length?`Removed ${vetoes.length} vetoed option(s) and re-ranked the remaining trade-offs.`:'No veto changed this plan.'});
   const supported=ranked.filter(candidate=>candidate.sufficient&&!candidate.vetoed);
-  return {mode,domain,city,budget,people,ranked,supported,needsMoreEvidence:!supported.length,nextAction:!supported.length?'No candidate has observed evidence for every participant. Resolve missing favorites, relax an over-tight constraint, or collect another preference before calling a group compromise.':null,trace,disclaimer:mode==='demo'?'Demo mode: all candidates and signals are simulated local evidence, for interaction only.':'Live mode: Qloo candidates are observed; affinity is distinguished from rank-derived context, and UNISON scores remain heuristics rather than satisfaction probabilities.'};
+  return {mode,domain,city,budget,people,ranked,supported,needsMoreEvidence:!supported.length,nextAction:!supported.length?'No candidate has observed evidence for every participant. Resolve missing favorites, relax an over-tight constraint, or collect another preference before calling a group compromise.':null,trace,disclaimer:mode==='demo'?'Demo mode: all candidates and signals are simulated local evidence, for interaction only.':'Live mode: candidates originate from Qloo. Per-person fit and group scores use UNISON rank-derived estimates, not native Qloo affinity or satisfaction probabilities.'};
 }
