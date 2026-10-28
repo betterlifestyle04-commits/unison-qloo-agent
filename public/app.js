@@ -3,16 +3,28 @@ import {ballotChoices,updateBallot,summarizeBallot,winningAgreement} from './bal
 const $=selector=>document.querySelector(selector);
 const people=$('#people'),template=$('#person-template'),form=$('#plan-form'),results=$('#results'),error=$('#form-error'),submitBtn=$('#submit-plan'),statusBadge=$('#mode-status');
 const starters=[['Maya','Studio Ghibli'],['Jon','Anthony Bourdain'],['Priya','Knives Out']];
-const app={configured:false,requesting:false,lastInput:null,lastResult:null,showAll:false,hasChangedMode:false,baseResult:null,hashLoaded:false,decisionStyle:'balanced',ballots:{}};
+const app={configured:false,requesting:false,lastInput:null,lastResult:null,showAll:false,hasChangedMode:false,baseResult:null,hashLoaded:false,decisionStyle:'balanced',ballots:{},lookupBusy:false};
 const escape=value=>{const element=document.createElement('span');element.textContent=String(value??'');return element.innerHTML.replace(/\"/g,'&quot;').replace(/'/g,'&#39;');};
 const number=value=>Number.isFinite(value)?String(Math.round(value)):null;
 const initial=value=>String(value||'?').trim().slice(0,1).toUpperCase();
 const percent=value=>Math.max(0,Math.min(100,Number(value)||0));
 const sourceName=data=>data.mode==='live'?'Real Qloo results':'Fictional demonstration';
+function updateTasteOwners(){
+  const owner=$('#taste-owner');if(!owner)return;
+  const previous=owner.value;
+  owner.replaceChildren();
+  [...people.querySelectorAll('.person')].forEach((row,index)=>{
+    const name=row.querySelector('[data-field=name]').value.trim()||'Person '+(index+1);
+    const option=document.createElement('option');option.value=String(index);option.textContent=name;owner.append(option);
+  });
+  if([...owner.options].some(option=>option.value===previous))owner.value=previous;
+}
+
 function updateGroup(){
   $('#people-count').textContent=people.children.length+' of 5';
   $('#add-person').disabled=people.children.length>=5;
   [...people.querySelectorAll('.person')].forEach((row,index)=>{const input=row.querySelector('[data-field=name]');row.querySelector('.person-avatar').textContent=initial(input.value);row.querySelector('.remove').setAttribute('aria-label','Remove '+(input.value.trim()||'person '+(index+1)));row.querySelector('.remove').disabled=people.children.length<=2;});
+  updateTasteOwners();
 }
 function addPerson(values=['','']){
   const node=template.content.firstElementChild.cloneNode(true);
@@ -33,9 +45,43 @@ function updateFormPresentation(){
   $('#city').required=places&&currentMode()==='live';
   $('#city').disabled=!places;
   $('#budget').disabled=!places;
+  $('#taste-finder').hidden=!(app.configured&&currentMode()==='live');
   $('#submit-label').textContent=places?'Find our common ground':'Find our movie night';
 }
 form.querySelectorAll('input[name=domain],input[name=mode]').forEach(input=>input.addEventListener('change',()=>{if(input.name==='mode')app.hasChangedMode=true;updateFormPresentation();}));
+const lookupBtn=$('#taste-find');
+const lookupResults=$('#taste-find-results');
+function lookupMessage(message){lookupResults.replaceChildren(Object.assign(document.createElement('p'),{textContent:message}));}
+async function lookupTaste(){
+  if(app.lookupBusy||!app.configured||currentMode()!=='live')return;
+  const q=$('#taste-query').value.trim();
+  if(q.length<2||q.length>80){lookupMessage('Enter a cultural reference between 2 and 80 characters.');return;}
+  app.lookupBusy=true;lookupBtn.disabled=true;lookupMessage('Searching Qloo cultural entities…');
+  try{
+    const response=await fetch('/api/taste-lookup?q='+encodeURIComponent(q),{cache:'no-store'});
+    const payload=await response.json();
+    if(!response.ok)throw new Error(payload.error||'Qloo search is currently unavailable.');
+    if(!Array.isArray(payload.matches)||!payload.matches.length){lookupMessage('No result found. Try a more specific title or artist name.');return;}
+    lookupResults.innerHTML='<p>Select a matching Qloo name to add it to your chosen participant.</p>'+
+      payload.matches.slice(0,5).map(item=>`<button type="button" class="taste-match" data-add-taste="${escape(item.name)}"><strong>${escape(item.name)}</strong><span>${escape(String(item.type||'Cultural entity').replace(/^urn:entity:/,''))}</span></button>`).join('');
+    lookupResults.querySelectorAll('[data-add-taste]').forEach(button=>button.addEventListener('click',()=>{
+      const person=[...people.querySelectorAll('.person')][Number($('#taste-owner').value)];
+      const input=person?.querySelector('[data-field=favorite]');if(!input)return;
+      const chosen=button.dataset.addTaste;
+      if(chosen.includes(',')){lookupMessage('This title contains a comma and cannot be appended automatically. Copy its name into the favorites field manually.');return;}
+      const favorites=input.value.split(',').map(x=>x.trim()).filter(Boolean);
+      if(favorites.some(f=>f.toLowerCase()===chosen.toLowerCase())){lookupMessage(chosen+' is already listed.');return;}
+      if(favorites.length>=3){lookupMessage('This participant already has three favorites. Remove one before adding another.');return;}
+      input.value=[...favorites,chosen].join(', ');
+      lookupMessage('Added '+chosen+'. Generate a new live plan to use this reference.');
+      input.focus();
+    }));
+  }catch(e){lookupMessage(e.message||'Could not search Qloo.');}
+  finally{app.lookupBusy=false;lookupBtn.disabled=false;}
+}
+lookupBtn.addEventListener('click',lookupTaste);
+$('#taste-query').addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();lookupTaste();}});
+
 document.querySelectorAll('.city-quick').forEach(button=>button.addEventListener('click',()=>{$('#city').value=button.dataset.city;showError();}));
 function brief(){
   const data=new FormData(form);
