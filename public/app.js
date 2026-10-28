@@ -119,12 +119,12 @@ function validate(input){
   return '';
 }
 function sameBrief(a,b){if(!a||!b)return false;const extract=x=>JSON.stringify([x.domain,x.mode,x.city,x.budget,x.people]);return extract(a)===extract(b);}
-function fitBar(value){return value===null||value===undefined?'<span class="unknown">No signal</span>':`<span class="bar" aria-hidden="true"><i style="width:${percent(value)}%"></i></span><span class="value">${number(value)}</span>`;}
+function fitBar(value){return value===null||value===undefined?'<span class="unknown">No signal</span>':`<meter class="fit-meter" min="0" max="100" value="${percent(value)}" aria-label="Relative fit ${number(value)} out of 100">${number(value)}/100</meter><span class="value">${number(value)}</span>`;}
 function listPeople(item,data){
   return `<details class="taste"><summary>How each person fits</summary><ul class="taste-list">${data.people.map(person=>{
     const val=item.signals?.[person.id];
     const shown=number(val);
-    return `<li><span>${escape(person.name)}</span>${shown===null?'<span class="unknown">No signal</span>':`<span class="tiny-bar" aria-hidden="true"><i style="width:${percent(val)}%"></i></span><b>${shown}/100</b>`}</li>`;
+    return `<li><span>${escape(person.name)}</span>${shown===null?'<span class="unknown">No signal</span>':`<meter class="fit-meter tiny-meter" min="0" max="100" value="${percent(val)}" aria-label="${escape(person.name)} relative fit ${shown} out of 100">${shown}/100</meter><b>${shown}/100</b>`}</li>`;
   }).join('')}</ul></details>`;
 }
 function evidenceSection(item,data){
@@ -170,7 +170,7 @@ function card(item,index,data){
     <div class="divider-line"></div>
     <div class="stat-row"><span class="label">Lowest fit</span>${fitBar(item.minimum)}</div>
     <div class="stat-row"><span class="label">Average fit</span>${fitBar(item.average)}</div>
-    <div class="stat-row"><span class="label">Coverage</span><span class="bar" aria-hidden="true"><i style="width:${Math.round((item.coverage||0)*100)}%"></i></span><span class="value">${Math.round((item.coverage||0)*100)}%</span></div>
+    <div class="stat-row"><span class="label">Coverage</span><meter class="fit-meter" min="0" max="100" value="${Math.round((item.coverage||0)*100)}" aria-label="Coverage ${Math.round((item.coverage||0)*100)} percent">${Math.round((item.coverage||0)*100)}%</meter><span class="value">${Math.round((item.coverage||0)*100)}%</span></div>
     ${listPeople(item,data)}
     ${ballotSection(item,data)}
     ${evidenceSection(item,data)}
