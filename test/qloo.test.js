@@ -24,3 +24,10 @@ test('requires an exact search match and caches repeated safe GETs',async()=>{
   const first=await searchFavorite('Everything Everywhere All at Once',{fetchImpl});const second=await searchFavorite('Everything Everywhere All at Once',{fetchImpl});
   assert.equal(first.status,'resolved');assert.equal(second.cached,true);assert.equal(calls,1);
 });
+
+test('Qloo descriptions and release years are surfaced only when present',()=>{
+  const result=parseInsights({results:{entities:[{entity_id:'sample',name:'Sample Film',subtype:'urn:entity:movie',properties:{description:'A sample description',release_year:2024}}]}});
+  assert.equal(result[0].note,'A sample description');
+  assert.equal(result[0].year,2024);
+  assert.equal(result[0].address,undefined);
+});
