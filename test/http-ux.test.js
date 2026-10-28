@@ -76,3 +76,21 @@ test('recommendation meters avoid inline CSS forbidden by the app CSP',async()=>
   assert.doesNotMatch(js.body,/style="width:\$\{/);
   assert.match(js.body,/download-calendar/);
 });
+
+test('evidence audit module is first-party and visible in the real results code',async()=>{
+  const [module,app]=await Promise.all([request('/evidence-audit.js'),request('/app.js')]);
+  assert.equal(module.response.status,200);
+  assert.match(module.response.headers.get('content-type'),/javascript/);
+  assert.match(module.body,/auditGroupEvidence/);
+  assert.match(app.body,/renderEvidenceAudit/);
+  assert.match(app.body,/recoverySuggestions/);
+});
+test('one-click judge demo explicitly submits fictional data without Qloo access',async()=>{
+  const [page,app]=await Promise.all([request('/'),request('/app.js')]);
+  assert.equal(page.response.status,200);
+  assert.match(page.body,/id="instant-demo"/);
+  assert.match(page.body,/fictional demonstration/);
+  assert.match(app.body,/submitPlan\(request\)/);
+  assert.match(app.body,/request\.mode='demo'/);
+  assert.match(app.body,/app\.hasChangedMode=true/);
+});
