@@ -1,8 +1,8 @@
-import {starterGroups,normalizeBrief,encodeShareBrief,decodeShareBrief,applyVetoLocally,buildGroupSummary} from './planner-state.js';
+import {starterGroups,normalizeBrief,encodeShareBrief,decodeShareBrief,applyVetoLocally,decisionStyles,buildGroupSummary} from './planner-state.js';
 const $=selector=>document.querySelector(selector);
 const people=$('#people'),template=$('#person-template'),form=$('#plan-form'),results=$('#results'),error=$('#form-error'),submitBtn=$('#submit-plan'),statusBadge=$('#mode-status');
 const starters=[['Maya','Studio Ghibli'],['Jon','Anthony Bourdain'],['Priya','Knives Out']];
-const app={configured:false,requesting:false,lastInput:null,lastResult:null,showAll:false,hasChangedMode:false,baseResult:null,hashLoaded:false};
+const app={configured:false,requesting:false,lastInput:null,lastResult:null,showAll:false,hasChangedMode:false,baseResult:null,hashLoaded:false,decisionStyle:'balanced'};
 const escape=value=>{const element=document.createElement('span');element.textContent=String(value??'');return element.innerHTML.replace(/\"/g,'&quot;').replace(/'/g,'&#39;');};
 const number=value=>Number.isFinite(value)?String(Math.round(value)):null;
 const initial=value=>String(value||'?').trim().slice(0,1).toUpperCase();
@@ -85,6 +85,11 @@ function render(data){
   const status=data.mode==='live'?'Qloo API · Live evidence':'Demo · Simulated evidence';
   results.innerHTML=`<div class="result-topline"><div><p class="overline">${escape(status)}</p><h3>${top?'Your best shared match':'We need a little more evidence'}</h3><p class="result-sub">${escape(data.domain==='places'?(data.city?'Planning for '+data.city:'No city selected'):'Movie night')} · ${data.people.length} people · ${count} fully covered option${count===1?'':'s'}</p></div><div class="result-actions"><button id="copy-plan" class="text-button" type="button" ${top?'':'disabled'}>Copy plan ↗</button><button id="reset-veto" class="text-button" type="button">Clear vetoes</button></div></div>
     <div class="source-banner ${data.mode==='live'?'live':''}"><strong>${escape(sourceName(data))}.</strong> ${escape(data.disclaimer)}</div>
+    <section class="decision-tuning" aria-label="How should we balance the group's preferences?">
+      <div class="decision-tuning-head"><strong>How should we choose?</strong><span>Adjusts ranking only · no new Qloo requests</span></div>
+      <div class="decision-styles">${Object.entries(decisionStyles).map(([key,style])=>`<button type="button" data-style="${key}" aria-pressed="${app.decisionStyle===key}">${escape(style.label)}</button>`).join('')}</div>
+      <p>${escape(decisionStyles[app.decisionStyle].description)} These weights are UNISON heuristics, not measurements of happiness.</p>
+    </section>
     ${data.needsMoreEvidence?`<div class="notice" role="status">${escape(data.nextAction||'Evidence is incomplete. Add another preference.')}</div>`:''}
     ${top?`<article class="winner"><div class="winner-inner"><p class="eyebrow">✳ THE BEST CURRENT COMPROMISE</p><h3>${escape(top.name)}</h3><div class="winner-meta"><span>${escape(data.domain==='movies'?'Movie recommendation':'Place recommendation')}</span><span>${escape(data.mode==='live'?'Qloo candidates':'Fictional demo candidates')}</span>${data.city&&data.domain==='places'?'<span>'+escape(data.city)+'</span>':''}</div><p>${escape(top.note||top.address||'Recommended based on the available cross-person taste signals.')}</p><div class="winner-stats"><div><strong>${escape(top.score)}</strong><small>UNISON relative score / 100</small></div><div><strong>${number(top.minimum)}</strong><small>Lowest relative fit</small></div><div><strong>${Math.round(top.coverage*100)}%</strong><small>Signal coverage</small></div></div></div></article>`:''}
     ${top?`<div class="compromise-context"><span class="context-icon">◎</span><span><strong>What makes this a compromise?</strong><small>${escape(leastMatched?leastMatched.name+' has the lowest relative fit at '+number(top.minimum)+'/100. UNISON considers this alongside the group average when ranking options.':'UNISON compares each participant using relative-fit evidence.')}</small></span></div>`:''}
@@ -97,9 +102,13 @@ function render(data){
     const vetoes=new Set(app.lastInput.vetoes||[]);
     vetoes.has(button.dataset.veto)?vetoes.delete(button.dataset.veto):vetoes.add(button.dataset.veto);
     app.lastInput.vetoes=[...vetoes];
-    render(app.lastInput.vetoes.length?applyVetoLocally(app.baseResult,app.lastInput.vetoes):app.baseResult);
+    render(applyVetoLocally(app.baseResult,app.lastInput.vetoes,app.decisionStyle));
   }));
-  $('#reset-veto')?.addEventListener('click',()=>{app.lastInput.vetoes=[];render(app.baseResult);});
+  $('#reset-veto')?.addEventListener('click',()=>{app.lastInput.vetoes=[];render(applyVetoLocally(app.baseResult,[],app.decisionStyle));});
+  results.querySelectorAll('[data-style]').forEach(button=>button.addEventListener('click',()=>{
+    app.decisionStyle=button.dataset.style;
+    render(applyVetoLocally(app.baseResult,app.lastInput?.vetoes||[],app.decisionStyle));
+  }));
   $('#show-all')?.addEventListener('click',()=>{app.showAll=!app.showAll;render(data);});
   $('#copy-plan')?.addEventListener('click',async()=>{
     if(!top)return;
@@ -117,7 +126,7 @@ async function submitPlan(input,{preserveScroll=false}={}){
     let data;try{data=await response.json();}catch{throw new Error('The planner returned an unexpected response. Please try again.');}
     if(!response.ok)throw new Error(data.error||'We could not create this plan.');
     app.baseResult=data;
-    render(data);
+    render(app.decisionStyle==='balanced'?data:applyVetoLocally(data,[],app.decisionStyle));
     if(!preserveScroll&&window.innerWidth<821)$('#results-heading').scrollIntoView({behavior:'smooth',block:'start'});
   }catch(e){
     showError(e.message);
