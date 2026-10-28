@@ -4,6 +4,7 @@ const $=selector=>document.querySelector(selector);
 const people=$('#people'),template=$('#person-template'),form=$('#plan-form'),results=$('#results'),error=$('#form-error'),submitBtn=$('#submit-plan'),statusBadge=$('#mode-status');
 const starters=[['Maya','Studio Ghibli'],['Jon','Anthony Bourdain'],['Priya','Knives Out']];
 const selectedByPerson=new WeakMap();
+function showPinned(node){const selections=[...(selectedByPerson.get(node)?.values()||[])];const hint=node.querySelector('[data-pinned]');if(hint)hint.textContent=selections.length?'Verified Qloo selection: '+selections.map(x=>x.name+' ('+String(x.type||'entity').replace(/^urn:entity:/,'')+')').join(', '):'';}
 const app={configured:false,requesting:false,lastInput:null,lastResult:null,showAll:false,hasChangedMode:false,baseResult:null,hashLoaded:false,decisionStyle:'balanced',ballots:{},lookupBusy:false};
 const escape=value=>{const element=document.createElement('span');element.textContent=String(value??'');return element.innerHTML.replace(/\"/g,'&quot;').replace(/'/g,'&#39;');};
 const number=value=>Number.isFinite(value)?String(Math.round(value)):null;
@@ -36,10 +37,11 @@ function addPerson(values=['',''],chosenEntities=[]){
     const stillListed=new Set(favorite.value.split(',').map(x=>x.trim().toLowerCase()).filter(Boolean));
     const saved=selectedByPerson.get(node);
     for(const key of saved.keys())if(!stillListed.has(key))saved.delete(key);
+    showPinned(node);
   });
   name.addEventListener('input',updateGroup);
   node.querySelector('.remove').addEventListener('click',()=>{if(people.children.length<=2){showError('A group needs at least two people.');return;}node.remove();updateGroup();});
-  people.append(node);updateGroup();
+  people.append(node);showPinned(node);updateGroup();
 }
 starters.forEach(addPerson);
 $('#add-person').addEventListener('click',()=>{if(people.children.length>=5)return;addPerson();people.lastElementChild.querySelector('[data-field=name]').focus();});
@@ -82,6 +84,7 @@ async function lookupTaste(){
       if(!existing&&favorites.length>=3){lookupMessage('This participant already has three favorites. Remove one before adding another.');return;}
       if(!existing)input.value=[...favorites,chosen].join(', ');
       selectedByPerson.get(person).set(chosen.toLowerCase(),entity);
+      showPinned(person);
       lookupMessage('Selected Qloo '+(entity.type.replace(/^urn:entity:/,'')||'entity')+' “'+chosen+'”. Its exact ID will be used for this participant in the next live plan.');
       input.focus();
     }));
