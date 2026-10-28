@@ -89,17 +89,26 @@ export function decodeShareBrief(hash){
   if(parsed?.v!==1)throw new Error('This group link uses an unsupported version.');
   return normalizeBrief(parsed);
 }
-export function applyVetoLocally(result,vetoes){
+export const decisionStyles={
+  balanced:{label:'Balanced',minimum:.55,average:.35,coverage:.10,description:'Balances the least-supported person with the group average.'},
+  protective:{label:'Protect the lowest fit',minimum:.75,average:.15,coverage:.10,description:'Gives greater influence to whoever has the lowest relative fit.'},
+  average:{label:'Group average',minimum:.25,average:.65,coverage:.10,description:'Places greater weight on the average relative fit across the group.'}
+};
+export function applyVetoLocally(result,vetoes,style='balanced'){
   if(!result||!Array.isArray(result.ranked))throw new Error('A ranked plan is required.');
   const excluded=new Set(vetoes);
+  const weights=decisionStyles[style]??decisionStyles.balanced;
   const ranked=result.ranked.map(item=>{
     const vetoed=excluded.has(item.id);
-    const originalScore=item.baseScore??item.score;
+    // Every candidate uses the same locally derived relative-fit measurements.
+    const computed=item.sufficient&&Number.isFinite(item.minimum)&&Number.isFinite(item.average)
+      ?Number((weights.minimum*item.minimum+weights.average*item.average+weights.coverage*100*(item.coverage??0)).toFixed(1))
+      :item.sufficient?(item.baseScore??item.score):null;
     return {
       ...item,
-      baseScore:originalScore,
+      baseScore:computed,
       vetoed,
-      score:vetoed?null:originalScore,
+      score:vetoed?null:computed,
       explanation:vetoed?'Removed because the group vetoed this option.':item.originalExplanation??item.explanation,
       originalExplanation:item.originalExplanation??item.explanation
     };
@@ -109,11 +118,12 @@ export function applyVetoLocally(result,vetoes){
     ...result,
     ranked,
     supported,
+    decisionStyle:decisionStyles[style]?style:'balanced',
     needsMoreEvidence:!supported.length,
     nextAction:!supported.length?'No supported options remain. Restore a veto or adjust your group brief and search again.':null,
     trace:[
       ...(result.trace||[]).filter(step=>step.kind!=='local-veto'),
-      {step:'Replan after veto',kind:'local-veto',detail:'Re-ranked the existing evidence locally, with no new Qloo request. The full group can restore choices at any time.'}
+      {step:'Local preference revision',kind:'local-veto',detail:'Re-ranked existing evidence using '+weights.label.toLowerCase()+' weights and '+excluded.size+' veto(es). No new Qloo request was made.'}
     ]
   };
 }
@@ -127,6 +137,7 @@ export function buildGroupSummary(result){
     result.domain==='movies'?'Movie night':'Group outing'+(result.city?' in '+result.city:''),
     'Top pick: '+winner.name,
     'UNISON relative score: '+winner.score+'/100',
+    'Decision style: '+(decisionStyles[result.decisionStyle]?.label??'Balanced'),
     'Evidence coverage: '+Math.round(winner.coverage*100)+'%',
     ...choices.slice(1,4).map((item,index)=>'Alternative '+(index+1)+': '+item.name),
     '',
