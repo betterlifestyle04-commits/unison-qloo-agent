@@ -3,7 +3,7 @@ const $=selector=>document.querySelector(selector);
 const people=$('#people'),template=$('#person-template'),form=$('#plan-form'),results=$('#results'),error=$('#form-error'),submitBtn=$('#submit-plan'),statusBadge=$('#mode-status');
 const starters=[['Maya','Studio Ghibli'],['Jon','Anthony Bourdain'],['Priya','Knives Out']];
 const app={configured:false,requesting:false,lastInput:null,lastResult:null,showAll:false,hasChangedMode:false,baseResult:null,hashLoaded:false};
-const escape=value=>{const element=document.createElement('span');element.textContent=String(value??'');return element.innerHTML;};
+const escape=value=>{const element=document.createElement('span');element.textContent=String(value??'');return element.innerHTML.replace(/\"/g,'&quot;').replace(/'/g,'&#39;');};
 const number=value=>Number.isFinite(value)?String(Math.round(value)):null;
 const initial=value=>String(value||'?').trim().slice(0,1).toUpperCase();
 const percent=value=>Math.max(0,Math.min(100,Number(value)||0));
@@ -129,6 +129,7 @@ function applyBrief(raw){
   const input=normalizeBrief(raw);
   const source=starterGroups.find(p=>p.id===raw.id);
   form.querySelector('input[name=domain][value='+input.domain+']').checked=true;
+  app.pendingMode=input.mode;
   const requestedMode=input.mode==='live'&&app.configured?'live':'demo';
   form.querySelector('input[name=mode][value='+requestedMode+']').checked=true;
   if(source||app.hashLoaded)app.hasChangedMode=true;
@@ -137,6 +138,7 @@ function applyBrief(raw){
   people.replaceChildren();
   input.people.forEach(p=>addPerson([p.name,p.favorites.join(', ')]));
   app.lastInput=null;app.lastResult=null;app.baseResult=null;app.showAll=false;
+  results.innerHTML='<div class="empty"><span class="eyebrow">READY FOR YOUR GROUP</span><h3>Different tastes, one plan.</h3><p>Review the group brief and select Find our common ground to create a new shortlist.</p></div>';
   showError();updateFormPresentation();
 }
 document.querySelectorAll('[data-preset]').forEach(button=>button.addEventListener('click',()=>{
@@ -169,11 +171,12 @@ try{
 updateFormPresentation();
 fetch('/api/status',{cache:'no-store'}).then(r=>r.json()).then(status=>{
   app.configured=Boolean(status.configured);
+  if(app.hashLoaded && app.pendingMode==='live' && app.configured){form.querySelector('input[name=mode][value=live]').checked=true;}
   statusBadge.classList.toggle('live',app.configured);statusBadge.classList.toggle('offline',!app.configured);
-  statusBadge.innerHTML=`<span class="status-dot"></span>${app.configured?'Qloo connected · Live-ready':'Explore in demo mode'}`;
+  statusBadge.innerHTML=`<span class="status-dot"></span>${app.configured?'Qloo key present · Live available':'Explore in demo mode'}`;
   const live=$('#live-choice input');
   live.disabled=!app.configured;$('#live-choice').classList.toggle('disabled',!app.configured);
   if(app.configured&&!app.hasChangedMode){live.checked=true;}
-  if(!app.configured&&live.checked){form.querySelector('input[name=mode][value=demo]').checked=true;}
+  if(!app.configured&&live.checked){form.querySelector('input[name=mode][value=demo]').checked=true;$('#share-message').textContent='Qloo is not configured; this shared group is now in demo mode.';}
   updateFormPresentation();
 }).catch(()=>{statusBadge.classList.add('offline');statusBadge.innerHTML='<span class="status-dot"></span>Service unavailable · Demo only';$('#live-choice input').disabled=true;$('#live-choice').classList.add('disabled');updateFormPresentation();});
