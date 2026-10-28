@@ -133,3 +133,11 @@ Share links can contain Qloo public entity IDs in addition to the group's names 
 **Saved group plans** are explicitly opt-in and stay in the current browser's `localStorage`. Each saved record contains the group brief (including participant names, favorites and any public Qloo entity IDs), a user-facing plan summary, a timestamp, and a winner label. It does not store the Qloo API key or create an account. Up to eight recent records can be saved. Users can reopen a brief, copy a saved summary, or delete a record. **Reopening always selects demo mode** and does not automatically query Qloo. Since browser storage is not encrypted, users on shared devices should not save private details.
 
 Implementation: `public/planner-state.js` exports `analyzeDecisionTradeoffs`; `public/saved-plans.js` handles explicit storage operations with validation and bounds. New unit and HTTP regression tests verify both features.
+
+## Tentative calendar handoff and CSP-safe scoring
+
+After generating a group shortlist, the **Make it happen** section lets people choose any fully supported, non-vetoed option; add a tentative date, start time, duration, meeting location and notes; and download a standard `.ics` calendar event or copy the meeting details. These are entirely browser-side operations and make no new Qloo calls. Event timestamps are created from the **visitor's browser-local timezone** and encoded as UTC in the calendar file. Users planning in another timezone must verify the imported event before sharing. Every generated calendar entry has **TENTATIVE** status and explicitly states that UNISON has not booked a reservation or verified availability.
+
+The recommendation comparison bars now use **native HTML `<meter>` elements** rather than HTML-injected inline CSS widths. This keeps the charts visible under the existing strict `style-src 'self'` Content Security Policy and improves their accessibility.
+
+The calendar helper is in `public/calendar.js`, covered by `test/calendar.test.js` and first-party routing tests. No calendar permissions, notifications, background processes or third-party calendar API integration are required.
