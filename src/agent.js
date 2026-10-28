@@ -3,6 +3,18 @@ import {explainCandidate,rankCandidates} from './rank.js';
 import {insights,isLiveConfigured,searchFavorite} from './qloo.js';
 
 const fail=(message,status=400)=>{throw Object.assign(new Error(message),{status});};
+// Keep upstream Qloo requests bounded so larger groups do not send 15 searches at once.
+export async function mapLimited(items,limit,mapper){
+  const results=new Array(items.length),workers=Math.min(limit,items.length);
+  let next=0;
+  await Promise.all(Array.from({length:workers},async()=>{
+    while(next<items.length){
+      const index=next++;
+      results[index]=await mapper(items[index],index);
+    }
+  }));
+  return results;
+}
 // One consistent ordinal estimate for every participant; native Qloo affinity is kept separate.
 export const rankFitEstimate=index=>Math.max(20,100-(index*8));
 const idFor=(name,index)=>`${name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'person'}-${index+1}`;
@@ -39,7 +51,7 @@ function validate(input){
   return {people,domain,mode,city,budget,vetoes};
 }
 export async function resolvePersonFavorites(person,search=searchFavorite){
-  return Promise.all(person.favorites.map(favorite=>{
+  return mapLimited(person.favorites,2,favorite=>{
     const chosen=(person.selectedEntities||[]).find(selection=>selection.name.toLowerCase()===favorite.toLowerCase());
     if(chosen)return {status:'resolved',exact:chosen,matches:[chosen],url:null,cached:false,picked:true};
     return search(favorite);
@@ -49,14 +61,26 @@ async function liveEvidence(people,domain,city,budget,trace){
   const resolved=await Promise.all(people.map(async person=>{
     const matches=await resolvePersonFavorites(person);
     const unresolved=matches.filter(match=>match.status!=='resolved');
-    if(unresolved.length){const names=unresolved.flatMap(match=>match.matches.map(item=>item.name)).slice(0,3);fail(`Please clarify ${person.name}'s favorite. Qloo found ${names.length?names.join(', '):'no exact match'}.`,422);}
+    if(unresolved.length){const names=unresolved.flatMap(match=>match.matches.map(item=>item.name+(item.type?' ('+item.type.replace(/^urn:entity:/,'')+')':''))).slice(0,5);fail(`Please clarify ${person.name}'s favorite using Taste Finder. Qloo found ${names.length?names.join(', '):'no exact match'}; titles shared by movies, albums, artists, or books must be selected explicitly.`,422);}
     const picked=matches.filter(match=>match.picked).length;
     trace.push({step:'Qloo entity resolution',kind:'qloo',detail:`Resolved ${person.favorites.length} favorite(s) for ${person.name}, including ${picked} explicitly selected Qloo entity ID(s).`,requests:matches.filter(match=>match.url).map(match=>({url:match.url,cached:match.cached}))});
     return {...person,entities:matches.map(match=>match.exact)};
   }));
-  const discoveries=await Promise.all(resolved.map(async person=>{const response=await insights(person.entities.map(entity=>entity.id),domain,{city,budget});trace.push({step:'Qloo discovery tool',kind:'qloo',detail:`Requested ${domain} candidates for ${person.name}${city&&domain==='places'?` strictly within ${city}`:''}.`,requests:[{url:response.url,cached:response.cached}]});return {person,results:response.results};}));
+  const discoveries=await mapLimited(resolved,2,async person=>{
+    const response=await insights(person.entities.map(entity=>entity.id),domain,{city,budget});
+    trace.push({step:'Qloo discovery tool',kind:'qloo',detail:`Requested ${domain} candidates for ${person.name}${city&&domain==='places'?` within ${city}`:''}.`,requests:[{url:response.url,cached:response.cached}]});
+    return {person,results:response.results};
+  });
   const shortlist=[...new Set(discoveries.flatMap(entry=>entry.results.map(item=>item.id)))].slice(0,12);
-  const perPerson=await Promise.all(resolved.map(async person=>{const response=await insights(person.entities.map(entity=>entity.id),domain,{city,budget,shortlist});trace.push({step:'Qloo shortlist evaluation tool',kind:'qloo',detail:`Evaluated the shared ${shortlist.length}-option shortlist for ${person.name}.`,requests:[{url:response.url,cached:response.cached}]});return {person,results:response.results};}));
+  if(!shortlist.length){
+    trace.push({step:'No candidates',kind:'local',detail:'Qloo returned no place or movie candidates matching this group and its current constraints.'});
+    return [];
+  }
+  const perPerson=await mapLimited(resolved,2,async person=>{
+    const response=await insights(person.entities.map(entity=>entity.id),domain,{city,budget,shortlist});
+    trace.push({step:'Qloo shortlist evaluation tool',kind:'qloo',detail:`Evaluated the shared ${shortlist.length}-option shortlist for ${person.name}.`,requests:[{url:response.url,cached:response.cached}]});
+    return {person,results:response.results};
+  });
   const candidates=new Map();
   perPerson.forEach(({person,results})=>results.forEach((item,index)=>{
     if(!candidates.has(item.id))candidates.set(item.id,{...item,signals:{},signalKinds:{},observedAffinityByPerson:{},evidence:'Observed Qloo candidate. All UNISON fit estimates use the same relative ordinal scale; native Qloo affinity is kept separate.'});
@@ -72,7 +96,9 @@ export async function runAgent(input){
   if(mode==='live'&&domain==='places'&&!city)fail('Choose a city before requesting live place recommendations.',422);
   const trace=[{step:'Plan',kind:'local',detail:`Collect up to three favorites per person, then seek a ${budget==='any'?'practical':budget}-budget ${domain==='places'?'place':'movie'} compromise.`}];
   const candidates=mode==='live'?await liveEvidence(people,domain,city,budget,trace):demoEvidence(people,domain,{city,budget});
-  if(!candidates.length)fail('No simulated options match that budget. Try a different practical constraint.',422);
+  if(!candidates.length)fail(mode==='live'
+    ?'Qloo returned no candidates for this combination of tastes and constraints. Try another city, loosen the price level, or select other cultural references. No fictional results were substituted.'
+    :'No simulated options match that budget. Try a different practical constraint.',422);
   const ranked=rankCandidates(candidates,people,vetoes).map(candidate=>({...candidate,explanation:explainCandidate(candidate,people)}));
   trace.push({step:mode==='demo'?'Simulated evidence tool':'Evidence merge',kind:mode==='demo'?'demo':'local',detail:mode==='demo'?'Mapped favorites to a deterministic fictional taste scenario. No Qloo request was made.':'Merged independent Qloo result lists; absent results remain unknown.'},{step:'Evaluation',kind:'local',detail:'Ranked consistently using UNISON ordinal relative-fit estimates. Native Qloo affinity is never blended with derived scores. Missing evidence stays unknown.'},{step:vetoes.length?'Replan after veto':'Control check',kind:'local',detail:vetoes.length?`Removed ${vetoes.length} vetoed option(s) and re-ranked the remaining trade-offs.`:'No veto changed this plan.'});
   const supported=ranked.filter(candidate=>candidate.sufficient&&!candidate.vetoed);
