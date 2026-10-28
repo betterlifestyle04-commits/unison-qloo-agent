@@ -108,3 +108,12 @@ The service can report `live-ready` when a server-side key is present, but that 
 - Local fairness controls do not trigger new Qloo requests and therefore cannot discover new candidate entities; submit a new brief to perform a fresh discovery.
 - Share links expose voluntarily included names and favorites. Do not put private secrets or sensitive personal information in the planner.
 - Browser-based end-to-end accessibility and layout testing, and live response accuracy checks across several cities and preference groups, remain ongoing.
+
+## Trust and human decision features
+
+- **Qloo Taste Finder:** The planner's optional, server-mediated cultural reference finder lets the user search for candidate names on demand. `GET /api/taste-lookup?q=...` requires a configured server key, accepts 2–80 characters, and is limited to 10 searches per minute per requester. Only cultural search terms are sent to Qloo; participant names are not included. Choosing a displayed name appends it to the participant's editable favorites field. It does **not** assert that similarly named Qloo entities have been unambiguously distinguished.
+- **Grounded artwork:** Live recommendation cards display imagery only when supplied by Qloo's entity metadata at a trusted `images.qloo.com` domain. Other image URLs are discarded; illustrative demo options use CSS placeholders rather than fake real-world photos.
+- **Group vote:** A participant can vote **Yes / Maybe / No** on each option. Votes are stored only in the current browser session, do not communicate with other users or devices, and do not change the underlying taste score. An option is marked **Everyone said yes** only if every listed participant explicitly votes Yes, with no veto. A new plan resets local votes.
+- **Evidence inspector:** The user can expand a card to distinguish Qloo entity provenance, optional native affinity information, UNISON rank-derived comparative scores, simulated data, and missing evidence. These are not calibrated satisfaction predictions.
+
+A group agreement based on one-device votes is a convenience for in-person planning, **not** authenticated multi-user voting. UNISON currently does not handle reservations, real-time opening hours, or payments.
