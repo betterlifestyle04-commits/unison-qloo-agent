@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {buildCalendarEvent,agendaText,escapeIcs,utcStamp} from '../public/calendar.js';
+import {buildCalendarEvent,agendaText,escapeIcs,utcStamp,foldIcsLine} from '../public/calendar.js';
 
 test('calendar export produces a tentative event in the visitor local time',()=>{
   const now=new Date('2026-10-28T20:00:00Z');
@@ -36,4 +36,16 @@ test('copying an agenda explicitly says the venue has not been booked',()=>{
   assert.match(summary,/Europe\/Oslo/);
   assert.match(summary,/No reservation or booking has been made/);
   assert.throws(()=>agendaText({title:'Movie night',date:'',startTime:''}),/date and time/i);
+});
+
+test('iCalendar physical lines are at most 75 UTF-8 octets',()=>{
+  const long='Meeting about 🍿 film choices; '+('é'.repeat(90));
+  const folded=foldIcsLine('DESCRIPTION:'+escapeIcs(long));
+  const physicalLines=folded.split('\r\n');
+  const encoder=new TextEncoder();
+  assert.ok(physicalLines.length>2);
+  assert.ok(physicalLines.every(line=>encoder.encode(line).length<=75));
+  assert.ok(physicalLines.slice(1).every(line=>line.startsWith(' ')));
+  const event=buildCalendarEvent({title:'Film night 🍿',date:'2026-11-14',startTime:'19:00',uid:'fold-check',notes:long});
+  assert.ok(event.split('\r\n').every(line=>encoder.encode(line).length<=75));
 });
