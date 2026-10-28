@@ -58,6 +58,19 @@ function listPeople(item,data){
     return `<li><span>${escape(person.name)}</span>${shown===null?'<span class="unknown">No signal</span>':`<span class="tiny-bar" aria-hidden="true"><i style="width:${percent(val)}%"></i></span><b>${shown}/100</b>`}</li>`;
   }).join('')}</ul></details>`;
 }
+function evidenceSection(item,data){
+  const source=data.mode==='live'?'Qloo entity · live':'Fictional demo entity';
+  const kind=data.mode==='live'?'Local ordinal fit estimate':'Simulated preference fit';
+  const raw=item.observedAffinityByPerson||{};
+  return `<details class="evidence-details">
+    <summary>What is this recommendation based on?</summary>
+    <div class="evidence-metadata"><span>Source</span><strong>${escape(source)}</strong></div>
+    ${data.mode==='live'?`<div class="evidence-metadata"><span>Qloo entity ID</span><code>${escape(item.id)}</code></div>`:''}
+    <div class="evidence-metadata"><span>Per-person score</span><strong>${escape(kind)}</strong></div>
+    ${data.people.map(person=>`<div class="evidence-metadata"><span>${escape(person.name)}</span><span>${escape(item.signalKinds?.[person.id]|| (data.mode==='demo'?'Fictional scenario':'No observed signal'))}${Number.isFinite(raw[person.id])?' · native affinity '+escape(raw[person.id]):''}</span></div>`).join('')}
+    <p>UNISON's group fit is a heuristic comparison, not a probability that anyone will enjoy the option. Missing evidence does not mean dislike.</p>
+  </details>`;
+}
 function ballotSection(item,data){
   const status=summarizeBallot(app.ballots,item.id,data.people.map(p=>p.id));
   return `<details class="group-ballot" data-ballot-panel="${escape(item.id)}">
@@ -91,6 +104,7 @@ function card(item,index,data){
     <div class="stat-row"><span class="label">Coverage</span><span class="bar" aria-hidden="true"><i style="width:${Math.round((item.coverage||0)*100)}%"></i></span><span class="value">${Math.round((item.coverage||0)*100)}%</span></div>
     ${listPeople(item,data)}
     ${ballotSection(item,data)}
+    ${evidenceSection(item,data)}
     ${mapUrl?`<a class="map-link" href="${escape(mapUrl)}" target="_blank" rel="noopener noreferrer">↗ Search for this place on Google Maps</a>`:''}
     <p class="card-explanation">${escape(item.explanation||'')}</p>
     <button class="veto" data-veto="${escape(item.id)}" aria-pressed="${Boolean(item.vetoed)}">${item.vetoed?'↶ Restore option':'× Not for our group'}</button>
