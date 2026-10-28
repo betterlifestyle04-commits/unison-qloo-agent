@@ -1,4 +1,93 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="UNISON helps a small group find an inspectable compromise."><title>UNISON — Different tastes. One great plan.</title><link rel="stylesheet" href="/styles.css"></head>
-<body><a class="skip" href="#planner">Skip to planner</a><header class="mast"><p class="eyebrow">QLOO AGENTIC HACKATHON · 2026</p><h1>Different tastes.<br><em>One great plan.</em></h1><p class="lede">UNISON looks for a compromise that does not leave one person behind. Every signal, missing-data caveat, and veto stays visible.</p><div id="mode-status" class="pill" aria-live="polite">Checking mode…</div></header>
-<main id="planner"><section class="panel setup"><div><p class="eyebrow">01 · GROUP BRIEF</p><h2>Bring 2–5 people together.</h2><p class="muted">Use up to three favorites per person, separated by commas. Demo mode creates a fictional scenario and never calls Qloo.</p></div><form id="plan-form"><fieldset><legend>What are you planning?</legend><div class="toggle"><label><input type="radio" name="domain" value="places" checked> A place</label><label><input type="radio" name="domain" value="movies"> Movie night</label></div></fieldset><div class="constraints"><label>City <input name="city" maxlength="80" placeholder="e.g. Oslo"></label><label>Budget <select name="budget"><option value="any">Any budget</option><option value="low">Lower cost</option><option value="mid">Mid-range</option><option value="high">Special occasion</option></select></label></div><div id="people" class="people"></div><button type="button" class="text-button" id="add-person">+ Add person</button><fieldset class="mode"><legend>Evidence source</legend><label><input type="radio" name="mode" value="demo" checked> <strong>Demo mode</strong> <span>Simulated scenario, safe for judging.</span></label><label id="live-choice"><input type="radio" name="mode" value="live"> <strong>Live Qloo</strong> <span>Requires a securely configured server key.</span></label></fieldset><button class="primary" type="submit">Find a fairer plan <span aria-hidden="true">→</span></button><p id="form-error" class="error" role="alert"></p></form></section><section id="results" class="results" aria-live="polite" aria-busy="false"><div class="empty"><p class="eyebrow">02 · NEGOTIATED PLAN</p><h2>Make every voice visible.</h2><p>Add your group and UNISON will show a transparent compromise, not a mysterious match score.</p></div></section></main><footer><span>UNISON</span><span>Relative heuristic · not a happiness prediction</span><span>Built with clearly labeled demo evidence</span></footer><template id="person-template"><div class="person"><label>Name<input data-field="name" maxlength="32" required></label><label>Favorites<input data-field="favorite" maxlength="180" required placeholder="e.g. Studio Ghibli, jazz"></label><button type="button" class="remove" aria-label="Remove person">×</button></div></template><script type="module" src="/app.js"></script></body></html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#111b25">
+  <meta name="description" content="UNISON turns different tastes into one considered group plan. Real cultural taste intelligence, transparent compromise, and decisions everyone can understand.">
+  <meta property="og:title" content="UNISON — Different tastes. One great plan.">
+  <meta property="og:description" content="A new way to find your group's common ground, powered by Qloo's Taste AI.">
+  <title>UNISON — Find your common ground</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<a class="skip" href="#planner">Skip to planning</a>
+<div class="site-shell">
+  <nav class="site-nav" aria-label="Main navigation">
+    <a class="brand" href="#top" aria-label="UNISON home"><span class="brand-symbol" aria-hidden="true"><i></i><i></i><i></i></span><span>unison<span class="brand-period">.</span></span></a>
+    <div class="nav-links"><a href="#planner">Plan together</a><a href="#how-it-works">How it works</a><a href="https://github.com/betterlifestyle04-commits/unison-qloo-agent" target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a></div>
+    <span class="nav-chip">Built for Qloo Hackathon '26</span>
+  </nav>
+
+  <header id="top" class="hero">
+    <div class="hero-copy">
+      <p class="overline"><span class="tiny-spark">✳</span> THE BETTER WAY TO DECIDE TOGETHER</p>
+      <h1>Different tastes.<br><em>One great plan.</em></h1>
+      <p class="hero-lead">One friend wants something adventurous. Another loves the familiar. UNISON finds the overlap, so no one gets left out.</p>
+      <div class="hero-actions"><a class="button button-dark" href="#planner">Find our common ground <span aria-hidden="true">↗</span></a><a class="button button-light" href="#how-it-works">See how it works <span aria-hidden="true">↓</span></a></div>
+      <div class="hero-meta"><span class="hero-proof"><span aria-hidden="true">◉</span> 2–5 people</span><span class="hero-proof"><span aria-hidden="true">◇</span> Fairness-first</span><span class="hero-proof"><span aria-hidden="true">✧</span> Explainable decisions</span></div>
+    </div>
+    <div class="hero-art" aria-hidden="true">
+      <div class="art-ring ring-one"></div><div class="art-ring ring-two"></div>
+      <div class="art-label label-a"><span class="avatar coral">M</span><span><b>Maya</b><small>Film & imagination</small></span></div>
+      <div class="art-label label-b"><span class="avatar blue">J</span><span><b>Jon</b><small>Food & exploration</small></span></div>
+      <div class="art-label label-c"><span class="avatar violet">P</span><span><b>Priya</b><small>Mystery & stories</small></span></div>
+      <div class="art-center"><span class="star-mark">✳</span><strong>Common<br>ground</strong><small>Found together</small></div>
+      <div class="art-caption">THREE PERSPECTIVES. ONE SHARED DECISION.</div>
+    </div>
+  </header>
+</div>
+
+<main id="planner" class="workspace">
+  <div class="workspace-intro"><div><p class="overline">01 / THE GROUP PLANNER</p><h2>A plan made for <em>all</em> of you.</h2><p>Tell us who's coming and what each person loves. We'll make the trade-offs visible.</p></div><div id="mode-status" class="status-chip" role="status" aria-live="polite"><span class="status-dot"></span> Checking Qloo access…</div></div>
+  <div class="workspace-grid">
+    <section class="panel setup" aria-labelledby="brief-heading">
+      <div class="section-heading"><span class="step-no">01</span><div><p class="overline">YOUR GROUP BRIEF</p><h3 id="brief-heading">Start with the essentials.</h3></div></div>
+      <form id="plan-form">
+        <fieldset class="field-section"><legend><span class="field-number">1</span> What are you planning?</legend>
+          <div class="toggle">
+            <label class="option-tile"><input type="radio" name="domain" value="places" checked><span class="option-emoji" aria-hidden="true">📍</span><span><b>Go somewhere</b><small>Find a place everyone likes</small></span></label>
+            <label class="option-tile"><input type="radio" name="domain" value="movies"><span class="option-emoji" aria-hidden="true">🎬</span><span><b>Movie night</b><small>Pick a film together</small></span></label>
+          </div>
+        </fieldset>
+        <fieldset class="field-section" id="place-constraints"><legend><span class="field-number">2</span> Narrow it down</legend>
+          <div class="constraints">
+            <label class="input-label" for="city">City <span class="required-note">Required for live place plans</span><input name="city" id="city" maxlength="80" autocomplete="address-level2" placeholder="e.g. Oslo, Norway"><small>Choose a city to avoid recommendations from around the world.</small></label>
+            <label class="input-label" for="budget">Price preference<select name="budget" id="budget"><option value="any">Any price level</option><option value="low">Up to level 1</option><option value="mid">Up to level 2</option><option value="high">Up to level 4</option></select><small>Qloo price-level filter, not a guaranteed price.</small></label>
+          </div>
+          <div class="city-suggestions"><span>Try:</span><button type="button" class="city-quick" data-city="Oslo">Oslo</button><button type="button" class="city-quick" data-city="New York City">New York</button><button type="button" class="city-quick" data-city="London">London</button></div>
+        </fieldset>
+        <fieldset class="field-section"><legend><span class="field-number">3</span> Who's in your group? <span id="people-count" class="field-count">3 of 5</span></legend>
+          <p class="field-help">Give each person up to three specific favorites, separated by commas. Think films, artists, or cultural references.</p>
+          <div id="people" class="people"></div>
+          <button class="add-person" type="button" id="add-person"><span aria-hidden="true">＋</span> Add another person</button>
+        </fieldset>
+        <fieldset class="field-section"><legend><span class="field-number">4</span> Choose your evidence</legend>
+          <div class="mode" id="source-options">
+            <label class="source-tile" id="live-choice"><input type="radio" name="mode" value="live"><span class="source-copy"><b>Live Qloo intelligence</b><small>Real cultural taste recommendations via the Qloo API.</small></span><span class="source-tag">LIVE</span></label>
+            <label class="source-tile"><input type="radio" name="mode" value="demo" checked><span class="source-copy"><b>Explore demo mode</b><small>Clearly labeled fictional data. No Qloo requests.</small></span><span class="source-tag neutral">DEMO</span></label>
+          </div>
+        </fieldset>
+        <button class="primary" type="submit" id="submit-plan"><span id="submit-label">Find our common ground</span><span aria-hidden="true">↗</span></button>
+        <p id="form-error" class="error" role="alert"></p>
+        <p class="form-note"><span aria-hidden="true">♢</span> Transparent methodology. No sign-up required. Names are not sent to Qloo.</p>
+      </form>
+    </section>
+    <section class="panel results-panel" aria-labelledby="results-heading">
+      <div class="section-heading result-section-heading"><span class="step-no accent-step">02</span><div><p class="overline">YOUR SHARED SHORTLIST</p><h3 id="results-heading">Where tastes meet.</h3></div></div>
+      <div id="results" class="results" aria-live="polite" aria-busy="false"><div class="empty">
+        <div class="empty-art" aria-hidden="true"><span class="empty-orbit o1"></span><span class="empty-orbit o2"></span><span class="empty-heart">✳</span><span class="empty-dot d1"></span><span class="empty-dot d2"></span><span class="empty-dot d3"></span></div>
+        <span class="eyebrow">GOOD PLANS START HERE</span><h3>Something everyone<br>can say yes to.</h3><p>Fill in the group brief, then explore recommendations ranked with everyone's preferences in mind.</p><div class="empty-steps"><span>01  Add your people</span><span>02  Connect their tastes</span><span>03  Find the overlap</span></div>
+      </div></div>
+    </section>
+  </div>
+</main>
+<section id="how-it-works" class="how-it-works"><div class="content-wide"><div class="how-head"><p class="overline">THE METHOD BEHIND THE MAGIC</p><h2>Less compromise.<br><em>More common ground.</em></h2></div><div class="feature-grid">
+  <article class="feature-card"><span class="feature-icon">✧</span><span class="feature-num">01 / DISCOVER</span><h3>Understand each taste</h3><p>We resolve favorite cultural references into Qloo entities and fetch recommendations for each person independently.</p></article>
+  <article class="feature-card"><span class="feature-icon">◇</span><span class="feature-num">02 / BALANCE</span><h3>Protect every voice</h3><p>Our transparent group ranking considers the lowest relative fit and the group average. Missing evidence isn't mistaken for agreement.</p></article>
+  <article class="feature-card"><span class="feature-icon">↺</span><span class="feature-num">03 / REPLAN</span><h3>Make it yours</h3><p>Compare how options fit everyone, veto a suggestion, and explore a new compromise with a visible decision trace.</p></article>
+</div><p class="method-note">UNISON scores are relative ranking heuristics, not probabilities of enjoyment or scientifically validated satisfaction measures. Qloo insights describe cultural affinities, not an individual's guaranteed behavior.</p></div></section>
+<footer class="site-footer"><div class="content-wide footer-content"><div class="footer-brand"><span class="brand-symbol" aria-hidden="true"><i></i><i></i><i></i></span><span>unison.</span></div><p>Different tastes. One great plan.</p><a href="https://github.com/betterlifestyle04-commits/unison-qloo-agent" target="_blank" rel="noopener noreferrer">View open-source code ↗</a><span>Built for the Qloo Agentic Hackathon 2026</span></div></footer>
+<template id="person-template"><div class="person"><span class="person-avatar" aria-hidden="true"></span><label class="input-label person-name">Name<input data-field="name" maxlength="32" required placeholder="Name"></label><label class="input-label person-favorite">Favorite cultural references<input data-field="favorite" maxlength="180" required placeholder="e.g. Interstellar, jazz"></label><button type="button" class="remove" aria-label="Remove participant" title="Remove person">×</button></div></template>
+<script type="module" src="/app.js"></script>
+</body></html>
