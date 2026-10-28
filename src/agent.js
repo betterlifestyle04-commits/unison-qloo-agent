@@ -55,7 +55,7 @@ export async function resolvePersonFavorites(person,search=searchFavorite){
     const chosen=(person.selectedEntities||[]).find(selection=>selection.name.toLowerCase()===favorite.toLowerCase());
     if(chosen)return {status:'resolved',exact:chosen,matches:[chosen],url:null,cached:false,picked:true};
     return search(favorite);
-  }));
+  });
 }
 async function liveEvidence(people,domain,city,budget,trace){
   const resolved=await Promise.all(people.map(async person=>{
