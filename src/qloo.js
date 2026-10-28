@@ -17,7 +17,18 @@ async function get(pathname,params,fetchImpl=fetch){
 }
 const array=value=>Array.isArray(value)?value:[];
 const candidates=payload=>array(payload?.results?.entities).length?payload.results.entities:array(payload?.results).length?payload.results:array(payload?.data?.entities).length?payload.data.entities:array(payload?.entities);
-function normalize(item){const affinity=item?.query?.affinity??item?.affinity??null;return {id:item?.entity_id??item?.id??item?.entity?.id,name:item?.name??item?.display_name??item?.title,type:item?.subtype??item?.type??item?.entity_type??array(item?.types)[0],category:item?.category?.name??item?.category,affinity:Number.isFinite(affinity)?(affinity<=1?affinity*100:affinity):null};}
+function normalize(item){
+  const affinity=item?.query?.affinity??item?.affinity??null;
+  const properties=item?.properties??{};
+  const category=item?.category?.name??item?.category;
+  const normalized={id:item?.entity_id??item?.id??item?.entity?.id,name:item?.name??item?.display_name??item?.title,type:item?.subtype??item?.type??item?.entity_type??array(item?.types)[0],category,affinity:Number.isFinite(affinity)?(affinity<=1?affinity*100:affinity):null};
+  const description=typeof properties.description==='string'?properties.description.trim():'';
+  const address=typeof properties.address==='string'?properties.address.trim():typeof properties.address?.formatted==='string'?properties.address.formatted.trim():'';
+  if(description)normalized.note=description.slice(0,240);
+  if(address)normalized.address=address.slice(0,180);
+  if(Number.isInteger(properties.release_year))normalized.year=properties.release_year;
+  return normalized;
+}
 export function parseSearch(payload){return candidates(payload).map(normalize).filter(item=>item.id&&item.name);}
 export function parseInsights(payload){return candidates(payload).map(normalize).filter(item=>item.id&&item.name);}
 export async function searchFavorite(name,{fetchImpl=fetch}={}){const {payload,cached,url}=await get('/search',{query:name},fetchImpl);const matches=parseSearch(payload);const exact=matches.find(item=>item.name.trim().localeCompare(name.trim(),undefined,{sensitivity:'accent'})===0);return {status:exact?'resolved':matches.length?'ambiguous':'unresolved',exact,matches:matches.slice(0,5),cached,url:url.pathname+url.search};}
