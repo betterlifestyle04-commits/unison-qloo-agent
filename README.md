@@ -1,6 +1,6 @@
 # UNISON — Different tastes. One great plan.
 
-UNISON is a fairness-aware group taste negotiation agent for the [Qloo Agentic Hackathon](https://qloo.devpost.com/). Instead of recommending the most popular option or maximizing average taste, it tries to avoid outcomes that leave one participant unhappy. **Currently the demo mode is complete and Qloo live integration is unverified until an event API key is supplied.**
+UNISON is a fairness-aware group taste negotiation agent for the [Qloo Agentic Hackathon](https://qloo.devpost.com/). Instead of recommending the most popular option or maximizing average taste, it tries to avoid outcomes that leave one participant unhappy. **The public application is deployed and the server reports the hackathon Qloo key as configured. A user-observed live-result example exists; production behavior remains subject to further authenticated end-to-end and visual testing.**
 
 ## Fast start
 
@@ -81,4 +81,30 @@ MIT (see `LICENSE`).
 
 ## UX release notes
 
-The public planner should require a city before live place searches and distinguish heuristic relative-fit values from Qloo-provided metadata.
+The public planner requires a city for live place searches and distinguishes heuristic relative-fit values from Qloo-provided metadata.
+
+## Public project
+
+- Website: https://unison-qloo.onrender.com
+- Status: https://unison-qloo.onrender.com/api/status
+- Source: https://github.com/betterlifestyle04-commits/unison-qloo-agent
+- Continuous integration: GitHub Actions `UNISON quality checks` runs `npm run check` and `npm test` on pushes.
+
+The service can report `live-ready` when a server-side key is present, but that status **does not itself prove** that authenticated requests succeed.
+
+## New user-facing features
+
+1. **Quick-start groups**: switch among a friends night out, a movie night, and a date-night scenario. Examples are editable and are not a claim about real people's tastes.
+2. **Consent-based share links**: clicking `Copy a group setup link` creates a URL fragment containing the group names, favorites, city, budget, and mode. The URL is not stored by our server; **anyone with the link can read the shared details**. The app never sends the URL fragment to Qloo, and it does not automatically submit loaded preferences.
+3. **Fairness styles**: balanced (55% floor, 35% mean, 10% coverage); protect lowest fit (75%, 15%, 10%); group average (25%, 65%, 10%). All weights are authored heuristic choices, not calibrated satisfaction scores.
+4. **Instant local re-evaluation**: vetoes, restores, and fairness-style switches operate on existing evidence in the browser. Only submitting a new brief starts a new Qloo workflow. The trace distinguishes local re-evaluation from real upstream requests.
+5. **Map lookup**: live place cards can open an external Google Maps search using the Qloo name and provided address or selected city. A map search is **not** a verified booking or opening-hour claim.
+6. **Transparency**: person-level fit, observed coverage, a group-compromise explanation, and an inspectable tool trace are visible, including the fact that rank-derived fit is UNISON's own estimate.
+7. **Harder input boundaries**: max five participants, three favorites per person, bounded field lengths, and defensive 400 responses to malformed requests.
+
+## Limitations and priorities
+
+- The venue data is Qloo's recommendation evidence. UNISON does not guarantee geographic accuracy, opening hours, reservations, availability, or prices.
+- Local fairness controls do not trigger new Qloo requests and therefore cannot discover new candidate entities; submit a new brief to perform a fresh discovery.
+- Share links expose voluntarily included names and favorites. Do not put private secrets or sensitive personal information in the planner.
+- Browser-based end-to-end accessibility and layout testing, and live response accuracy checks across several cities and preference groups, remain ongoing.
