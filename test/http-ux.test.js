@@ -46,3 +46,19 @@ test('sample groups and shared plans never auto-opt into live Qloo',async()=>{
   assert.match(r.body,/applyBrief\(\{\.\.\.decodeShareBrief\(location\.hash\),mode:'demo'\}\)/);
   assert.doesNotMatch(r.body,/applyBrief\(\{\.\.\.preset,mode:app\.configured\?'live':'demo'\}\)/);
 });
+
+test('Decision Lab and device save modules are served with JavaScript MIME type',async()=>{
+  for(const module of ['/saved-plans.js','/planner-state.js']){
+    const {response,body}=await request(module);
+    assert.equal(response.status,200);
+    assert.match(response.headers.get('content-type'),/application\/javascript/);
+    assert.ok(body.length>100);
+  }
+});
+test('real results UI offers a non-automatic on-device save action',async()=>{
+  const {response,body}=await request('/app.js');
+  assert.equal(response.status,200);
+  assert.match(body,/createPlanArchive/);
+  assert.match(body,/saveDevicePlan/);
+  assert.match(body,/analyzeDecisionTradeoffs/);
+});
