@@ -245,7 +245,7 @@ function render(data){
   $('#save-plan')?.addEventListener('click',()=>{
     try{
       if(!app.lastInput)throw new Error('Create a plan before saving.');
-      const id=typeof crypto?.randomUUID==='function'?crypto.randomUUID():'unison-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10);
+      const id=typeof globalThis.crypto?.randomUUID==='function'?globalThis.crypto.randomUUID():'unison-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10);
       const entry=createPlanArchive(app.lastInput,data,{id});
       if(!entry)throw new Error('Could not prepare this plan for saving.');
       const saved=saveDevicePlan(window.localStorage,entry);
