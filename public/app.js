@@ -120,6 +120,15 @@ function validate(input){
   if(input.mode==='live'&&!app.configured)return 'Live Qloo is not available right now. Choose demo mode.';
   return '';
 }
+function focusBriefProblem(problem,input){
+  if(problem.startsWith('Give every participant')){
+    const row=[...people.querySelectorAll('.person')].find(person=>{const name=person.querySelector('[data-field=name]').value.trim();const favorite=person.querySelector('[data-field=favorite]').value.trim();return !name||!favorite;});
+    row?.querySelector(row.querySelector('[data-field=name]').value.trim()?'[data-field=favorite]':'[data-field=name]')?.focus();return;
+  }
+  if(problem.startsWith('Each participant')){const seen=new Set();const row=[...people.querySelectorAll('.person')].find(person=>{const name=person.querySelector('[data-field=name]').value.trim().toLocaleLowerCase();if(seen.has(name))return true;seen.add(name);return false;});row?.querySelector('[data-field=name]')?.focus();return;}
+  if(problem.startsWith('Enter a city')){$('#city')?.focus();return;}
+  error.focus();
+}
 function sameBrief(a,b){if(!a||!b)return false;const extract=x=>JSON.stringify([x.domain,x.mode,x.city,x.budget,x.people]);return extract(a)===extract(b);}
 function fitBar(value){return value===null||value===undefined?'<span class="unknown">No signal</span>':`<span class="bar" aria-hidden="true"><i style="width:${percent(value)}%"></i></span><span class="value">${number(value)}</span>`;}
 function listPeople(item,data){
@@ -234,7 +243,7 @@ function render(data){
 }
 async function submitPlan(input,{preserveScroll=false}={}){
   if(app.requesting)return;
-  const problem=validate(input);if(problem){showError(problem);form.querySelector('#city')?.focus();return;}
+  const problem=validate(input);if(problem){showError(problem);focusBriefProblem(problem,input);return;}
   showError();app.requesting=true;app.lastInput=input;submitBtn.disabled=true;$('#submit-label').textContent='Finding the overlap…';
   results.setAttribute('aria-busy','true');results.innerHTML='<div class="loader" role="status"><span class="spinner" aria-hidden="true"></span><strong>Looking for common ground</strong><p>Checking preferences, comparing options and finding the fairest supported shortlist…</p></div>';
   try{

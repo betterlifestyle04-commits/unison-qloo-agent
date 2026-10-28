@@ -47,6 +47,14 @@ test('planner exposes an accessible preset state and shortlist navigation',async
   assert.match(app.body,/function setActivePreset/);
   assert.match(app.body,/setActivePreset\(preset\.id\)/);
 });
+test('frontend directs validation focus to the actual brief problem',async()=>{
+  const r=await request('/app.js');
+  assert.equal(r.response.status,200);
+  assert.match(r.body,/function focusBriefProblem/);
+  assert.match(r.body,/problem\.startsWith\('Give every participant'\)/);
+  assert.match(r.body,/problem\.startsWith\('Enter a city'\)/);
+  assert.doesNotMatch(r.body,/showError\(problem\);form\.querySelector\('#city'\)\?\.focus\(\);/);
+});
 
 test('sample groups and shared plans never auto-opt into live Qloo',async()=>{
   const r=await request('/app.js');
