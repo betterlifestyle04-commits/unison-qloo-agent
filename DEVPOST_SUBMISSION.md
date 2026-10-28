@@ -9,7 +9,7 @@ Judges can use the fully local demo with two to five people immediately. It cont
 ## Technical architecture
 
 - A dependency-free Node HTTP server keeps `QLOO_API_KEY` server-side and exposes same-origin status and planning endpoints.
-- The agent plans a bounded run, resolves up to three exact favorites per person through Qloo `/search` in live mode, then requests `/v2/insights` for each person using `filter.type`, `signal.interests.entities`, and city filtering for places. It evaluates the merged evidence and replans after vetoes.
+- The agent plans a bounded run, resolves up to three exact favorites per person through Qloo `/search` in live mode, then requests `/v2/insights` using documented comma-separated `signal.interests.entities`, `filter.type`, strict city filtering, and place-price filters. It evaluates a bounded shared shortlist per person with `filter.results.entities` and replans after vetoes.
 - Ranking is an explainable project heuristic: `0.55 × lowest observed fit + 0.35 × observed average + 0.10 × coverage`. It is not a Qloo score or a happiness prediction.
 - A local fictional catalog powers demo mode. Live failures are explicit; the app never silently changes a failed Qloo request into demo evidence.
 
@@ -25,10 +25,11 @@ Judges can use the fully local demo with two to five people immediately. It cont
 When the event key is securely configured, live mode makes bounded HTTPS calls with `X-Api-Key` only on the server:
 
 1. `GET /search?query=…` for each favorite; an exact name is required and ambiguous matches are surfaced.
-2. `GET /v2/insights?filter.type=urn:entity:place|urn:entity:movie&signal.interests.entities=…`, with `filter.location.query=…` for places, once per participant.
+2. `GET /v2/insights?filter.type=urn:entity:place|urn:entity:movie&signal.interests.entities=id1,id2`, with `filter.location.query`, `filter.location.radius=0`, and supported `filter.price_level.max` for places, once per participant.
+3. A second bounded Insights pass applies `filter.results.entities` to evaluate the common shortlist per participant. Candidates with incomplete group evidence are not named as a group compromise.
 3. The agent merges returned candidates and records rank-derived relative signals.
 
-Live calls have **not been validated** because no event key is available. Before presenting live results, validate the event response envelopes and the exact query parameters with the issued key; errors are intentionally surfaced instead of guessed around. The official docs/OpenAPI host returned 403 from this environment, so it was not treated as a substitute for an authenticated response.
+Live calls have **not been validated** because no event key is available. Before presenting live results, validate the event response envelopes and exact query parameters with the issued key; errors are intentionally surfaced instead of guessed around. The integration was reviewed against Qloo's public documentation repository, not treated as a substitute for an authenticated response.
 
 ## Compliance checklist
 

@@ -27,7 +27,7 @@ On Windows PowerShell: `$env:QLOO_API_KEY="YOUR_EVENT_KEY"; npm start`.
 - `public/*` — accessible, responsive frontend with multi-favorite group onboarding, city/budget constraints, honest demo mode, per-person comparisons, vetoes, and execution trace.
 - `server.js` — HTTP server and same-origin `/api/status` + `/api/plan`; key stays server-side.
 - `src/agent.js` — multi-step agent orchestration and input validation.
-- `src/qloo.js` — server-only Qloo adapter. It resolves exact favorites with `GET /search`, then uses `GET /v2/insights` with `filter.type`, repeated `signal.interests.entities`, and `filter.location.query` for places. It uses bounded TTL/LRU caching and retries only safe GET failures. `X-Api-Key` is sent only upstream by server.
+- `src/qloo.js` — server-only Qloo adapter. It resolves exact favorites with `GET /search`, then uses `GET /v2/insights` with documented comma-separated `signal.interests.entities`, `filter.type`, and `filter.location.query` for places. It uses bounded TTL/LRU caching, a shared shortlist evaluated per person with `filter.results.entities`, and retries only rate-limit/transient GET failures. `X-Api-Key` is sent only upstream by server.
 - `src/demo.js` — deterministic, **simulated local preference scenarios** whose outcome changes with the submitted favorites; they are visibly separated from real Qloo results.
 - `src/rank.js` — explainable max-min/average/coverage ranking, with vetoes.
 - `test/*` — Node native test runner.
@@ -48,14 +48,14 @@ This is an **unvalidated heuristic, not probability, objective satisfaction, or 
 
 1. Plan a bounded run: 2–5 people, up to three favorites each, target domain, city, budget, and prior vetoes.
 2. In live mode, resolve each favorite via `/search`; require exact name matches and surface ambiguous names rather than silently guessing.
-3. Call `/v2/insights` once per person with `filter.type=urn:entity:place` or `urn:entity:movie`, repeated `signal.interests.entities`, plus `filter.location.query` for places.
-4. Merge candidate IDs and record each person's relative rank-derived signal. Absence means unknown, not dislike.
-5. Evaluate trade-offs, rank for compromise, and replan after a veto; the trace labels Qloo tool calls separately from local computation.
+3. Call `/v2/insights` once per person with `filter.type=urn:entity:place` or `urn:entity:movie` and one comma-separated `signal.interests.entities` value. Places use `filter.location.query` with `filter.location.radius=0`; budget maps to documented `filter.price_level.max` (1, 2, or 4).
+4. Build a bounded shared shortlist, then evaluate that shortlist per person with `filter.results.entities`. An affinity returned by Qloo is retained as observed; a rank-derived signal is labeled as local context. Absence means unknown, not dislike.
+5. A candidate needs observed evidence from every participant before UNISON calls it a group compromise. Otherwise the app asks for a meaningful next step rather than naming a winner. Vetoes trigger replanning, and the trace labels Qloo tool calls separately from local computation.
 
 ## Important next steps before hackathon submission
 
 - Add the event-issued API key as a secret in the hosting provider.
-- Validate `GET /search` and `GET /v2/insights` response envelopes with that actual key and refine the strict response parser if necessary. The adapter sends the documented parameter names and has sanitized fixture tests, but **live API was not tested without the key**. Official docs/OpenAPI retrieval was also blocked by a 403 in this environment.
+- Validate `GET /search` and `GET /v2/insights` response envelopes with that actual key and refine the parser if necessary. The documented Insights entity envelope is covered by sanitized fixtures from Qloo's public docs, but **live API was not tested without the key**.
 - Add integration smoke tests against a redacted real-response fixture; handle quota and errors.
 - Deploy publicly to Render (included `render.yaml`) or another Node-capable host; GitHub Pages alone cannot host this secure server.
 - Verify live end-to-end from two different browser/device sessions, mobile usability, input edge cases, and proper error flows.
@@ -65,6 +65,15 @@ This is an **unvalidated heuristic, not probability, objective satisfaction, or 
 ## Environment & security
 
 Never put `QLOO_API_KEY` in GitHub, browser JavaScript, screenshots, logs, demo content, or messages. Set through deployment environment secrets. Only public test fixtures belong in source. No key? Select Demo mode, with no claims of actual Qloo usage. Qloo errors never trigger a silent mock fallback.
+
+The public `/api/plan` endpoint limits each client to 20 requests per minute and runs at most four plans concurrently. Live execution caps work at five people, three favorites per person, a 12-item shortlist, and cached GETs to protect Qloo quota.
+
+## Render deployment
+
+1. Create a Render **Web Service** from this repository. Render's existing configuration uses `npm install`, `npm start`, and `/api/status` as its health check.
+2. Set Node 22 (already declared in `render.yaml`). Do not add `QLOO_API_KEY` for a demo-only deployment; `/api/status` will report `demo` and the app remains functional.
+3. For live mode, add `QLOO_API_KEY` as a Render secret, optionally set `QLOO_BASE_URL` to `https://hackathon.api.qloo.com`, deploy, and make one authenticated smoke request. Do not describe live mode as verified until that succeeds.
+4. Confirm the public homepage and `/api/status` return 200 after deployment; add the verified URL to the Devpost material only then.
 
 ## License
 

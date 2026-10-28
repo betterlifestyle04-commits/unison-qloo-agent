@@ -8,15 +8,18 @@ export function rankCandidates(candidates,people,vetoes=[]){
     const minimum=values.length?Math.min(...values):null;
     const average=values.length?values.reduce((sum,value)=>sum+value,0)/values.length:null;
     const coverage=people.length?values.length/people.length:0;
-    const score=minimum===null?0:(.55*minimum)+(.35*average)+(10*coverage);
+    // A partial observation may be useful context, never evidence of group consensus.
+    const sufficient=coverage===1;
+    const score=!sufficient||minimum===null?null:(.55*minimum)+(.35*average)+10;
     const isVetoed=vetoed.has(candidate.id);
     const confidence=coverage===1?'complete':coverage>=.6?'partial':'limited';
-    return {...candidate,known,minimum,average,coverage,confidence,score:isVetoed?null:Number(score.toFixed(1)),vetoed:isVetoed};
+    return {...candidate,known,minimum,average,coverage,confidence,sufficient,score:isVetoed||score===null?null:Number(score.toFixed(1)),vetoed:isVetoed};
   }).sort((a,b)=>Number(b.score??-1)-Number(a.score??-1)||a.name.localeCompare(b.name));
 }
 
 export function explainCandidate(candidate,people){
   if(candidate.vetoed)return 'Removed because someone in the group vetoed it.';
+  if(!candidate.sufficient)return `Only ${candidate.known.length} of ${people.length} people have observed evidence. This is not enough to call a group compromise; add or resolve the missing taste signals.`;
   const missing=people.length-candidate.known.length;
   const floor=Math.round(candidate.minimum??0);
   const average=Math.round(candidate.average??0);
