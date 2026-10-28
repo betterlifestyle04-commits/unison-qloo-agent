@@ -154,3 +154,26 @@ export function buildGroupSummary(result){
     'https://unison-qloo.onrender.com'
   ].join('\n');
 }
+
+/**
+ * Compares different group-decision rules against the SAME observed candidate pool.
+ * Never imputes missing people, uses fake statistics, or claims measured happiness.
+ */
+export function analyzeDecisionTradeoffs(result){
+  if(!result||!Array.isArray(result.ranked))return {eligible:0,stable:false,winners:{},averageOnly:null,explanation:'Generate a plan to compare decision styles.'};
+  const eligible=result.ranked.filter(item=>!item.vetoed&&item.sufficient&&Number.isFinite(item.minimum)&&Number.isFinite(item.average)&&Number.isFinite(item.coverage)&&item.coverage===1);
+  if(!eligible.length)return {eligible:0,stable:false,winners:{},averageOnly:null,explanation:'No candidate has comparable evidence for every participant. Gather more information before comparing styles.'};
+  const score=(candidate,weights)=>weights.minimum*candidate.minimum+weights.average*candidate.average+weights.coverage*100*candidate.coverage;
+  const sortFor=weights=>[...eligible].sort((a,b)=>score(b,weights)-score(a,weights)||String(a.name).localeCompare(String(b.name))||String(a.id).localeCompare(String(b.id)));
+  const winners=Object.fromEntries(Object.entries(decisionStyles).map(([style,weights])=>[style,sortFor(weights)[0]]));
+  const averageOnly=[...eligible].sort((a,b)=>b.average-a.average||b.minimum-a.minimum||String(a.name).localeCompare(String(b.name)))[0];
+  const stable=new Set(Object.values(winners).map(item=>item.id)).size===1;
+  const balanced=winners.balanced;
+  const different=averageOnly.id!==balanced.id;
+  const minBenefit=different?Number((balanced.minimum-averageOnly.minimum).toFixed(1)):0;
+  const averageCost=different?Number((averageOnly.average-balanced.average).toFixed(1)):0;
+  const explanation=different
+    ?`The balanced rule currently favors ${balanced.name} over the highest-average option (${averageOnly.name}). Its lowest relative fit is ${balanced.minimum}/100 instead of ${averageOnly.minimum}/100; the group-average difference is ${averageCost.toFixed(1)} points. This is a transparent heuristic trade-off, not a satisfaction prediction.`
+    :`The balanced rule and highest-average rule both select ${balanced.name}. The ranking may still change if preferences or candidate evidence change.`;
+  return {eligible:eligible.length,stable,winners,averageOnly,balanced,minBenefit,averageCost,different,explanation};
+}
