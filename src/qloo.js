@@ -27,6 +27,16 @@ function normalize(item){
   if(description)normalized.note=description.slice(0,240);
   if(address)normalized.address=address.slice(0,180);
   if(Number.isInteger(properties.release_year))normalized.year=properties.release_year;
+  // Only allow Qloo-owned CDN imagery, never arbitrary external links from API metadata.
+  const imageCandidate=typeof properties.image?.url==='string'?properties.image.url:null;
+  if(imageCandidate){
+    try{
+      const image=new URL(imageCandidate);
+      if(image.protocol==='https:' && (image.hostname==='images.qloo.com'||image.hostname.endsWith('.images.qloo.com'))){
+        normalized.imageUrl=image.href;
+      }
+    }catch{/* malformed images are simply omitted */}
+  }
   return normalized;
 }
 export function parseSearch(payload){return candidates(payload).map(normalize).filter(item=>item.id&&item.name);}
