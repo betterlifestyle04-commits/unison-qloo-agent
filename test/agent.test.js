@@ -21,3 +21,10 @@ test('live mode fails explicitly when no Qloo key is configured',async()=>{
   await assert.rejects(()=>runAgent({...group,mode:'live'}),{message:/not configured/});
   if(prior)process.env.QLOO_API_KEY=prior;
 });
+
+test('live place mode requires a city before calling Qloo',async()=>{
+  const old=process.env.QLOO_API_KEY;
+  process.env.QLOO_API_KEY='test-only-placeholder';
+  try { await assert.rejects(()=>runAgent({...group,mode:'live',city:''}),/Choose a city/); }
+  finally { if(old===undefined)delete process.env.QLOO_API_KEY;else process.env.QLOO_API_KEY=old; }
+});
