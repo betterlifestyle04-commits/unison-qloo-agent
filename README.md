@@ -24,11 +24,11 @@ On Windows PowerShell: `$env:QLOO_API_KEY="YOUR_EVENT_KEY"; npm start`.
 
 ## Architecture
 
-- `public/*` — accessible, responsive frontend with group taste onboarding, honest demo mode, results, per-person signal charts, vetoes, workflow trace, and comparator.
+- `public/*` — accessible, responsive frontend with multi-favorite group onboarding, city/budget constraints, honest demo mode, per-person comparisons, vetoes, and execution trace.
 - `server.js` — HTTP server and same-origin `/api/status` + `/api/plan`; key stays server-side.
 - `src/agent.js` — multi-step agent orchestration and input validation.
-- `src/qloo.js` — server-only Qloo adapter. `GET /search` resolves precise cultural entities; `GET /v2/insights` queries each participant's signals separately. `X-Api-Key` is sent only upstream by server.
-- `src/demo.js` — **fictional scenarios**, visibly separated from real Qloo results.
+- `src/qloo.js` — server-only Qloo adapter. It resolves exact favorites with `GET /search`, then uses `GET /v2/insights` with `filter.type`, repeated `signal.interests.entities`, and `filter.location.query` for places. It uses bounded TTL/LRU caching and retries only safe GET failures. `X-Api-Key` is sent only upstream by server.
+- `src/demo.js` — deterministic, **simulated local preference scenarios** whose outcome changes with the submitted favorites; they are visibly separated from real Qloo results.
 - `src/rank.js` — explainable max-min/average/coverage ranking, with vetoes.
 - `test/*` — Node native test runner.
 
@@ -46,15 +46,16 @@ This is an **unvalidated heuristic, not probability, objective satisfaction, or 
 
 ## Agent flow
 
-1. Resolve each participant's favorite cultural entities via `/search`; require exact name matches to avoid silently using a wrong entity. Unresolved names are surfaced.
-2. Call `/v2/insights` per person for the target domain, with location/price filter on places.
-3. Merge candidate IDs and record each person's relative rank-derived signal. Absence means unknown, not dislike.
-4. Rank for compromise; provide inspectable trace; allow user to veto options and rerun.
+1. Plan a bounded run: 2–5 people, up to three favorites each, target domain, city, budget, and prior vetoes.
+2. In live mode, resolve each favorite via `/search`; require exact name matches and surface ambiguous names rather than silently guessing.
+3. Call `/v2/insights` once per person with `filter.type=urn:entity:place` or `urn:entity:movie`, repeated `signal.interests.entities`, plus `filter.location.query` for places.
+4. Merge candidate IDs and record each person's relative rank-derived signal. Absence means unknown, not dislike.
+5. Evaluate trade-offs, rank for compromise, and replan after a veto; the trace labels Qloo tool calls separately from local computation.
 
 ## Important next steps before hackathon submission
 
 - Add the event-issued API key as a secret in the hosting provider.
-- Validate `GET /search` and `GET /v2/insights` response envelopes with that actual key and refine the strict response parser if necessary. **Live API was not tested without the key.**
+- Validate `GET /search` and `GET /v2/insights` response envelopes with that actual key and refine the strict response parser if necessary. The adapter sends the documented parameter names and has sanitized fixture tests, but **live API was not tested without the key**. Official docs/OpenAPI retrieval was also blocked by a 403 in this environment.
 - Add integration smoke tests against a redacted real-response fixture; handle quota and errors.
 - Deploy publicly to Render (included `render.yaml`) or another Node-capable host; GitHub Pages alone cannot host this secure server.
 - Verify live end-to-end from two different browser/device sessions, mobile usability, input edge cases, and proper error flows.

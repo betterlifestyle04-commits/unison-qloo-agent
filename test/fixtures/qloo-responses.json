@@ -1,0 +1,4 @@
+{
+  "search": {"results": [{"entity_id": "urn:entity:movie:fictional-archive", "name": "The Bright Archive", "types": ["urn:entity:movie"]}]},
+  "insights": {"results": {"entities": [{"entity_id": "urn:entity:place:fictional-cafe", "name": "Fictional Café", "type": "urn:entity:place", "category": {"name": "Cafe"}}]}}
+}

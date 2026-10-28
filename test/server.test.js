@@ -11,5 +11,5 @@ test('status and homepage are available without a key',async()=>{
 });
 test('plan endpoint validates input and produces demo result',async()=>{
   const invalid=await request('/api/plan',{method:'POST',headers:{'Content-Type':'application/json'},body:'nope'});assert.equal(invalid.response.status,400);
-  const plan=await request('/api/plan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'demo',people:[{name:'Ada',favorite:'Jazz'},{name:'Bea',favorite:'Manga'}]})});assert.equal(plan.response.status,200);assert.equal(JSON.parse(plan.body).ranked.length,4);
+  const plan=await request('/api/plan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'demo',people:[{name:'Ada',favorite:'Jazz'},{name:'Bea',favorite:'Manga'}]})});assert.equal(plan.response.status,200);assert.equal(JSON.parse(plan.body).ranked.length,5);
 });

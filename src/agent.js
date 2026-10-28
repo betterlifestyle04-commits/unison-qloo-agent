@@ -1,22 +1,23 @@
 import {demoEvidence} from './demo.js';
 import {explainCandidate,rankCandidates} from './rank.js';
-import {insights,isLiveConfigured,resolveExact} from './qloo.js';
+import {insights,isLiveConfigured,searchFavorite} from './qloo.js';
 
 const fail=(message,status=400)=>{throw Object.assign(new Error(message),{status});};
 const idFor=(name,index)=>`${name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'person'}-${index+1}`;
 function validate(input){
   if(!input||typeof input!=='object')fail('A plan request is required.');
-  const people=(input.people||[]).map((person,index)=>({name:String(person?.name||'').trim(),favorite:String(person?.favorite||'').trim(),id:idFor(String(person?.name||''),index)}));
+  const people=(input.people||[]).map((person,index)=>{const favorites=Array.isArray(person?.favorites)?person.favorites:String(person?.favorite||'').split(',');return {name:String(person?.name||'').trim(),favorites:[...new Set(favorites.map(value=>String(value).trim()).filter(Boolean))].slice(0,3),id:idFor(String(person?.name||''),index)};});
   if(people.length<2||people.length>5)fail('Add between 2 and 5 people.');
-  if(people.some(person=>!person.name||!person.favorite))fail('Each person needs a name and one favorite cultural reference.');
+  if(people.some(person=>!person.name||!person.favorites.length))fail('Each person needs a name and at least one favorite cultural reference.');
   if(new Set(people.map(person=>person.name.toLocaleLowerCase())).size!==people.length)fail('Use distinct names so the evidence remains inspectable.');
   const domain=input.domain==='movies'?'movies':'places';
   const mode=input.mode==='live'?'live':'demo';
-  return {people,domain,mode,vetoes:Array.isArray(input.vetoes)?input.vetoes.filter(value=>typeof value==='string'):[]};
+  const city=String(input.city||'').trim().slice(0,80),budget=['any','low','mid','high'].includes(input.budget)?input.budget:'any';
+  return {people,domain,mode,city,budget,vetoes:Array.isArray(input.vetoes)?input.vetoes.filter(value=>typeof value==='string'):[]};
 }
-async function liveEvidence(people,domain){
-  const resolved=await Promise.all(people.map(async person=>({...person,entity:await resolveExact(person.favorite)})));
-  const perPerson=await Promise.all(resolved.map(async person=>({person,results:await insights(person.entity.id,domain)})));
+async function liveEvidence(people,domain,city,trace){
+  const resolved=await Promise.all(people.map(async person=>{const matches=await Promise.all(person.favorites.map(favorite=>searchFavorite(favorite)));const unresolved=matches.filter(match=>match.status!=='resolved');if(unresolved.length){const names=unresolved.flatMap(match=>match.matches.map(item=>item.name)).slice(0,3);fail(`Please clarify ${person.name}'s favorite. Qloo found ${names.length?names.join(', '):'no exact match'}.`,422);}trace.push({step:'Qloo search tool',kind:'qloo',detail:`Resolved ${person.favorites.length} exact favorite${person.favorites.length===1?'':'s'} for ${person.name}.`,requests:matches.map(match=>({url:match.url,cached:match.cached}))});return {...person,entities:matches.map(match=>match.exact)};}));
+  const perPerson=await Promise.all(resolved.map(async person=>{const response=await insights(person.entities.map(entity=>entity.id),domain,{city});trace.push({step:'Qloo insights tool',kind:'qloo',detail:`Requested ${domain} candidates for ${person.name}${city&&domain==='places'?` near ${city}`:''}.`,requests:[{url:response.url,cached:response.cached}]});return {person,results:response.results};}));
   const candidates=new Map();
   perPerson.forEach(({person,results})=>results.forEach((item,index)=>{
     if(!candidates.has(item.id))candidates.set(item.id,{...item,signals:{},evidence:'Observed in Qloo insights; relative fit is derived from result rank.'});
@@ -25,14 +26,12 @@ async function liveEvidence(people,domain){
   return [...candidates.values()];
 }
 export async function runAgent(input){
-  const {people,domain,mode,vetoes}=validate(input);
+  const {people,domain,mode,city,budget,vetoes}=validate(input);
   if(mode==='live'&&!isLiveConfigured())fail('Live Qloo mode is not configured. Add QLOO_API_KEY securely or choose clearly labeled demo mode.',503);
-  const candidates=mode==='live'?await liveEvidence(people,domain):demoEvidence(people,domain);
+  const trace=[{step:'Plan',kind:'local',detail:`Collect up to three favorites per person, then seek a ${budget==='any'?'practical':budget}-budget ${domain==='places'?'place':'movie'} compromise.`}];
+  const candidates=mode==='live'?await liveEvidence(people,domain,city,trace):demoEvidence(people,domain,{city,budget});
+  if(!candidates.length)fail('No simulated options match that budget. Try a different practical constraint.',422);
   const ranked=rankCandidates(candidates,people,vetoes).map(candidate=>({...candidate,explanation:explainCandidate(candidate,people)}));
-  return {mode,domain,people,ranked,trace:[
-    {step:'Input checked',detail:`${people.length} distinct people; ${domain} target.`},
-    {step:mode==='demo'?'Demo evidence selected':'Qloo evidence requested',detail:mode==='demo'?'Fictional local scenario only. No Qloo request was made.':'Each favorite is resolved before per-person insights are merged.'},
-    {step:'Compromise ranked',detail:'0.55 × minimum observed fit + 0.35 × observed average + 0.10 × coverage. Missing remains unknown.'},
-    {step:'Vetoes applied',detail:vetoes.length?`${vetoes.length} option(s) excluded.`:'No options excluded.'}
-  ],disclaimer:mode==='demo'?'Demo mode: all candidates and signals are fictional, for interaction only.':'Live mode: Qloo results are observed; scores are UNISON relative heuristics, not satisfaction probabilities.'};
+  trace.push({step:mode==='demo'?'Simulated evidence tool':'Evidence merge',kind:mode==='demo'?'demo':'local',detail:mode==='demo'?'Mapped favorites to a deterministic fictional taste scenario. No Qloo request was made.':'Merged independent Qloo result lists; absent results remain unknown.'},{step:'Evaluation',kind:'local',detail:'Ranked with 0.55 × minimum observed fit + 0.35 × observed average + 0.10 × coverage. Missing stays unknown.'},{step:vetoes.length?'Replan after veto':'Control check',kind:'local',detail:vetoes.length?`Removed ${vetoes.length} vetoed option(s) and re-ranked the remaining trade-offs.`:'No veto changed this plan.'});
+  return {mode,domain,city,budget,people,ranked,trace,disclaimer:mode==='demo'?'Demo mode: all candidates and signals are simulated local evidence, for interaction only.':'Live mode: Qloo results are observed; scores are UNISON relative heuristics, not satisfaction probabilities.'};
 }

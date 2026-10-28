@@ -1,37 +1,25 @@
 const allowedBases=new Set(['https://hackathon.api.qloo.com','https://api.qloo.com']);
+const CACHE_TTL_MS=5*60*1000, CACHE_LIMIT=100;
 const cache=new Map();
 const base=()=>process.env.QLOO_BASE_URL||'https://hackathon.api.qloo.com';
 export const isLiveConfigured=()=>Boolean(process.env.QLOO_API_KEY);
-
-function endpoint(pathname,params={}){
-  const origin=base();
-  if(!allowedBases.has(origin))throw Object.assign(new Error('QLOO_BASE_URL is not an approved Qloo HTTPS host'),{status:500});
-  const url=new URL(pathname,origin);
-  Object.entries(params).filter(([,value])=>value!==undefined&&value!==null&&value!=='').forEach(([key,value])=>url.searchParams.set(key,String(value)));
-  return url;
+export const entityTypeFor=domain=>domain==='movies'?'urn:entity:movie':'urn:entity:place';
+const error=(message,status=502)=>Object.assign(new Error(message),{status});
+function endpoint(pathname,params={}){const origin=base();if(!allowedBases.has(origin))throw error('QLOO_BASE_URL is not an approved Qloo HTTPS host',500);const url=new URL(pathname,origin);for(const [key,raw] of Object.entries(params))for(const value of Array.isArray(raw)?raw:[raw])if(value!==undefined&&value!==null&&value!=='')url.searchParams.append(key,String(value));return url;}
+function fromCache(key){const hit=cache.get(key);if(!hit||Date.now()-hit.created>CACHE_TTL_MS){cache.delete(key);return null;}cache.delete(key);cache.set(key,hit);return hit.value;}
+function saveCache(key,value){cache.set(key,{created:Date.now(),value});if(cache.size>CACHE_LIMIT)cache.delete(cache.keys().next().value);return value;}
+const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+async function get(pathname,params,fetchImpl=fetch){
+  if(!isLiveConfigured())throw error('Live Qloo mode requires QLOO_API_KEY. Demo mode remains available.',503);
+  const url=endpoint(pathname,params), key=url.toString(), hit=fromCache(key);if(hit)return {payload:hit,cached:true,url};
+  for(let attempt=0;attempt<3;attempt++){try{const response=await fetchImpl(url,{headers:{'X-Api-Key':process.env.QLOO_API_KEY,Accept:'application/json'},signal:AbortSignal.timeout(8000)});if(response.ok)return {payload:saveCache(key,await response.json()),cached:false,url};if(response.status!==429&&response.status<500)throw error(`Qloo request failed (${response.status}). Check the favorite or live API access.`,response.status===401||response.status===403?502:response.status);}catch(caught){if(caught.status&&caught.status<500)throw caught;}if(attempt<2)await wait(150*(attempt+1));}
+  throw error('Qloo is temporarily unavailable after three safe GET attempts. No demo evidence was substituted.');
 }
-async function get(pathname,params){
-  if(!isLiveConfigured())throw Object.assign(new Error('Live Qloo mode requires QLOO_API_KEY. Demo mode remains available.'),{status:503});
-  const url=endpoint(pathname,params); const key=url.toString();
-  if(cache.has(key))return cache.get(key);
-  const response=await fetch(url,{headers:{'X-Api-Key':process.env.QLOO_API_KEY,Accept:'application/json'},signal:AbortSignal.timeout(8000)});
-  if(!response.ok)throw Object.assign(new Error(`Qloo request failed (${response.status})`),{status:502});
-  const json=await response.json(); cache.set(key,json); return json;
-}
-const list=value=>Array.isArray(value)?value:Array.isArray(value?.results)?value.results:Array.isArray(value?.data)?value.data:Array.isArray(value?.entities)?value.entities:[];
-const entity=item=>({id:item?.id??item?.entity_id??item?.uuid,name:item?.name??item?.title??item?.display_name});
-
-export async function resolveExact(name){
-  const payload=await get('/search',{query:name});
-  const match=list(payload).map(entity).find(item=>item.id&&item.name?.trim().toLocaleLowerCase()===name.trim().toLocaleLowerCase());
-  if(!match)throw Object.assign(new Error(`Qloo could not resolve an exact entity for “${name}”.`),{status:422});
-  return match;
-}
-
-// The envelope is intentionally strict: an event-key validation should confirm fields before relying on it.
-export async function insights(entityId,domain){
-  const payload=await get('/v2/insights',{entity_id:entityId,domain});
-  const results=list(payload).map(item=>({id:item?.id??item?.entity_id,name:item?.name??item?.title,kind:item?.category?.name??item?.type,rawRank:item?.rank})).filter(item=>item.id&&item.name);
-  if(!results.length)throw Object.assign(new Error('Qloo returned an unrecognised or empty insights envelope. Validate it with the event key before live use.'),{status:502});
-  return results.slice(0,12);
-}
+const array=value=>Array.isArray(value)?value:[];
+const candidates=payload=>array(payload?.results?.entities).length?payload.results.entities:array(payload?.results).length?payload.results:array(payload?.data?.entities).length?payload.data.entities:array(payload?.entities);
+function normalize(item){return {id:item?.entity_id??item?.id??item?.entity?.id,name:item?.name??item?.display_name??item?.title,type:item?.type??item?.entity_type??array(item?.types)[0],category:item?.category?.name??item?.category};}
+export function parseSearch(payload){return candidates(payload).map(normalize).filter(item=>item.id&&item.name);}
+export function parseInsights(payload){return candidates(payload).map(normalize).filter(item=>item.id&&item.name);}
+export async function searchFavorite(name,{fetchImpl=fetch}={}){const {payload,cached,url}=await get('/search',{query:name},fetchImpl);const matches=parseSearch(payload);const exact=matches.find(item=>item.name.trim().localeCompare(name.trim(),undefined,{sensitivity:'accent'})===0);return {status:exact?'resolved':matches.length?'ambiguous':'unresolved',exact,matches:matches.slice(0,5),cached,url:url.pathname+url.search};}
+export async function insights(entityIds,domain,{city,fetchImpl=fetch}={}){const ids=[...new Set(entityIds)].slice(0,3);if(!ids.length)throw error('At least one resolved Qloo entity is required.',422);const params={'filter.type':entityTypeFor(domain),'signal.interests.entities':ids};if(domain==='places'&&city?.trim())params['filter.location.query']=city.trim();const {payload,cached,url}=await get('/v2/insights',params,fetchImpl);const results=parseInsights(payload);if(!results.length)throw error('Qloo returned an empty or unsupported insights envelope. Inspect the documented response and retry with the event key.',502);return {results:results.slice(0,12),cached,url:url.pathname+url.search};}
+export const __resetQlooCache=()=>cache.clear();
