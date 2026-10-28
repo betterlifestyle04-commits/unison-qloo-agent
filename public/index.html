@@ -43,6 +43,14 @@
   <div class="workspace-grid">
     <section class="panel setup" aria-labelledby="brief-heading">
       <div class="section-heading"><span class="step-no">01</span><div><p class="overline">YOUR GROUP BRIEF</p><h3 id="brief-heading">Start with the essentials.</h3></div></div>
+      <div class="quick-start" aria-label="Quick start with a sample group">
+        <div class="quick-start-head"><strong>Get started with a sample group</strong><span>Or enter your own below</span></div>
+        <div class="quick-start-options">
+          <button type="button" data-preset="friends"><span aria-hidden="true">✳</span><b>Friends night out</b></button>
+          <button type="button" data-preset="movie"><span aria-hidden="true">▣</span><b>Movie night</b></button>
+          <button type="button" data-preset="date"><span aria-hidden="true">♡</span><b>Date night</b></button>
+        </div>
+      </div>
       <form id="plan-form">
         <fieldset class="field-section"><legend><span class="field-number">1</span> What are you planning?</legend>
           <div class="toggle">
@@ -69,6 +77,11 @@
           </div>
         </fieldset>
         <button class="primary" type="submit" id="submit-plan"><span id="submit-label">Find our common ground</span><span aria-hidden="true">↗</span></button>
+        <div class="share-tools">
+          <button class="share-brief" id="share-brief" type="button"><span aria-hidden="true">↗</span> Copy a group setup link</button>
+          <span class="share-explainer">The link contains names and favorites you entered. Only share it with people you trust.</span>
+          <p id="share-message" class="share-message" role="status" aria-live="polite"></p>
+        </div>
         <p id="form-error" class="error" role="alert"></p>
         <p class="form-note"><span aria-hidden="true">♢</span> Transparent methodology. No sign-up required. Names are not sent to Qloo.</p>
       </form>
