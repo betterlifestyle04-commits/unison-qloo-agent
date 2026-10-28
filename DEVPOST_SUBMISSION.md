@@ -90,3 +90,9 @@ UNISON now provides an inspectable Decision Lab using only candidates with compl
 ## Optional device-only plan library
 
 For returning visitors, UNISON can save up to eight group briefs and recommendation summaries **only when the user clicks Save**. Users can reopen a brief, copy a summary or delete it. We clearly warn that names and cultural preferences will be stored in this browser profile. Reopened briefs default to demo mode and require explicit opt-in before any live Qloo calls.
+
+## Bringing the group decision into the real world
+
+UNISON now includes a zero-integration calendar handoff. Once the shortlist is generated, the group can pick a supported option, agree on a proposed date and meeting location, and export a tentative standard calendar event. The app explicitly does not make bookings, check availability or send invitations. This is a local completion step rather than another AI or Qloo API request.
+
+We also corrected an accessibility and security-policy conflict: recommendation fit visualizations use native meters and remain visible under a restrictive Content Security Policy without relying on blocked inline CSS.
