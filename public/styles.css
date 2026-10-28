@@ -113,3 +113,6 @@
 .taste-match strong{font-size:.74rem;color:#535b76;overflow-wrap:anywhere}
 .taste-match span{font-size:.65rem;text-transform:capitalize;color:#8278b3}
 @media(max-width:580px){.taste-finder-form{grid-template-columns:1fr}.taste-find-button{grid-column:auto}.taste-match{align-items:flex-start}}
+
+.person .pinned-summary:not(:empty){display:block;margin-top:6px;border-radius:7px;background:#edfaf4;color:#287b58;font-size:.61rem;line-height:1.45;font-weight:700;padding:5px 7px;overflow-wrap:anywhere}
+.person .pinned-summary:empty{display:none}
