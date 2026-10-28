@@ -16,7 +16,17 @@ function validate(input){
     if(favorites.length<1||favorites.length>3)fail('Use between 1 and 3 favorites per participant.');
     if(!favorites.every(value=>typeof value==='string'&&value.trim().length>0&&value.trim().length<=80))fail('Each favorite must be 1–80 characters.');
     if(!name||name.length>32)fail('Each participant needs a name up to 32 characters.');
-    return {name,favorites:[...new Set(favorites.map(value=>value.trim()))],id:idFor(name,index)};
+    const uniqueFavorites=[...new Set(favorites.map(value=>value.trim()))];
+    const selections=Array.isArray(person.selectedEntities)?person.selectedEntities:[];
+    if(selections.length>3)fail('No more than three selected cultural entities are allowed per participant.');
+    const selectedEntities=selections.map(choice=>{
+      if(!choice||typeof choice!=='object'||Array.isArray(choice)||typeof choice.name!=='string'||typeof choice.id!=='string')fail('Invalid selected cultural entity.');
+      const canonicalName=choice.name.trim();
+      if(!uniqueFavorites.some(f=>f.toLowerCase()===canonicalName.toLowerCase()))fail('A selected Qloo entity must match a listed favorite.');
+      if(!/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(choice.id))fail('Invalid Qloo entity identifier.');
+      return {name:canonicalName,id:choice.id,type:typeof choice.type==='string'?choice.type.slice(0,80):''};
+    });
+    return {name,favorites:uniqueFavorites,selectedEntities,id:idFor(name,index)};
   });
   if(new Set(people.map(person=>person.name.toLocaleLowerCase())).size!==people.length)fail('Use distinct names so the evidence remains inspectable.');
   if(input.domain!==undefined&&!['places','movies'].includes(input.domain))fail('Unsupported planning category.');
@@ -29,7 +39,18 @@ function validate(input){
   return {people,domain,mode,city,budget,vetoes};
 }
 async function liveEvidence(people,domain,city,budget,trace){
-  const resolved=await Promise.all(people.map(async person=>{const matches=await Promise.all(person.favorites.map(favorite=>searchFavorite(favorite)));const unresolved=matches.filter(match=>match.status!=='resolved');if(unresolved.length){const names=unresolved.flatMap(match=>match.matches.map(item=>item.name)).slice(0,3);fail(`Please clarify ${person.name}'s favorite. Qloo found ${names.length?names.join(', '):'no exact match'}.`,422);}trace.push({step:'Qloo search tool',kind:'qloo',detail:`Resolved ${person.favorites.length} exact favorite${person.favorites.length===1?'':'s'} for ${person.name}.`,requests:matches.map(match=>({url:match.url,cached:match.cached}))});return {...person,entities:matches.map(match=>match.exact)};}));
+  const resolved=await Promise.all(people.map(async person=>{
+    const matches=await Promise.all(person.favorites.map(favorite=>{
+      const chosen=person.selectedEntities.find(selection=>selection.name.toLowerCase()===favorite.toLowerCase());
+      if(chosen)return {status:'resolved',exact:chosen,matches:[chosen],url:null,cached:false,picked:true};
+      return searchFavorite(favorite);
+    }));
+    const unresolved=matches.filter(match=>match.status!=='resolved');
+    if(unresolved.length){const names=unresolved.flatMap(match=>match.matches.map(item=>item.name)).slice(0,3);fail(`Please clarify ${person.name}'s favorite. Qloo found ${names.length?names.join(', '):'no exact match'}.`,422);}
+    const picked=matches.filter(match=>match.picked).length;
+    trace.push({step:'Qloo entity resolution',kind:'qloo',detail:`Resolved ${person.favorites.length} favorite(s) for ${person.name}, including ${picked} explicitly selected Qloo entity ID(s).`,requests:matches.filter(match=>match.url).map(match=>({url:match.url,cached:match.cached}))});
+    return {...person,entities:matches.map(match=>match.exact)};
+  }));
   const discoveries=await Promise.all(resolved.map(async person=>{const response=await insights(person.entities.map(entity=>entity.id),domain,{city,budget});trace.push({step:'Qloo discovery tool',kind:'qloo',detail:`Requested ${domain} candidates for ${person.name}${city&&domain==='places'?` strictly within ${city}`:''}.`,requests:[{url:response.url,cached:response.cached}]});return {person,results:response.results};}));
   const shortlist=[...new Set(discoveries.flatMap(entry=>entry.results.map(item=>item.id)))].slice(0,12);
   const perPerson=await Promise.all(resolved.map(async person=>{const response=await insights(person.entities.map(entity=>entity.id),domain,{city,budget,shortlist});trace.push({step:'Qloo shortlist evaluation tool',kind:'qloo',detail:`Evaluated the shared ${shortlist.length}-option shortlist for ${person.name}.`,requests:[{url:response.url,cached:response.cached}]});return {person,results:response.results};}));
