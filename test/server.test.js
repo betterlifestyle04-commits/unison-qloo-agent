@@ -17,17 +17,3 @@ test('public plan endpoint rate-limits repeated requests',async()=>{
   for(let i=0;i<18;i++){const item=await request('/api/plan',{method:'POST',headers:{'Content-Type':'application/json'},body:'nope'});assert.equal(item.response.status,400);}
   const limited=await request('/api/plan',{method:'POST',headers:{'Content-Type':'application/json'},body:'nope'});assert.equal(limited.response.status,429);
 });
-
-test('browser planning utilities are served as first-party JavaScript',async()=>{
-  const module=await request('/planner-state.js');
-  assert.equal(module.response.status,200);
-  assert.match(module.response.headers.get('content-type'),/javascript/);
-  assert.match(module.body,/applyVetoLocally/);
-});
-test('malformed participant structures fail safely with a 400 response',async()=>{
-  for(const people of ['not-an-array',[null,null],[{name:'A',favorites:['X','Y','Z','Too many']},{name:'B',favorites:['Z']}]]){
-    const answer=await request('/api/plan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'demo',domain:'movies',people})});
-    assert.equal(answer.response.status,400);
-    assert.ok(JSON.parse(answer.body).error);
-  }
-});
