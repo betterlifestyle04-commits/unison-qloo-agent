@@ -38,13 +38,16 @@ function validate(input){
   const vetoes=Array.isArray(input.vetoes)?input.vetoes.filter(value=>typeof value==='string'&&value.length<=200).slice(0,30):[];
   return {people,domain,mode,city,budget,vetoes};
 }
+export async function resolvePersonFavorites(person,search=searchFavorite){
+  return Promise.all(person.favorites.map(favorite=>{
+    const chosen=(person.selectedEntities||[]).find(selection=>selection.name.toLowerCase()===favorite.toLowerCase());
+    if(chosen)return {status:'resolved',exact:chosen,matches:[chosen],url:null,cached:false,picked:true};
+    return search(favorite);
+  }));
+}
 async function liveEvidence(people,domain,city,budget,trace){
   const resolved=await Promise.all(people.map(async person=>{
-    const matches=await Promise.all(person.favorites.map(favorite=>{
-      const chosen=person.selectedEntities.find(selection=>selection.name.toLowerCase()===favorite.toLowerCase());
-      if(chosen)return {status:'resolved',exact:chosen,matches:[chosen],url:null,cached:false,picked:true};
-      return searchFavorite(favorite);
-    }));
+    const matches=await resolvePersonFavorites(person);
     const unresolved=matches.filter(match=>match.status!=='resolved');
     if(unresolved.length){const names=unresolved.flatMap(match=>match.matches.map(item=>item.name)).slice(0,3);fail(`Please clarify ${person.name}'s favorite. Qloo found ${names.length?names.join(', '):'no exact match'}.`,422);}
     const picked=matches.filter(match=>match.picked).length;
