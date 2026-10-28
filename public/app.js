@@ -1,12 +1,13 @@
 import {starterGroups,normalizeBrief,encodeShareBrief,decodeShareBrief,applyVetoLocally,decisionStyles,buildGroupSummary,analyzeDecisionTradeoffs} from './planner-state.js';
 import {ballotChoices,updateBallot,summarizeBallot,winningAgreement} from './ballot.js';
 import {createPlanArchive,loadDevicePlans,saveDevicePlan,removeDevicePlan} from './saved-plans.js';
+import {buildCalendarEvent,agendaText} from './calendar.js';
 const $=selector=>document.querySelector(selector);
 const people=$('#people'),template=$('#person-template'),form=$('#plan-form'),results=$('#results'),error=$('#form-error'),submitBtn=$('#submit-plan'),statusBadge=$('#mode-status');
 const starters=[['Maya','Studio Ghibli'],['Jon','Anthony Bourdain'],['Priya','Knives Out']];
 const selectedByPerson=new WeakMap();
 function showPinned(node){const selections=[...(selectedByPerson.get(node)?.values()||[])];const hint=node.querySelector('[data-pinned]');if(hint)hint.textContent=selections.length?'Verified Qloo selection: '+selections.map(x=>x.name+' ('+String(x.type||'entity').replace(/^urn:entity:/,'')+')').join(', '):'';}
-const app={configured:false,requesting:false,lastInput:null,lastResult:null,showAll:false,hasChangedMode:false,baseResult:null,hashLoaded:false,decisionStyle:'balanced',ballots:{},lookupBusy:false};
+const app={configured:false,requesting:false,lastInput:null,lastResult:null,showAll:false,hasChangedMode:false,baseResult:null,hashLoaded:false,decisionStyle:'balanced',ballots:{},lookupBusy:false,agenda:{choiceId:'',date:'',time:'19:00',duration:'120',meeting:'',notes:''}};
 const escape=value=>{const element=document.createElement('span');element.textContent=String(value??'');return element.innerHTML.replace(/\"/g,'&quot;').replace(/'/g,'&#39;');};
 const number=value=>Number.isFinite(value)?String(Math.round(value)):null;
 const initial=value=>String(value||'?').trim().slice(0,1).toUpperCase();
@@ -196,6 +197,29 @@ function decisionLab(data){
     <small class="lab-disclaimer">Relative-fit scores are UNISON heuristics, not measured enjoyment or probabilities. The average-only baseline is not a popularity score.</small>
   </details>`;
 }
+function planHandoff(data,choices,groupApproved){
+  if(!choices.length)return '';
+  const agenda=app.agenda;
+  if(!choices.some(item=>item.id===agenda.choiceId))agenda.choiceId=(groupApproved||choices[0]).id;
+  const timezone=Intl.DateTimeFormat().resolvedOptions().timeZone||'device local time';
+  const options=choices.map(item=>`<option value="${escape(item.id)}" ${item.id===agenda.choiceId?'selected':''}>${escape(item.name)}${groupApproved?.id===item.id?' · Group-approved':''}</option>`).join('');
+  return `<section class="plan-handoff" aria-labelledby="handoff-heading">
+    <div class="handoff-heading"><span class="handoff-mark" aria-hidden="true">↗</span><div><p class="overline">03 / TURN A CHOICE INTO A PLAN</p><h4 id="handoff-heading">Make it happen, together.</h4></div></div>
+    <p class="handoff-lead">Choose an option and suggest when to meet. Export a tentative calendar event or copy the details. Nothing is booked, and no invitation is sent automatically.</p>
+    <div class="handoff-fields">
+      <label class="input-label handoff-choice">Chosen option<select id="agenda-choice">${options}</select></label>
+      <label class="input-label">Date<input type="date" id="agenda-date" value="${escape(agenda.date)}"></label>
+      <label class="input-label">Start time<input type="time" id="agenda-time" value="${escape(agenda.time)}"></label>
+      <label class="input-label">Duration<select id="agenda-duration">${[60,90,120,180,240].map(min=>`<option value="${min}" ${String(min)===agenda.duration?'selected':''}>${min>=60?min/60+' hr'+(min>60?'s':'')+' ('+min+' min)':''}${min===90?'1.5 hrs (90 min)':''}</option>`).join('')}</select></label>
+      <label class="input-label handoff-wide">Meeting place / address (optional)<input id="agenda-meeting" maxlength="160" value="${escape(agenda.meeting)}" placeholder="Specify your agreed meeting point"></label>
+      <label class="input-label handoff-wide">Notes (optional)<input id="agenda-notes" maxlength="240" value="${escape(agenda.notes)}" placeholder="What should everyone bring or confirm?"></label>
+    </div>
+    <p class="handoff-timezone">Time interpreted using your browser timezone: <strong>${escape(timezone)}</strong>. For a different city or timezone, check the calendar entry before sharing.</p>
+    <div class="handoff-actions"><button type="button" id="download-calendar">↓ Download tentative calendar event</button><button type="button" id="copy-agenda">Copy meeting details</button></div>
+    <p class="handoff-footnote">UNISON does not check venue opening hours or availability, make reservations, or send invitations. Confirm details with everyone before treating this as final.</p>
+    <p id="agenda-message" class="handoff-message" role="status" aria-live="polite"></p>
+  </section>`;
+}
 function render(data){
   app.lastResult=data;
   const approved=data.ranked.filter(item=>item.sufficient&&!item.vetoed);
@@ -217,10 +241,43 @@ function render(data){
     ${data.needsMoreEvidence?`<div class="notice" role="status">${escape(data.nextAction||'Evidence is incomplete. Add another preference.')}</div>`:''}
     ${top?`<article class="winner"><div class="winner-inner"><p class="eyebrow">✳ THE BEST CURRENT COMPROMISE</p><h3>${escape(top.name)}</h3><div class="winner-meta"><span>${escape(data.domain==='movies'?'Movie recommendation':'Place recommendation')}</span><span>${escape(data.mode==='live'?'Qloo candidates':'Fictional demo candidates')}</span>${data.city&&data.domain==='places'?'<span>'+escape(data.city)+'</span>':''}</div><p>${escape(top.note||top.address||'Recommended based on the available cross-person taste signals.')}</p><div class="winner-stats"><div><strong>${escape(top.score)}</strong><small>UNISON relative score / 100</small></div><div><strong>${number(top.minimum)}</strong><small>Lowest relative fit</small></div><div><strong>${Math.round(top.coverage*100)}%</strong><small>Signal coverage</small></div></div></div></article>`:''}
     ${top?`<div class="compromise-context"><span class="context-icon">◎</span><span><strong>What makes this a compromise?</strong><small>${escape(leastMatched?leastMatched.name+' has the lowest relative fit at '+number(top.minimum)+'/100. UNISON considers this alongside the group average when ranking options.':'UNISON compares each participant using relative-fit evidence.')}</small></span></div>`:''}
+    ${planHandoff(data,approved,groupApproved)}
     <div class="cards-heading"><h4>Explore the shortlist</h4><small>${data.ranked.length} candidate${data.ranked.length===1?'':'s'}</small></div>
     <div class="cards">${show.map((item,i)=>card(item,i,data)).join('')}</div>
     ${data.ranked.length>6?`<button id="show-all" class="add-person" type="button">${app.showAll?'Show fewer options':'Show all '+data.ranked.length+' options'} <span aria-hidden="true">↓</span></button>`:''}
     <details class="trace"><summary>How UNISON reached this decision · ${data.trace.length} steps</summary><ol>${data.trace.map(step=>{const label=step.kind==='qloo'?'Qloo request':step.kind==='demo'?'Simulated evidence':'Local computation';const tone=step.kind==='qloo'?'qloo':step.kind==='demo'?'demo':'local';return `<li class="trace-step trace-${tone}"><span class="trace-kind">${label}</span><strong>${escape(step.step)}</strong> — ${escape(step.detail)}${step.requests?.length?`<span class="trace-url">${step.requests.map(request=>escape(request.url+(request.cached?' (cached)':''))).join(' · ')}</span>`:''}</li>`;}).join('')}</ol></details>`;
+  const agendaFields={choiceId:'#agenda-choice',date:'#agenda-date',time:'#agenda-time',duration:'#agenda-duration',meeting:'#agenda-meeting',notes:'#agenda-notes'};
+  for(const [key,selector] of Object.entries(agendaFields)){
+    results.querySelector(selector)?.addEventListener('change',event=>{app.agenda[key]=event.target.value;});
+    if(key==='meeting'||key==='notes')results.querySelector(selector)?.addEventListener('input',event=>{app.agenda[key]=event.target.value;});
+  }
+  const agendaDetails=()=>{
+    const chosen=approved.find(item=>item.id===app.agenda.choiceId);
+    if(!chosen)throw new Error('Choose an available option before scheduling.');
+    const title=(data.mode==='demo'?'[Fictional demo] ':'')+chosen.name;
+    const meeting=app.agenda.meeting.trim()||(data.mode==='live'&&data.domain==='places'?[chosen.name,chosen.address||data.city].filter(Boolean).join(', '):'');
+    const timezone=Intl.DateTimeFormat().resolvedOptions().timeZone||'device local time';
+    if(!app.agenda.date||!app.agenda.time)throw new Error('Choose a calendar date and starting time.');
+    return {title,date:app.agenda.date,startTime:app.agenda.time,durationMinutes:Number(app.agenda.duration),location:meeting,notes:app.agenda.notes.trim(),timezone};
+  };
+  results.querySelector('#download-calendar')?.addEventListener('click',()=>{
+    const message=results.querySelector('#agenda-message');
+    try{
+      const details=agendaDetails();
+      const uid='unison-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10);
+      const calendar=buildCalendarEvent({...details,uid});
+      const blob=new Blob([calendar],{type:'text/calendar;charset=utf-8'});
+      const link=document.createElement('a'),url=URL.createObjectURL(blob);
+      link.href=url;link.download='unison-group-plan.ics';document.body.append(link);link.click();link.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),1500);
+      message.textContent='Tentative event downloaded. Open it in your calendar, check the timezone, and confirm the details with the group.';
+    }catch(e){message.textContent=e.message||'Calendar export is unavailable.';}
+  });
+  results.querySelector('#copy-agenda')?.addEventListener('click',async()=>{
+    const message=results.querySelector('#agenda-message');
+    try{const details=agendaDetails();message.textContent=await copyText(agendaText({...details,note:details.notes}))?'Meeting details copied. No invitation was sent.':'Clipboard unavailable in this browser.';}
+    catch(e){message.textContent=e.message||'Could not copy meeting details.';}
+  });
   // Human votes are distinct from preference predictions; no network request.
   results.querySelectorAll('[data-vote-choice]').forEach(button=>button.addEventListener('click',()=>{
     const id=button.dataset.voteCandidate;
@@ -298,6 +355,7 @@ async function submitPlan(input,{preserveScroll=false}={}){
     let data;try{data=await response.json();}catch{throw new Error('The planner returned an unexpected response. Please try again.');}
     if(!response.ok)throw new Error(data.error||'We could not create this plan.');
     app.ballots={};
+    app.agenda={choiceId:'',date:'',time:'19:00',duration:'120',meeting:'',notes:''};
     app.baseResult=data;
     render(app.decisionStyle==='balanced'?data:applyVetoLocally(data,[],app.decisionStyle));
     if(!preserveScroll&&window.innerWidth<821)$('#results-heading').scrollIntoView({behavior:'smooth',block:'start'});
@@ -319,7 +377,7 @@ function applyBrief(raw){
   $('#budget').value=input.budget;
   people.replaceChildren();
   input.people.forEach(p=>addPerson([p.name,p.favorites.join(', ')],p.selectedEntities||[]));
-  app.lastInput=null;app.lastResult=null;app.baseResult=null;app.ballots={};app.showAll=false;
+  app.lastInput=null;app.lastResult=null;app.baseResult=null;app.ballots={};app.agenda={choiceId:'',date:'',time:'19:00',duration:'120',meeting:'',notes:''};app.showAll=false;
   results.innerHTML='<div class="empty"><span class="eyebrow">READY FOR YOUR GROUP</span><h3>Different tastes, one plan.</h3><p>Review the group brief and select Find our common ground to create a new shortlist.</p></div>';
   showError();updateFormPresentation();
 }
