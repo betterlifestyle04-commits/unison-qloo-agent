@@ -117,3 +117,11 @@ The service can report `live-ready` when a server-side key is present, but that 
 - **Evidence inspector:** The user can expand a card to distinguish Qloo entity provenance, optional native affinity information, UNISON rank-derived comparative scores, simulated data, and missing evidence. These are not calibrated satisfaction predictions.
 
 A group agreement based on one-device votes is a convenience for in-person planning, **not** authenticated multi-user voting. UNISON currently does not handle reservations, real-time opening hours, or payments.
+
+## Entity identity and disambiguation
+
+Qloo's Search API can return multiple cultural entities with the **same visible name** (for example, `Interstellar` can be a movie, album, book, or artist). The optional Taste Finder returns a name, entity type, and Qloo ID. When the user explicitly selects an item, the browser retains that exact Qloo ID in the participant's editable group brief and the agent uses it directly for live insights. This avoids silently selecting a different cultural entity with the same name and saves redundant Qloo searches.
+
+Unselected, manually typed favorites continue through the documented server-side name resolver. The application validates the selected ID format and its relationship to the entered favorite before contacting Qloo. Qloo remains the authority on whether the chosen entity ID is recognized.
+
+Share links can contain Qloo public entity IDs in addition to the group's names and favorites. A shared link does not automatically execute the Qloo API.
