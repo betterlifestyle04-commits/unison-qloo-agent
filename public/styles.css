@@ -155,3 +155,12 @@
 .library-message{color:#7162a6;font-size:.67rem;font-weight:690;line-height:1.5;margin:10px 0 0}
 .library-message:empty{display:none}
 @media(max-width:580px){.lab-style-grid{grid-template-columns:1fr}.lab-style{padding:9px 10px}.device-item-actions button{flex:1}}
+
+/* Native meter bars remain visible under strict CSP (no inline style attributes). */
+.fit-meter{height:8px;min-width:30px;flex:1;display:block;border:0;border-radius:12px;background:#ebe8f5;color:#7161d8;overflow:hidden;appearance:auto}
+.fit-meter::-webkit-meter-bar{border:0;background:#ebe8f5;border-radius:12px;box-shadow:none}
+.fit-meter::-webkit-meter-optimum-value{background:linear-gradient(90deg,#a89cf6,#6455da);border-radius:12px}
+.fit-meter::-webkit-meter-suboptimum-value{background:linear-gradient(90deg,#a89cf6,#6455da);border-radius:12px}
+.fit-meter::-webkit-meter-even-less-good-value{background:linear-gradient(90deg,#a89cf6,#6455da);border-radius:12px}
+.fit-meter::-moz-meter-bar{background:#7664db;border-radius:12px}
+.taste-list .fit-meter.tiny-meter{height:7px;width:65px;min-width:45px;flex:0 0 65px;margin-left:auto}
