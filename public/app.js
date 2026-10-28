@@ -427,6 +427,17 @@ document.querySelectorAll('[data-preset]').forEach(button=>button.addEventListen
   $('#share-message').textContent='Loaded '+preset.label+'. Edit the names and tastes to make it yours.';
   form.scrollIntoView({behavior:'smooth',block:'start'});
 }));
+$('#instant-demo').addEventListener('click',()=>{
+  if(app.requesting)return;
+  const demo=starterGroups.find(item=>item.id==='friends')||starterGroups[0];
+  applyBrief({...demo,mode:'demo'});
+  form.querySelector('input[name=mode][value=demo]').checked=true;
+  app.hasChangedMode=true;
+  updateFormPresentation();
+  const request=brief();
+  request.mode='demo';request.vetoes=[];app.showAll=false;
+  submitPlan(request);
+});
 $('#share-brief').addEventListener('click',async()=>{
   const message=$('#share-message');
   try{
