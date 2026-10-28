@@ -1,5 +1,6 @@
-import {starterGroups,normalizeBrief,encodeShareBrief,decodeShareBrief,applyVetoLocally,decisionStyles,buildGroupSummary} from './planner-state.js';
+import {starterGroups,normalizeBrief,encodeShareBrief,decodeShareBrief,applyVetoLocally,decisionStyles,buildGroupSummary,analyzeDecisionTradeoffs} from './planner-state.js';
 import {ballotChoices,updateBallot,summarizeBallot,winningAgreement} from './ballot.js';
+import {createPlanArchive,loadDevicePlans,saveDevicePlan,removeDevicePlan} from './saved-plans.js';
 const $=selector=>document.querySelector(selector);
 const people=$('#people'),template=$('#person-template'),form=$('#plan-form'),results=$('#results'),error=$('#form-error'),submitBtn=$('#submit-plan'),statusBadge=$('#mode-status');
 const starters=[['Maya','Studio Ghibli'],['Jon','Anthony Bourdain'],['Priya','Knives Out']];
@@ -178,6 +179,23 @@ function card(item,index,data){
     <button class="veto" data-veto="${escape(item.id)}" aria-pressed="${Boolean(item.vetoed)}">${item.vetoed?'↶ Restore option':'× Not for our group'}</button>
   </article>`;
 }
+function decisionLab(data){
+  const lab=analyzeDecisionTradeoffs(data);
+  if(!lab.eligible)return '<details class="decision-lab"><summary>Decision Lab · Compare decision rules</summary><p>There are no fully comparable options yet. Every participant needs evidence for a candidate before we compare fairness styles.</p></details>';
+  const styles=Object.entries(decisionStyles).map(([key,style])=>{
+    const chosen=lab.winners[key];
+    return `<div class="lab-style"><span>${escape(style.label)}</span><strong>${escape(chosen.name)}</strong><small>Lowest relative fit: ${escape(chosen.minimum)}/100 · group average: ${escape(chosen.average)}/100</small></div>`;
+  }).join('');
+  return `<details class="decision-lab">
+    <summary>Decision Lab · What changes when fairness matters?</summary>
+    <p>Same ${lab.eligible} fully observed candidate(s). Each rule changes only how existing evidence is weighted—no extra Qloo calls.</p>
+    <div class="lab-style-grid">${styles}</div>
+    <div class="lab-baseline"><span>Pure group-average choice</span><strong>${escape(lab.averageOnly.name)}</strong><small>Average ${lab.averageOnly.average}/100 · lowest relative fit ${lab.averageOnly.minimum}/100</small></div>
+    <div class="lab-sensitivity">${lab.stable?'All three UNISON weightings currently pick the same option.':'At least one weighting selects a different option. The result is sensitive to group priorities.'}</div>
+    <p class="lab-explanation">${escape(lab.explanation)}</p>
+    <small class="lab-disclaimer">Relative-fit scores are UNISON heuristics, not measured enjoyment or probabilities. The average-only baseline is not a popularity score.</small>
+  </details>`;
+}
 function render(data){
   app.lastResult=data;
   const approved=data.ranked.filter(item=>item.sufficient&&!item.vetoed);
@@ -186,13 +204,14 @@ function render(data){
   const leastMatched=top?data.people.find(p=>top.signals?.[p.id]===top.minimum):null;
   const show=data.ranked.slice(0,app.showAll?data.ranked.length:6);
   const status=data.mode==='live'?'Qloo API · Live evidence':'Demo · Simulated evidence';
-  results.innerHTML=`<div class="result-topline"><div><p class="overline">${escape(status)}</p><h3>${top?'Your best shared match':'We need a little more evidence'}</h3><p class="result-sub">${escape(data.domain==='places'?(data.city?'Planning for '+data.city:'No city selected'):'Movie night')} · ${data.people.length} people · ${count} fully covered option${count===1?'':'s'}</p></div><div class="result-actions"><button id="copy-plan" class="text-button" type="button" ${top?'':'disabled'}>Copy plan ↗</button><button id="reset-veto" class="text-button" type="button">Clear vetoes</button></div></div>
+  results.innerHTML=`<div class="result-topline"><div><p class="overline">${escape(status)}</p><h3>${top?'Your best shared match':'We need a little more evidence'}</h3><p class="result-sub">${escape(data.domain==='places'?(data.city?'Planning for '+data.city:'No city selected'):'Movie night')} · ${data.people.length} people · ${count} fully covered option${count===1?'':'s'}</p></div><div class="result-actions"><button id="save-plan" class="text-button" type="button">Save on this device</button><button id="copy-plan" class="text-button" type="button" ${top?'':'disabled'}>Copy plan ↗</button><button id="reset-veto" class="text-button" type="button">Clear vetoes</button></div></div>
     <div class="source-banner ${data.mode==='live'?'live':''}"><strong>${escape(sourceName(data))}.</strong> ${escape(data.disclaimer)}</div>
     <section class="decision-tuning" aria-label="How should we balance the group's preferences?">
       <div class="decision-tuning-head"><strong>How should we choose?</strong><span>Adjusts ranking only · no new Qloo requests</span></div>
       <div class="decision-styles">${Object.entries(decisionStyles).map(([key,style])=>`<button type="button" data-style="${key}" aria-pressed="${app.decisionStyle===key}">${escape(style.label)}</button>`).join('')}</div>
       <p>${escape(decisionStyles[app.decisionStyle].description)} These weights are UNISON heuristics, not measurements of happiness.</p>
     </section>
+    ${decisionLab(data)}
     <div class="voting-intro"><strong>New · Agree together</strong><span>Each person can vote Yes, Maybe or No on any candidate. Votes stay on this device, separate from Qloo predictions.</span></div>
     ${groupApproved?`<div class="approved-choice" role="status">✓ Group agreement recorded: <strong>${escape(groupApproved.name)}</strong>. Everyone voted Yes.</div>`:''}
     ${data.needsMoreEvidence?`<div class="notice" role="status">${escape(data.nextAction||'Evidence is incomplete. Add another preference.')}</div>`:''}
@@ -223,12 +242,52 @@ function render(data){
     render(applyVetoLocally(app.baseResult,app.lastInput?.vetoes||[],app.decisionStyle));
   }));
   $('#show-all')?.addEventListener('click',()=>{app.showAll=!app.showAll;render(data);});
+  $('#save-plan')?.addEventListener('click',()=>{
+    try{
+      if(!app.lastInput)throw new Error('Create a plan before saving.');
+      const id=typeof crypto?.randomUUID==='function'?crypto.randomUUID():'unison-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10);
+      const entry=createPlanArchive(app.lastInput,data,{id});
+      if(!entry)throw new Error('Could not prepare this plan for saving.');
+      const saved=saveDevicePlan(window.localStorage,entry);
+      paintDeviceLibrary(saved);
+      $('#save-plan').textContent='Saved ✓';
+      $('#library-message').textContent='Saved on this browser only. No account or Qloo call needed.';
+    }catch(e){$('#library-message').textContent='Saving was unavailable: '+String(e.message||'Browser storage blocked');$('#save-plan').textContent='Storage unavailable';}
+  });
   $('#copy-plan')?.addEventListener('click',async()=>{
     if(!top)return;
     const text=buildGroupSummary(data)+(groupApproved?'\nGroup vote: Everyone voted Yes for '+groupApproved.name+' (votes recorded in one browser session).':'');
     if(await copyText(text))$('#copy-plan').textContent='Copied ✓';else $('#copy-plan').textContent='Copy unavailable';
   });
 }
+function paintDeviceLibrary(items=loadDevicePlans(window.localStorage)){
+  const shelf=$('#device-plans');
+  shelf.innerHTML=items.length?items.map(item=>{
+    const date=new Date(item.savedAt).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'});
+    return `<div class="device-item">
+      <div><strong>${escape(item.title)}</strong><small>${escape(item.winner)} · ${escape(date)} · ${item.mode==='live'?'Saved from Qloo live results':'Saved from fictional demo'}</small></div>
+      <div class="device-item-actions"><button type="button" data-open-device="${escape(item.id)}">Open brief</button><button type="button" data-copy-device="${escape(item.id)}">Copy summary</button><button type="button" data-delete-device="${escape(item.id)}">Delete</button></div>
+    </div>`;
+  }).join(''):'<p class="device-empty">No saved plans yet. Generate a plan, then select “Save on this device.”</p>';
+  shelf.querySelectorAll('[data-open-device]').forEach(button=>button.addEventListener('click',()=>{
+    const entry=loadDevicePlans(window.localStorage).find(item=>item.id===button.dataset.openDevice);
+    if(!entry)return;
+    applyBrief({...entry.brief,mode:'demo'});
+    $('#library-message').textContent='Restored your group brief in demo mode. Review it and select Live manually if needed; no automatic Qloo calls were made.';
+    $('#plan-form').scrollIntoView({behavior:'smooth',block:'start'});
+  }));
+  shelf.querySelectorAll('[data-copy-device]').forEach(button=>button.addEventListener('click',async()=>{
+    const entry=loadDevicePlans(window.localStorage).find(item=>item.id===button.dataset.copyDevice);
+    if(entry)$('#library-message').textContent=await copyText(entry.summary)?'Saved plan summary copied.':'Clipboard is unavailable in this browser.';
+  }));
+  shelf.querySelectorAll('[data-delete-device]').forEach(button=>button.addEventListener('click',()=>{
+    const saved=removeDevicePlan(window.localStorage,button.dataset.deleteDevice);
+    paintDeviceLibrary(saved);
+    $('#library-message').textContent='Saved plan deleted from this browser.';
+  }));
+}
+try{paintDeviceLibrary();}catch{$('#device-plans').textContent='Browser storage is unavailable. You can still plan without saving.';}
+
 async function submitPlan(input,{preserveScroll=false}={}){
   if(app.requesting)return;
   const problem=validate(input);if(problem){showError(problem);form.querySelector('#city')?.focus();return;}
