@@ -24,5 +24,5 @@ export function explainCandidate(candidate,people){
   const floor=Math.round(candidate.minimum??0);
   const average=Math.round(candidate.average??0);
   const coverage=Math.round(candidate.coverage*100);
-  return `${floor} is the lowest observed relative fit; the observed average is ${average} across ${coverage}% of the group.${missing?` ${missing} person${missing===1?' has':'s have'} no signal, so this is not evidence of dislike.`:''}`;
+  return `${floor} is the lowest relative-fit estimate; the relative-fit average is ${average} across ${coverage}% of the group.${missing?` ${missing} person${missing===1?' has':'s have'} no signal, so this is not evidence of dislike.`:''}`;
 }
