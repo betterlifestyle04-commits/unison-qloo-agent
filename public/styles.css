@@ -84,3 +84,14 @@
 .ballot-actions button[data-vote-choice=no][aria-pressed=true]{background:#ffebeb;border-color:#ebacb3;color:#a63f51}
 .ballot-unanimous{background:#e6f9ed;color:#217951;font-size:.65rem;font-weight:730;border-radius:7px;padding:8px;margin-top:10px}
 @media(max-width:580px){.candidate-visual{height:140px}.ballot-person{align-items:flex-start;flex-direction:column}.ballot-actions{width:100%}.ballot-actions button{flex:1}}
+
+.evidence-details{border-top:1px solid #f0eef5;margin-top:5px;padding-top:8px}
+.evidence-details summary{font-size:.66rem;color:#78788f;font-weight:720;cursor:pointer;list-style:none;display:block}
+.evidence-details summary::-webkit-details-marker{display:none}
+.evidence-details summary:after{content:' +';float:right}
+.evidence-details[open] summary:after{content:' −'}
+.evidence-metadata{display:flex;justify-content:space-between;align-items:flex-start;gap:9px;font-size:.62rem;line-height:1.5;color:#858999;margin:6px 0}
+.evidence-metadata:first-of-type{margin-top:11px}
+.evidence-metadata strong,.evidence-metadata code{font-size:.62rem;font-weight:700;color:#5e6780;overflow-wrap:anywhere;max-width:66%;text-align:right}
+.evidence-metadata span:last-child:not(:first-child){text-align:right;overflow-wrap:anywhere}
+.evidence-details p{font-size:.62rem;line-height:1.55;color:#8f92a0;margin:10px 0 0}
