@@ -119,3 +119,4 @@
 
 /* Trace provenance and keyboard focus are first-class product signals. */
 .trace-kind{display:inline-flex;align-items:center;border-radius:999px;padding:2px 6px;margin:0 5px 0 0;font-size:.54rem;line-height:1.2;font-weight:800;letter-spacing:.03em;text-transform:uppercase;background:#edf0f7;color:#667086}.trace-qloo .trace-kind{background:#e7f7ed;color:#28704b}.trace-demo .trace-kind{background:#f5edff;color:#7256aa}.trace-local .trace-kind{background:#eef1f7;color:#5c6679}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid #7968dc;outline-offset:3px}
+.quick-start-options button[aria-pressed="true"]{background:#6556d7;border-color:#6556d7;color:#fff;box-shadow:0 5px 14px #5e4ecb2e}.quick-start-options button[aria-pressed="true"] span{color:#fff}

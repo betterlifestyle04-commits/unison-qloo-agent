@@ -11,6 +11,7 @@ const number=value=>Number.isFinite(value)?String(Math.round(value)):null;
 const initial=value=>String(value||'?').trim().slice(0,1).toUpperCase();
 const percent=value=>Math.max(0,Math.min(100,Number(value)||0));
 const sourceName=data=>data.mode==='live'?'Real Qloo results':'Fictional demonstration';
+function setActivePreset(id=null){document.querySelectorAll('[data-preset]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.preset===id)));}
 function updateTasteOwners(){
   const owner=$('#taste-owner');if(!owner)return;
   const previous=owner.value;
@@ -62,7 +63,9 @@ function updateFormPresentation(){
   $('#taste-finder').hidden=!(app.configured&&currentMode()==='live');
   $('#submit-label').textContent=places?'Find our common ground':'Find our movie night';
 }
-form.querySelectorAll('input[name=domain],input[name=mode]').forEach(input=>input.addEventListener('change',()=>{if(input.name==='mode')app.hasChangedMode=true;updateFormPresentation();}));
+form.querySelectorAll('input[name=domain],input[name=mode]').forEach(input=>input.addEventListener('change',()=>{if(input.name==='mode')app.hasChangedMode=true;setActivePreset();updateFormPresentation();}));
+form.addEventListener('input',event=>{if(!event.target.matches('[data-preset]'))setActivePreset();});
+form.addEventListener('change',event=>{if(!event.target.matches('[data-preset]'))setActivePreset();});
 const lookupBtn=$('#taste-find');
 const lookupResults=$('#taste-find-results');
 function lookupMessage(message){lookupResults.replaceChildren(Object.assign(document.createElement('p'),{textContent:message}));}
@@ -267,6 +270,7 @@ function applyBrief(raw){
 document.querySelectorAll('[data-preset]').forEach(button=>button.addEventListener('click',()=>{
   const preset=starterGroups.find(item=>item.id===button.dataset.preset);
   if(!preset)return;
+  setActivePreset(preset.id);
   applyBrief({...preset,mode:currentMode()});
   $('#share-message').textContent='Loaded '+preset.label+'. Edit the names and tastes to make it yours.';
   form.scrollIntoView({behavior:'smooth',block:'start'});

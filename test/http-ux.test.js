@@ -38,6 +38,15 @@ test('frontend keeps demo mode opt-in and provides clipboard fallback',async()=>
   assert.doesNotMatch(r.body,/if\(app\.configured&&!app\.hasChangedMode\)\{live\.checked=true;/);
   assert.match(r.body,/Qloo request/);
 });
+test('planner exposes an accessible preset state and shortlist navigation',async()=>{
+  const r=await request('/');
+  assert.equal(r.response.status,200);
+  assert.match(r.body,/href="#results-heading"/);
+  assert.match(r.body,/data-preset="friends" aria-pressed="false"/);
+  const app=await request('/app.js');
+  assert.match(app.body,/function setActivePreset/);
+  assert.match(app.body,/setActivePreset\(preset\.id\)/);
+});
 
 test('sample groups and shared plans never auto-opt into live Qloo',async()=>{
   const r=await request('/app.js');
