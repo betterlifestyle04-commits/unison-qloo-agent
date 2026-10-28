@@ -2,6 +2,7 @@ import {starterGroups,normalizeBrief,encodeShareBrief,decodeShareBrief,applyVeto
 import {ballotChoices,updateBallot,summarizeBallot,winningAgreement} from './ballot.js';
 import {createPlanArchive,loadDevicePlans,saveDevicePlan,removeDevicePlan} from './saved-plans.js';
 import {buildCalendarEvent,agendaText} from './calendar.js';
+import {auditGroupEvidence,recoverySuggestions} from './evidence-audit.js';
 const $=selector=>document.querySelector(selector);
 const people=$('#people'),template=$('#person-template'),form=$('#plan-form'),results=$('#results'),error=$('#form-error'),submitBtn=$('#submit-plan'),statusBadge=$('#mode-status');
 const starters=[['Maya','Studio Ghibli'],['Jon','Anthony Bourdain'],['Priya','Knives Out']];
@@ -220,6 +221,39 @@ function planHandoff(data,choices,groupApproved){
     <p id="agenda-message" class="handoff-message" role="status" aria-live="polite"></p>
   </section>`;
 }
+function renderEvidenceAudit(data){
+  const audit=auditGroupEvidence(data);
+  const coverage=audit.total?Math.round(100*audit.complete/audit.total):0;
+  const participants=audit.people.map(person=>`<div class="audit-person">
+    <div class="audit-person-label"><span>${escape(person.name)}</span><strong>${person.observed} of ${person.total}</strong></div>
+    <meter class="fit-meter" min="0" max="100" value="${person.percent}" aria-label="${escape(person.name)} has evidence for ${person.percent} percent of active candidates">${person.percent}%</meter>
+  </div>`).join('');
+  const comparison=audit.winner&&audit.alternative?`<div class="audit-comparison">
+    <p><strong>Same shortlist · Top two options</strong> The values below are derived relative-fit signals, not satisfaction probabilities.</p>
+    <div class="audit-compare-table"><table>
+      <thead><tr><th scope="col">Person</th><th scope="col">${escape(audit.winner.name)}</th><th scope="col">${escape(audit.alternative.name)}</th></tr></thead>
+      <tbody>${audit.comparison.map(person=>`<tr><th scope="row">${escape(person.name)}</th><td>${person.winnerFit}/100</td><td>${person.alternativeFit}/100</td></tr>`).join('')}</tbody>
+    </table></div>
+    <small>People can disagree about which option is best; this table makes that trade-off visible.</small>
+  </div>`:''; 
+  const missing=audit.missingRows.length?`<details class="audit-missing">
+    <summary>Inspect missing signals (${audit.missingRows.length} option${audit.missingRows.length===1?'':'s'})</summary>
+    <ul>${audit.missingRows.slice(0,8).map(row=>`<li><strong>${escape(row.name)}:</strong> ${escape(row.missing.map(person=>person.name).join(', ')||'No missing names available')}</li>`).join('')}</ul>
+    <p>A missing signal means the Qloo comparison did not return evidence for that participant; it must not be counted as a negative reaction.</p>
+  </details>`:''; 
+  const suggestions=audit.complete===0?recoverySuggestions(data,audit):[];
+  return `<section class="evidence-audit" aria-labelledby="audit-heading">
+    <div class="audit-head"><div><span class="eyebrow">GROUP EVIDENCE · ${data.mode==='demo'?'SIMULATED':'QLOO-INFORMED'}</span><h4 id="audit-heading">Are we comparing everyone fairly?</h4></div><span class="audit-coverage">${audit.complete}/${audit.total} comparable</span></div>
+    <p class="audit-summary">${escape(audit.summary)}</p>
+    <div class="audit-overview"><div><strong>${coverage}%</strong><small>Active options with complete group evidence</small></div><div><strong>${audit.people.length}</strong><small>Participants being considered</small></div>${audit.winner?`<div><strong>${Math.round(audit.spread)}</strong><small>Top option's estimated max–min fit gap</small></div>`:''}</div>
+    <details class="audit-detail"><summary>Show person-by-person evidence and comparisons</summary>
+      <div class="audit-person-grid">${participants}</div>
+      ${comparison}
+      ${missing}
+    </details>
+    ${suggestions.length?`<div class="audit-recovery"><strong>How to get a clearer answer</strong><ul>${suggestions.map(suggestion=>`<li>${escape(suggestion)}</li>`).join('')}</ul><button type="button" id="edit-after-audit">Review your group brief ↑</button></div>`:''}
+  </section>`;
+}
 function render(data){
   app.lastResult=data;
   const approved=data.ranked.filter(item=>item.sufficient&&!item.vetoed);
@@ -236,6 +270,7 @@ function render(data){
       <p>${escape(decisionStyles[app.decisionStyle].description)} These weights are UNISON heuristics, not measurements of happiness.</p>
     </section>
     ${decisionLab(data)}
+    ${renderEvidenceAudit(data)}
     <div class="voting-intro"><strong>New · Agree together</strong><span>Each person can vote Yes, Maybe or No on any candidate. Votes stay on this device, separate from Qloo predictions.</span></div>
     ${groupApproved?`<div class="approved-choice" role="status">✓ Group agreement recorded: <strong>${escape(groupApproved.name)}</strong>. Everyone voted Yes.</div>`:''}
     ${data.needsMoreEvidence?`<div class="notice" role="status">${escape(data.nextAction||'Evidence is incomplete. Add another preference.')}</div>`:''}
@@ -277,6 +312,10 @@ function render(data){
     const message=results.querySelector('#agenda-message');
     try{const details=agendaDetails();message.textContent=await copyText(agendaText({...details,note:details.notes}))?'Meeting details copied. No invitation was sent.':'Clipboard unavailable in this browser.';}
     catch(e){message.textContent=e.message||'Could not copy meeting details.';}
+  });
+  results.querySelector('#edit-after-audit')?.addEventListener('click',()=>{
+    form.scrollIntoView({behavior:'smooth',block:'start'});
+    const first=people.querySelector('[data-field=favorite]');if(first)first.focus({preventScroll:true});
   });
   // Human votes are distinct from preference predictions; no network request.
   results.querySelectorAll('[data-vote-choice]').forEach(button=>button.addEventListener('click',()=>{
