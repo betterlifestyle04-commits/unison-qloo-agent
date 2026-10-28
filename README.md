@@ -141,3 +141,13 @@ After generating a group shortlist, the **Make it happen** section lets people c
 The recommendation comparison bars now use **native HTML `<meter>` elements** rather than HTML-injected inline CSS widths. This keeps the charts visible under the existing strict `style-src 'self'` Content Security Policy and improves their accessibility.
 
 The calendar helper is in `public/calendar.js`, covered by `test/calendar.test.js` and first-party routing tests. No calendar permissions, notifications, background processes or third-party calendar API integration are required.
+
+## Group Evidence Audit and one-click judge demo
+
+The results screen includes a **Group Evidence Audit** powered by `public/evidence-audit.js`. It reports active candidates with complete person-level evidence, each participant's observed share of the active candidate set, a side-by-side comparison of the top two fully supported candidates, and a list of missing signals. When no candidate can be treated as a group compromise, it gives concrete, non-automatic suggestions to revise preferences or broaden the price constraint. **Missing evidence is not imputed as negative preference.** All audit values are based on the current result only and do not cause additional Qloo requests.
+
+The **Run a one-click fictional demonstration** action loads a sample brief in demo mode, explicitly locks its mode to `demo`, and runs the existing local deterministic scenario. It never calls Qloo endpoints. This makes the agent UI safely explorable for judges and for first-time visitors without spending hackathon API quota. The demo results and agent steps are always labeled simulated.
+
+See [JUDGE_DEMO.md](JUDGE_DEMO.md) for a reproducible two-minute walkthrough that differentiates live Qloo evidence from fictional demonstrations and includes transparency caveats.
+
+Regression tests: `test/evidence-audit.test.js` and `test/http-ux.test.js`. Browser-driven visual acceptance checks remain outstanding.
