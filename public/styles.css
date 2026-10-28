@@ -185,3 +185,43 @@
 .handoff-message{margin:9px 0 0;color:#6557a7;font-size:.72rem;line-height:1.5;font-weight:690}
 .handoff-message:empty{display:none}
 @media(max-width:580px){.plan-handoff{padding:14px}.handoff-fields{grid-template-columns:1fr}.handoff-actions button{width:100%}}
+
+/* Group Evidence Audit: coverage and person-level comparison, without fake confidence. */
+.evidence-audit{margin:0 0 18px;padding:17px;border:1px solid #dfe7ed;border-radius:14px;background:linear-gradient(145deg,#f8fbff,#fbfcff)}
+.audit-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.audit-head .eyebrow{font-size:.58rem;margin:0 0 5px;color:#6d83ae}
+.audit-head h4{font-size:1rem;line-height:1.3;letter-spacing:-.032em;margin:0}
+.audit-coverage{background:#e7effa;color:#607399;font-size:.63rem;font-weight:840;border-radius:7px;padding:6px 9px;white-space:nowrap}
+.audit-summary{font-size:.71rem;color:#707d94;line-height:1.6;margin:11px 0}
+.audit-overview{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0}
+.audit-overview>div{border:1px solid #e6eaf2;border-radius:10px;background:#fff;padding:11px 9px;display:flex;flex-direction:column;gap:3px;min-width:0}
+.audit-overview strong{font-size:1.3rem;color:#3d5478;line-height:1.2;letter-spacing:-.04em}
+.audit-overview small{font-size:.61rem;color:#8a94a6;line-height:1.4}
+.audit-detail{border-top:1px solid #e4eaf4;padding-top:11px;margin-top:13px}
+.audit-detail>summary{cursor:pointer;font-size:.72rem;color:#576b99;font-weight:780}
+.audit-person-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;margin:14px 0}
+.audit-person{min-width:0}
+.audit-person-label{display:flex;justify-content:space-between;gap:8px;font-size:.7rem;color:#65728c;align-items:center;margin-bottom:7px}
+.audit-person-label strong{font-size:.66rem;color:#7482a0}
+.audit-person .fit-meter{width:100%;height:9px}
+.audit-comparison{padding:12px;background:#fff;border:1px solid #e6eaf3;border-radius:10px;margin:12px 0}
+.audit-comparison p{font-size:.7rem;color:#758094;line-height:1.6;margin:0 0 9px}
+.audit-comparison p strong{color:#566b91}
+.audit-compare-table{overflow-x:auto}
+.audit-compare-table table{width:100%;border-collapse:collapse;min-width:310px}
+.audit-compare-table th,.audit-compare-table td{padding:8px 7px;font-size:.65rem;border-bottom:1px solid #e9edf3;text-align:left;overflow-wrap:anywhere}
+.audit-compare-table thead th{color:#687da2;font-weight:820}
+.audit-compare-table tbody th{color:#667083;font-weight:720}
+.audit-comparison small{display:block;color:#8a93a4;font-size:.63rem;margin-top:8px;line-height:1.5}
+.audit-missing{margin-top:12px;border:1px dashed #d9dce9;border-radius:9px;padding:10px}
+.audit-missing summary{cursor:pointer;font-size:.71rem;font-weight:760;color:#6f789a}
+.audit-missing ul,.audit-recovery ul{padding-left:17px;margin:9px 0;display:grid;gap:5px}
+.audit-missing li,.audit-recovery li,.audit-missing p{font-size:.67rem;color:#7f8799;line-height:1.55}
+.audit-recovery{margin:15px 0 0;border-radius:10px;background:#fff8f0;border:1px solid #f2e1cd;padding:11px}
+.audit-recovery>strong{color:#94603f;font-size:.73rem}
+.audit-recovery button{border:1px solid #e8c9a8;background:white;color:#a36d47;font-size:.7rem;font-weight:780;border-radius:8px;padding:9px 10px;margin-top:5px}
+.audit-recovery button:hover{background:#fff3e5}
+.instant-demo{width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:12px;border:0;border-radius:10px;background:linear-gradient(115deg,#6556ce,#5544ba);color:white;padding:11px 13px;font-weight:790;font-size:.75rem}
+.instant-demo:hover{filter:brightness(.95)}
+.demo-explainer{margin:7px 0 0;color:#8587a5;font-size:.64rem;line-height:1.5}
+@media(max-width:580px){.audit-head{flex-direction:column;gap:6px}.audit-overview{grid-template-columns:repeat(2,minmax(0,1fr))}.audit-person-grid{grid-template-columns:1fr}.audit-overview>div{min-height:76px}}
