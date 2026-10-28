@@ -210,7 +210,7 @@ function planHandoff(data,choices,groupApproved){
       <label class="input-label handoff-choice">Chosen option<select id="agenda-choice">${options}</select></label>
       <label class="input-label">Date<input type="date" id="agenda-date" value="${escape(agenda.date)}"></label>
       <label class="input-label">Start time<input type="time" id="agenda-time" value="${escape(agenda.time)}"></label>
-      <label class="input-label">Duration<select id="agenda-duration">${[60,90,120,180,240].map(min=>`<option value="${min}" ${String(min)===agenda.duration?'selected':''}>${min>=60?min/60+' hr'+(min>60?'s':'')+' ('+min+' min)':''}${min===90?'1.5 hrs (90 min)':''}</option>`).join('')}</select></label>
+      <label class="input-label">Duration<select id="agenda-duration">${[60,90,120,180,240].map(min=>`<option value="${min}" ${String(min)===agenda.duration?'selected':''}>${min/60} hr${min===60?'':'s'} (${min} min)</option>`).join('')}</select></label>
       <label class="input-label handoff-wide">Meeting place / address (optional)<input id="agenda-meeting" maxlength="160" value="${escape(agenda.meeting)}" placeholder="Specify your agreed meeting point"></label>
       <label class="input-label handoff-wide">Notes (optional)<input id="agenda-notes" maxlength="240" value="${escape(agenda.notes)}" placeholder="What should everyone bring or confirm?"></label>
     </div>
