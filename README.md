@@ -78,3 +78,7 @@ The public `/api/plan` endpoint limits each client to 20 requests per minute and
 ## License
 
 MIT (see `LICENSE`).
+
+## UX release notes
+
+The public planner should require a city before live place searches and distinguish heuristic relative-fit values from Qloo-provided metadata.
