@@ -1,0 +1,19 @@
+name: UNISON quality checks
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install
+        run: npm install
+      - name: JavaScript syntax
+        run: npm run check
+      - name: Unit and integration tests
+        run: npm test
