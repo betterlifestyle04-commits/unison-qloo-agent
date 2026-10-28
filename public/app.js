@@ -1,18 +1,125 @@
-const people=document.querySelector('#people'); const template=document.querySelector('#person-template'); const form=document.querySelector('#plan-form'); const results=document.querySelector('#results'); const error=document.querySelector('#form-error');
-const defaults=[['Maya','Studio Ghibli'],['Jon','Anthony Bourdain'],['Priya','Knives Out']];
-function addPerson(values=['','']){const node=template.content.firstElementChild.cloneNode(true); const [name,favorite]=node.querySelectorAll('input'); name.value=values[0]; favorite.value=values[1]; node.querySelector('.remove').addEventListener('click',()=>{if(people.children.length>2)node.remove();else showError('A group needs at least two people.');}); people.append(node);}
-defaults.forEach(addPerson); document.querySelector('#add-person').addEventListener('click',()=>{if(people.children.length<5)addPerson();else showError('UNISON keeps the conversation focused on 2–5 people.');});
-function showError(message=''){error.textContent=message;}
-function escape(value){const node=document.createElement('span');node.textContent=value;return node.innerHTML;}
-function bar(value){return value===null||value===undefined?'<span class="unknown">Unknown</span>':`<span class="bar"><i style="width:${value}%"></i></span><b>${Math.round(value)}</b>`;}
-function render(data){
-  const winner=data.ranked.find(item=>!item.vetoed&&item.sufficient);
-  const cards=data.ranked.map((item,index)=>`<article class="card ${item.vetoed?'vetoed':''}"><div class="card-top"><span>${item.vetoed?'Vetoed':`#${index+1}`}</span><strong>${item.score??'—'}</strong></div><h3>${escape(item.name)}</h3><p>${escape(item.kind||'Candidate')} · ${escape(item.price||'')}</p><dl><div><dt>Lowest observed</dt><dd>${bar(item.minimum)}</dd></div><div><dt>Observed average</dt><dd>${bar(item.average)}</dd></div><div><dt>Coverage</dt><dd>${Math.round(item.coverage*100)}%</dd></div></dl><details class="taste"><summary>Compare each person</summary><ul>${data.people.map(person=>`<li>${escape(person.name)} <b>${item.signals?.[person.id]??'Unknown'}</b></li>`).join('')}</ul></details><p class="small">${escape(item.explanation)}</p><button class="veto" data-veto="${escape(item.id)}" aria-pressed="${item.vetoed}">${item.vetoed?'Restore option':'Veto this option'}</button></article>`).join('');
-  results.innerHTML=`<div class="result-head"><div><p class="eyebrow">02 · NEGOTIATED PLAN</p><h2>${winner?`Try ${escape(winner.name)} first.`:'More evidence needed.'}</h2><p>${escape(data.disclaimer)}</p></div><button class="text-button" id="reset-veto">Clear vetoes</button></div>${data.needsMoreEvidence?`<p class="error">${escape(data.nextAction)}</p>`:''}${winner?`<article class="winner"><p class="eyebrow">BEST CURRENT COMPROMISE · ${winner.confidence} evidence</p><h3>${escape(winner.name)}</h3><p>${escape(winner.kind||'Suggested option')} · ${escape(winner.note||'')}</p><p class="reason">${escape(winner.explanation)}</p></article>`:''}<div class="cards">${cards}</div><details><summary>Agent execution trace (${data.mode==='live'?'Qloo tools + local evaluation':'simulated evidence + local evaluation'})</summary><ol>${data.trace.map(step=>`<li><strong>${escape(step.step)}.</strong> ${escape(step.detail)}${step.requests?` <span class="small">${step.requests.map(request=>escape(`${request.url}${request.cached?' (cache)':''}`)).join(' · ')}</span>`:''}</li>`).join('')}</ol></details>`;
-  results.querySelectorAll('[data-veto]').forEach(button=>button.addEventListener('click',()=>{const vetoes=new Set(lastInput.vetoes);vetoes.has(button.dataset.veto)?vetoes.delete(button.dataset.veto):vetoes.add(button.dataset.veto);lastInput.vetoes=[...vetoes];submit(lastInput);}));
-  results.querySelector('#reset-veto')?.addEventListener('click',()=>{lastInput.vetoes=[];submit(lastInput);});
+const $=selector=>document.querySelector(selector);
+const people=$('#people'),template=$('#person-template'),form=$('#plan-form'),results=$('#results'),error=$('#form-error'),submitBtn=$('#submit-plan'),statusBadge=$('#mode-status');
+const starters=[['Maya','Studio Ghibli'],['Jon','Anthony Bourdain'],['Priya','Knives Out']];
+const app={configured:false,requesting:false,lastInput:null,lastResult:null,showAll:false,hasChangedMode:false};
+const escape=value=>{const element=document.createElement('span');element.textContent=String(value??'');return element.innerHTML;};
+const number=value=>Number.isFinite(value)?String(Math.round(value)):null;
+const initial=value=>String(value||'?').trim().slice(0,1).toUpperCase();
+const percent=value=>Math.max(0,Math.min(100,Number(value)||0));
+const sourceName=data=>data.mode==='live'?'Real Qloo results':'Fictional demonstration';
+function updateGroup(){
+  $('#people-count').textContent=people.children.length+' of 5';
+  $('#add-person').disabled=people.children.length>=5;
+  [...people.querySelectorAll('.person')].forEach((row,index)=>{const input=row.querySelector('[data-field=name]');row.querySelector('.person-avatar').textContent=initial(input.value);row.querySelector('.remove').setAttribute('aria-label','Remove '+(input.value.trim()||'person '+(index+1)));row.querySelector('.remove').disabled=people.children.length<=2;});
 }
-let lastInput={vetoes:[]};
-async function submit(input){showError();results.setAttribute('aria-busy','true');results.querySelector('.empty')?.replaceChildren(Object.assign(document.createElement('p'),{textContent:'Negotiating a transparent compromise…'}));try{const response=await fetch('/api/plan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(input)});const data=await response.json();if(!response.ok)throw new Error(data.error||'Could not create a plan.');render(data);}catch(err){showError(err.message);results.innerHTML='<div class="empty"><h2>We could not make that plan yet.</h2><p>Check the group brief, then try again.</p></div>';}finally{results.setAttribute('aria-busy','false');}}
-form.addEventListener('submit',event=>{event.preventDefault();const fields=[...people.querySelectorAll('.person')],data=new FormData(form);lastInput={domain:data.get('domain'),mode:data.get('mode'),city:data.get('city'),budget:data.get('budget'),vetoes:lastInput.vetoes||[],people:fields.map(row=>({name:row.querySelector('[data-field=name]').value.trim(),favorites:row.querySelector('[data-field=favorite]').value.split(',').map(value=>value.trim()).filter(Boolean)}))};submit(lastInput);});
-fetch('/api/status').then(response=>response.json()).then(status=>{const pill=document.querySelector('#mode-status');pill.textContent=status.mode==='live-ready'?'Live Qloo key detected — validate before presenting':'Demo mode · Qloo key not configured';if(!status.configured){document.querySelector('#live-choice').classList.add('disabled');document.querySelector('#live-choice input').disabled=true;}}).catch(()=>{document.querySelector('#mode-status').textContent='Demo mode · server status unavailable';});
+function addPerson(values=['','']){
+  const node=template.content.firstElementChild.cloneNode(true);
+  const name=node.querySelector('[data-field=name]'),favorite=node.querySelector('[data-field=favorite]');
+  name.value=values[0];favorite.value=values[1];
+  name.addEventListener('input',updateGroup);
+  node.querySelector('.remove').addEventListener('click',()=>{if(people.children.length<=2){showError('A group needs at least two people.');return;}node.remove();updateGroup();});
+  people.append(node);updateGroup();
+}
+starters.forEach(addPerson);
+$('#add-person').addEventListener('click',()=>{if(people.children.length>=5)return;addPerson();people.lastElementChild.querySelector('[data-field=name]').focus();});
+function showError(message=''){error.textContent=message;}
+function currentMode(){return form.querySelector('input[name=mode]:checked')?.value||'demo';}
+function currentDomain(){return form.querySelector('input[name=domain]:checked')?.value||'places';}
+function updateFormPresentation(){
+  const places=currentDomain()==='places';
+  $('#place-constraints').hidden=!places;
+  $('#city').required=places&&currentMode()==='live';
+  $('#city').disabled=!places;
+  $('#budget').disabled=!places;
+  $('#submit-label').textContent=places?'Find our common ground':'Find our movie night';
+}
+form.querySelectorAll('input[name=domain],input[name=mode]').forEach(input=>input.addEventListener('change',()=>{if(input.name==='mode')app.hasChangedMode=true;updateFormPresentation();}));
+document.querySelectorAll('.city-quick').forEach(button=>button.addEventListener('click',()=>{$('#city').value=button.dataset.city;showError();}));
+function brief(){
+  const data=new FormData(form);
+  return {domain:data.get('domain'),mode:data.get('mode'),city:String(data.get('city')||'').trim(),budget:data.get('budget')||'any',
+    people:[...people.querySelectorAll('.person')].map(row=>({name:row.querySelector('[data-field=name]').value.trim(),favorites:row.querySelector('[data-field=favorite]').value.split(',').map(s=>s.trim()).filter(Boolean).slice(0,3)}))};
+}
+function validate(input){
+  if(input.people.some(p=>!p.name||!p.favorites.length))return 'Give every participant a name and at least one favorite.';
+  if(new Set(input.people.map(p=>p.name.toLocaleLowerCase())).size!==input.people.length)return 'Each participant needs a different name.';
+  if(input.domain==='places'&&input.mode==='live'&&!input.city)return 'Enter a city for a live place plan so results stay in your chosen area.';
+  if(input.mode==='live'&&!app.configured)return 'Live Qloo is not available right now. Choose demo mode.';
+  return '';
+}
+function sameBrief(a,b){if(!a||!b)return false;const extract=x=>JSON.stringify([x.domain,x.mode,x.city,x.budget,x.people]);return extract(a)===extract(b);}
+function fitBar(value){return value===null||value===undefined?'<span class="unknown">No signal</span>':`<span class="bar" aria-hidden="true"><i style="width:${percent(value)}%"></i></span><span class="value">${number(value)}</span>`;}
+function listPeople(item,data){
+  return `<details class="taste"><summary>How each person fits</summary><ul class="taste-list">${data.people.map(person=>{
+    const val=item.signals?.[person.id];
+    const shown=number(val);
+    return `<li><span>${escape(person.name)}</span>${shown===null?'<span class="unknown">No signal</span>':`<span class="tiny-bar" aria-hidden="true"><i style="width:${percent(val)}%"></i></span><b>${shown}/100</b>`}</li>`;
+  }).join('')}</ul></details>`;
+}
+function card(item,index,data){
+  const title=escape(item.name),val=item.score===null||item.score===undefined?'—':escape(item.score);
+  const label=item.vetoed?'VETOED':item.sufficient?'OPTION '+(index+1):'MORE EVIDENCE';
+  const kind=escape(item.kind||item.category|| (data.domain==='movies'?'Movie':'Place'));
+  const note=item.note||item.address||'';
+  return `<article class="card ${item.vetoed?'vetoed':''}" aria-label="${title}">
+    <div class="card-top"><span class="rank-pill">${label}</span><strong>${val}<small>${item.score===null?'':'/100'}</small></strong></div>
+    <h4>${title}</h4><p class="candidate-meta">${kind}${item.price?' · '+escape('Price tier '+item.price):''}</p>${note?`<p class="candidate-note">${escape(note)}</p>`:''}
+    <div class="divider-line"></div>
+    <div class="stat-row"><span class="label">Lowest fit</span>${fitBar(item.minimum)}</div>
+    <div class="stat-row"><span class="label">Average fit</span>${fitBar(item.average)}</div>
+    <div class="stat-row"><span class="label">Coverage</span><span class="bar" aria-hidden="true"><i style="width:${Math.round((item.coverage||0)*100)}%"></i></span><span class="value">${Math.round((item.coverage||0)*100)}%</span></div>
+    ${listPeople(item,data)}
+    <p class="card-explanation">${escape(item.explanation||'')}</p>
+    <button class="veto" data-veto="${escape(item.id)}" aria-pressed="${Boolean(item.vetoed)}">${item.vetoed?'↶ Restore option':'× Not for our group'}</button>
+  </article>`;
+}
+function render(data){
+  app.lastResult=data;
+  const approved=data.ranked.filter(item=>item.sufficient&&!item.vetoed);
+  const top=approved[0],count=approved.length;
+  const show=data.ranked.slice(0,app.showAll?data.ranked.length:6);
+  const status=data.mode==='live'?'Qloo API · Live evidence':'Demo · Simulated evidence';
+  results.innerHTML=`<div class="result-topline"><div><p class="overline">${escape(status)}</p><h3>${top?'Your best shared match':'We need a little more evidence'}</h3><p class="result-sub">${escape(data.domain==='places'?(data.city?'Planning for '+data.city:'No city selected'):'Movie night')} · ${data.people.length} people · ${count} fully covered option${count===1?'':'s'}</p></div><div class="result-actions"><button id="copy-plan" class="text-button" type="button" ${top?'':'disabled'}>Copy plan ↗</button><button id="reset-veto" class="text-button" type="button">Clear vetoes</button></div></div>
+    <div class="source-banner ${data.mode==='live'?'live':''}"><strong>${escape(sourceName(data))}.</strong> ${escape(data.disclaimer)}</div>
+    ${data.needsMoreEvidence?`<div class="notice" role="status">${escape(data.nextAction||'Evidence is incomplete. Add another preference.')}</div>`:''}
+    ${top?`<article class="winner"><div class="winner-inner"><p class="eyebrow">✳ THE BEST CURRENT COMPROMISE</p><h3>${escape(top.name)}</h3><div class="winner-meta"><span>${escape(data.domain==='movies'?'Movie recommendation':'Place recommendation')}</span><span>${escape(data.mode==='live'?'Qloo candidates':'Fictional demo candidates')}</span>${data.city&&data.domain==='places'?'<span>'+escape(data.city)+'</span>':''}</div><p>${escape(top.note||top.address||'Recommended based on the available cross-person taste signals.')}</p><div class="winner-stats"><div><strong>${escape(top.score)}</strong><small>UNISON relative score / 100</small></div><div><strong>${number(top.minimum)}</strong><small>Lowest relative fit</small></div><div><strong>${Math.round(top.coverage*100)}%</strong><small>Signal coverage</small></div></div></div></article>`:''}
+    <div class="cards-heading"><h4>Explore the shortlist</h4><small>${data.ranked.length} candidate${data.ranked.length===1?'':'s'}</small></div>
+    <div class="cards">${show.map((item,i)=>card(item,i,data)).join('')}</div>
+    ${data.ranked.length>6?`<button id="show-all" class="add-person" type="button">${app.showAll?'Show fewer options':'Show all '+data.ranked.length+' options'} <span aria-hidden="true">↓</span></button>`:''}
+    <details class="trace"><summary>How UNISON reached this decision · ${data.trace.length} steps</summary><ol>${data.trace.map(step=>`<li><strong>${escape(step.step)}</strong> — ${escape(step.detail)}${step.requests?.length?`<span class="trace-url">${step.requests.map(request=>escape(request.url+(request.cached?' (cached)':''))).join(' · ')}</span>`:''}</li>`).join('')}</ol></details>`;
+  results.querySelectorAll('[data-veto]').forEach(button=>button.addEventListener('click',()=>{const vetoes=new Set(app.lastInput.vetoes);vetoes.has(button.dataset.veto)?vetoes.delete(button.dataset.veto):vetoes.add(button.dataset.veto);app.lastInput.vetoes=[...vetoes];submitPlan(app.lastInput,{preserveScroll:true});}));
+  $('#reset-veto')?.addEventListener('click',()=>{app.lastInput.vetoes=[];submitPlan(app.lastInput,{preserveScroll:true});});
+  $('#show-all')?.addEventListener('click',()=>{app.showAll=!app.showAll;render(data);});
+  $('#copy-plan')?.addEventListener('click',async()=>{
+    if(!top)return;
+    const text=[`UNISON — ${data.city||'Group'} ${data.domain==='movies'?'movie night':'outing'}`,`Top pick: ${top.name}`,`UNISON relative fit: ${top.score}/100 · evidence coverage: ${Math.round(top.coverage*100)}%`,...approved.slice(1,4).map((o,i)=>`Alternative ${i+1}: ${o.name}`),data.disclaimer,'https://unison-qloo.onrender.com'].join('\n');
+    try{await navigator.clipboard.writeText(text);$('#copy-plan').textContent='Copied ✓';}catch{ $('#copy-plan').textContent='Copy unavailable';}
+  });
+}
+async function submitPlan(input,{preserveScroll=false}={}){
+  if(app.requesting)return;
+  const problem=validate(input);if(problem){showError(problem);form.querySelector('#city')?.focus();return;}
+  showError();app.requesting=true;app.lastInput=input;submitBtn.disabled=true;$('#submit-label').textContent='Finding the overlap…';
+  results.setAttribute('aria-busy','true');results.innerHTML='<div class="loader" role="status"><span class="spinner" aria-hidden="true"></span><strong>Looking for common ground</strong><p>Checking preferences, comparing options and finding the fairest supported shortlist…</p></div>';
+  try{
+    const response=await fetch('/api/plan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(input)});
+    let data;try{data=await response.json();}catch{throw new Error('The planner returned an unexpected response. Please try again.');}
+    if(!response.ok)throw new Error(data.error||'We could not create this plan.');
+    render(data);
+    if(!preserveScroll&&window.innerWidth<821)$('#results-heading').scrollIntoView({behavior:'smooth',block:'start'});
+  }catch(e){
+    showError(e.message);
+    results.innerHTML=`<div class="empty"><span class="eyebrow">SOMETHING TO ADJUST</span><h3>Let's try another route.</h3><p>${escape(e.message)}</p><p>Check the city and cultural references, or switch to demo mode to explore how UNISON works.</p></div>`;
+  }finally{app.requesting=false;submitBtn.disabled=false;$('#submit-label').textContent=currentDomain()==='places'?'Find our common ground':'Find our movie night';results.setAttribute('aria-busy','false');}
+}
+form.addEventListener('submit',event=>{event.preventDefault();const input=brief();input.vetoes=sameBrief(input,app.lastInput)?[...(app.lastInput?.vetoes||[])]:[];app.showAll=false;submitPlan(input);});
+updateFormPresentation();
+fetch('/api/status',{cache:'no-store'}).then(r=>r.json()).then(status=>{
+  app.configured=Boolean(status.configured);
+  statusBadge.classList.toggle('live',app.configured);statusBadge.classList.toggle('offline',!app.configured);
+  statusBadge.innerHTML=`<span class="status-dot"></span>${app.configured?'Qloo connected · Live-ready':'Explore in demo mode'}`;
+  const live=$('#live-choice input');
+  live.disabled=!app.configured;$('#live-choice').classList.toggle('disabled',!app.configured);
+  if(app.configured&&!app.hasChangedMode){live.checked=true;}
+  updateFormPresentation();
+}).catch(()=>{statusBadge.classList.add('offline');statusBadge.innerHTML='<span class="status-dot"></span>Service unavailable · Demo only';$('#live-choice input').disabled=true;$('#live-choice').classList.add('disabled');updateFormPresentation();});
