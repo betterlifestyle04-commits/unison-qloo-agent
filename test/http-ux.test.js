@@ -30,3 +30,11 @@ test('session-only vote utilities are served with the correct MIME type',async()
   assert.match(r.response.headers.get('content-type'),/javascript/);
   assert.match(r.body,/summarizeBallot/);
 });
+test('frontend keeps demo mode opt-in and provides clipboard fallback',async()=>{
+  const r=await request('/app.js');
+  assert.equal(r.response.status,200);
+  assert.match(r.body,/async function copyText/);
+  assert.match(r.body,/document\.execCommand\('copy'\)/);
+  assert.doesNotMatch(r.body,/if\(app\.configured&&!app\.hasChangedMode\)\{live\.checked=true;/);
+  assert.match(r.body,/Qloo request/);
+});

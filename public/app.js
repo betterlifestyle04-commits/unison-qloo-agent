@@ -46,6 +46,11 @@ function addPerson(values=['',''],chosenEntities=[]){
 starters.forEach(addPerson);
 $('#add-person').addEventListener('click',()=>{if(people.children.length>=5)return;addPerson();people.lastElementChild.querySelector('[data-field=name]').focus();});
 function showError(message=''){error.textContent=message;}
+async function copyText(text){
+  if(navigator.clipboard?.writeText){try{await navigator.clipboard.writeText(text);return true;}catch{}}
+  const area=document.createElement('textarea');area.value=text;area.setAttribute('readonly','');area.style.cssText='position:fixed;opacity:0;pointer-events:none';document.body.append(area);area.select();
+  const copied=document.execCommand('copy');area.remove();return copied;
+}
 function currentMode(){return form.querySelector('input[name=mode]:checked')?.value||'demo';}
 function currentDomain(){return form.querySelector('input[name=domain]:checked')?.value||'places';}
 function updateFormPresentation(){
@@ -196,7 +201,7 @@ function render(data){
     <div class="cards-heading"><h4>Explore the shortlist</h4><small>${data.ranked.length} candidate${data.ranked.length===1?'':'s'}</small></div>
     <div class="cards">${show.map((item,i)=>card(item,i,data)).join('')}</div>
     ${data.ranked.length>6?`<button id="show-all" class="add-person" type="button">${app.showAll?'Show fewer options':'Show all '+data.ranked.length+' options'} <span aria-hidden="true">↓</span></button>`:''}
-    <details class="trace"><summary>How UNISON reached this decision · ${data.trace.length} steps</summary><ol>${data.trace.map(step=>`<li><strong>${escape(step.step)}</strong> — ${escape(step.detail)}${step.requests?.length?`<span class="trace-url">${step.requests.map(request=>escape(request.url+(request.cached?' (cached)':''))).join(' · ')}</span>`:''}</li>`).join('')}</ol></details>`;
+    <details class="trace"><summary>How UNISON reached this decision · ${data.trace.length} steps</summary><ol>${data.trace.map(step=>{const label=step.kind==='qloo'?'Qloo request':step.kind==='demo'?'Simulated evidence':'Local computation';const tone=step.kind==='qloo'?'qloo':step.kind==='demo'?'demo':'local';return `<li class="trace-step trace-${tone}"><span class="trace-kind">${label}</span><strong>${escape(step.step)}</strong> — ${escape(step.detail)}${step.requests?.length?`<span class="trace-url">${step.requests.map(request=>escape(request.url+(request.cached?' (cached)':''))).join(' · ')}</span>`:''}</li>`;}).join('')}</ol></details>`;
   // Human votes are distinct from preference predictions; no network request.
   results.querySelectorAll('[data-vote-choice]').forEach(button=>button.addEventListener('click',()=>{
     const id=button.dataset.voteCandidate;
@@ -221,7 +226,7 @@ function render(data){
   $('#copy-plan')?.addEventListener('click',async()=>{
     if(!top)return;
     const text=buildGroupSummary(data)+(groupApproved?'\nGroup vote: Everyone voted Yes for '+groupApproved.name+' (votes recorded in one browser session).':'');
-    try{await navigator.clipboard.writeText(text);$('#copy-plan').textContent='Copied ✓';}catch{ $('#copy-plan').textContent='Copy unavailable';}
+    if(await copyText(text))$('#copy-plan').textContent='Copied ✓';else $('#copy-plan').textContent='Copy unavailable';
   });
 }
 async function submitPlan(input,{preserveScroll=false}={}){
@@ -271,7 +276,7 @@ $('#share-brief').addEventListener('click',async()=>{
   try{
     const input=normalizeBrief(brief());
     const url=location.origin+location.pathname+'#plan='+encodeShareBrief(input);
-    await navigator.clipboard.writeText(url);
+    if(!await copyText(url))throw new Error('Clipboard unavailable');
     message.textContent='Group setup link copied. Anyone with the link can see these names and favorites.';
   }catch(e){message.textContent=e.message?.includes('clipboard')?'Clipboard unavailable; try another browser.':'Could not create a link. Check the participant names and favorites.';}
 });
@@ -294,7 +299,7 @@ fetch('/api/status',{cache:'no-store'}).then(r=>r.json()).then(status=>{
   statusBadge.innerHTML=`<span class="status-dot"></span>${app.configured?'Qloo key present · Live available':'Explore in demo mode'}`;
   const live=$('#live-choice input');
   live.disabled=!app.configured;$('#live-choice').classList.toggle('disabled',!app.configured);
-  if(app.configured&&!app.hasChangedMode){live.checked=true;}
+  // A key only makes live mode available. Keep demo selected until a person opts in.
   if(!app.configured&&live.checked){form.querySelector('input[name=mode][value=demo]').checked=true;$('#share-message').textContent='Qloo is not configured; this shared group is now in demo mode.';}
   updateFormPresentation();
 }).catch(()=>{statusBadge.classList.add('offline');statusBadge.innerHTML='<span class="status-dot"></span>Service unavailable · Demo only';$('#live-choice input').disabled=true;$('#live-choice').classList.add('disabled');updateFormPresentation();});
