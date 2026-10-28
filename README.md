@@ -125,3 +125,11 @@ Qloo's Search API can return multiple cultural entities with the **same visible 
 Unselected, manually typed favorites continue through the documented server-side name resolver. The application validates the selected ID format and its relationship to the entered favorite before contacting Qloo. Qloo remains the authority on whether the chosen entity ID is recognized.
 
 Share links can contain Qloo public entity IDs in addition to the group's names and favorites. A shared link does not automatically execute the Qloo API.
+
+## Decision Lab and saved plans (October 2026)
+
+**Decision Lab** compares **the same fully observed candidate set** under three predeclared, transparent aggregation formulas. It shows each rule's winning candidate and a pure average-fit baseline, while stating when rankings are sensitive to the weight choices. It excludes vetoed candidates and any option with incomplete group coverage. The baseline is **not** an observed popularity metric, and no formula is a calibrated happiness prediction. All calculations are local and make no new Qloo requests.
+
+**Saved group plans** are explicitly opt-in and stay in the current browser's `localStorage`. Each saved record contains the group brief (including participant names, favorites and any public Qloo entity IDs), a user-facing plan summary, a timestamp, and a winner label. It does not store the Qloo API key or create an account. Up to eight recent records can be saved. Users can reopen a brief, copy a saved summary, or delete a record. **Reopening always selects demo mode** and does not automatically query Qloo. Since browser storage is not encrypted, users on shared devices should not save private details.
+
+Implementation: `public/planner-state.js` exports `analyzeDecisionTradeoffs`; `public/saved-plans.js` handles explicit storage operations with validation and bounds. New unit and HTTP regression tests verify both features.
