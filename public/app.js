@@ -49,7 +49,7 @@ function showError(message=''){error.textContent=message;}
 async function copyText(text){
   if(navigator.clipboard?.writeText){try{await navigator.clipboard.writeText(text);return true;}catch{}}
   const area=document.createElement('textarea');area.value=text;area.setAttribute('readonly','');area.style.cssText='position:fixed;opacity:0;pointer-events:none';document.body.append(area);area.select();
-  const copied=document.execCommand('copy');area.remove();return copied;
+  let copied=false;try{copied=typeof document.execCommand==='function'&&document.execCommand('copy');}catch{copied=false;}finally{area.remove();}return copied;
 }
 function currentMode(){return form.querySelector('input[name=mode]:checked')?.value||'demo';}
 function currentDomain(){return form.querySelector('input[name=domain]:checked')?.value||'places';}
@@ -267,7 +267,7 @@ function applyBrief(raw){
 document.querySelectorAll('[data-preset]').forEach(button=>button.addEventListener('click',()=>{
   const preset=starterGroups.find(item=>item.id===button.dataset.preset);
   if(!preset)return;
-  applyBrief({...preset,mode:app.configured?'live':'demo'});
+  applyBrief({...preset,mode:currentMode()});
   $('#share-message').textContent='Loaded '+preset.label+'. Edit the names and tastes to make it yours.';
   form.scrollIntoView({behavior:'smooth',block:'start'});
 }));
@@ -283,8 +283,8 @@ $('#share-brief').addEventListener('click',async()=>{
 try{
   if(location.hash.startsWith('#plan=')){
     app.hashLoaded=true;
-    applyBrief(decodeShareBrief(location.hash));
-    $('#share-message').textContent='Shared group loaded. Review the preferences before generating a plan.';
+    applyBrief({...decodeShareBrief(location.hash),mode:'demo'});
+    $('#share-message').textContent='Shared group loaded in demo mode. Review preferences, and choose Live Qloo explicitly if desired.';
     history.replaceState(null,'',location.pathname+location.search);
   }
 }catch{
