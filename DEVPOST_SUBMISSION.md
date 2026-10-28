@@ -1,42 +1,75 @@
 # UNISON — Different tastes. One great plan.
 
-## Project story
+**Project homepage:** https://unison-qloo.onrender.com  
+**Public source:** https://github.com/betterlifestyle04-commits/unison-qloo-agent  
+**License:** MIT  
+**Hackathon:** Qloo Agentic Hackathon 2026
 
-Planning with friends is usually optimized for the loudest preference or the average score. UNISON is a small-group negotiation agent that instead shows a defensible compromise: it protects the lowest observed relative fit, considers the observed average, calls out missing evidence, and gives every participant a veto.
+## Inspiration — the group decision problem
 
-Judges can use the fully local demo with two to five people immediately. It contains fictional candidates and fictional signals, visibly labeled as such. Nothing in demo mode is presented as Qloo data.
+Most recommendation engines focus on a single user or on popularity. Real group decisions are harder: one friend's favorite can become everyone else's compromise, and a high group average can hide one very unhappy participant. UNISON helps groups find a transparent shared plan instead of relying on the loudest preference or opaque matching.
 
-## Technical architecture
+## What it does
 
-- A dependency-free Node HTTP server keeps `QLOO_API_KEY` server-side and exposes same-origin status and planning endpoints.
-- The agent plans a bounded run, resolves up to three exact favorites per person through Qloo `/search` in live mode, then requests `/v2/insights` using documented comma-separated `signal.interests.entities`, `filter.type`, strict city filtering, and place-price filters. It evaluates a bounded shared shortlist per person with `filter.results.entities` and replans after vetoes.
-- Ranking is an explainable project heuristic: `0.55 × lowest observed fit + 0.35 × observed average + 0.10 × coverage`. It is not a Qloo score or a happiness prediction.
-- A local fictional catalog powers demo mode. Live failures are explicit; the app never silently changes a failed Qloo request into demo evidence.
+UNISON helps two to five people plan a group outing or movie night. Each person contributes up to three favorite cultural references. A server-side agent resolves Qloo entities, retrieves taste-based recommendations individually, evaluates a common shortlist for everyone, and applies a fairness-aware heuristic. It explicitly refuses to call an incomplete-evidence option a fully supported consensus.
 
-## Demo instructions
+Users can:
+- Choose a city and Qloo price-level constraint for places.
+- Compare per-person relative fit, group average, lowest fit, and evidence coverage.
+- Try balanced, protect-lowest-fit, or group-average decision styles; these re-rank existing evidence immediately.
+- Veto or restore a candidate without generating another Qloo API request.
+- Inspect the plan → search → insights → comparison → re-evaluation trace.
+- Share an editable group setup through a consent-based link, or copy a plan summary.
+- Open a Google Maps search for a live place candidate; this is discovery, not a verified booking.
+- Explore a clearly labeled fictional demonstration if live API access isn't available.
 
-1. Start with `npm start` and open the service locally.
-2. Leave **Demo mode** selected and add 2–5 people with cultural references.
-3. Choose a place or movie-night plan, then select **Find a fairer plan**.
-4. Inspect each candidate’s observed floor, average, coverage, trace, and veto behavior.
+## How we built it
 
-## Qloo call trace and activation
+- **Frontend:** responsive semantic HTML, modern CSS, vanilla JavaScript ES modules. No account required.
+- **Backend:** Node.js server exposing `/api/status` and `/api/plan` with validation, request limits, and server-only API credentials.
+- **Qloo tools:** authenticated GET `/search` resolves each favorite; `/v2/insights` uses `filter.type`, comma-separated `signal.interests.entities`, optional strict city filtering with `filter.location.query` and `filter.location.radius=0`, and place `filter.price_level.max`. A second comparison pass uses `filter.results.entities` to assess a shared shortlist.
+- **Group reasoning:** candidates are compared using UNISON rank-derived relative-fit estimates on one consistent scale, with 100% observed group coverage required to name a compromise. Native Qloo affinity is not mixed with those local scores.
+- **Transparency:** every displayed group score is a user-facing heuristic, never claimed to be a prediction of enjoyment or Qloo's own confidence percentage.
+- **Quality:** native Node tests, integration tests, and GitHub Actions; deployment from GitHub to Render in Frankfurt.
 
-When the event key is securely configured, live mode makes bounded HTTPS calls with `X-Api-Key` only on the server:
+## Why it's agentic
 
-1. `GET /search?query=…` for each favorite; an exact name is required and ambiguous matches are surfaced.
-2. `GET /v2/insights?filter.type=urn:entity:place|urn:entity:movie&signal.interests.entities=id1,id2`, with `filter.location.query`, `filter.location.radius=0`, and supported `filter.price_level.max` for places, once per participant.
-3. A second bounded Insights pass applies `filter.results.entities` to evaluate the common shortlist per participant. Candidates with incomplete group evidence are not named as a group compromise.
-3. The agent merges returned candidates and records rank-derived relative signals.
+The agent does not just output a text recommendation. It runs a bounded tool-using process: interpret a group brief, resolve cultural entities, query Qloo for each person's tastes, generate a shared shortlist, evaluate cross-person evidence, and present a transparent choice. When users veto a candidate or change the decision weights, the browser immediately re-evaluates the existing evidence without paying for redundant upstream calls. A genuinely changed brief triggers fresh Qloo tools.
 
-Live calls have **not been validated** because no event key is available. Before presenting live results, validate the event response envelopes and exact query parameters with the issued key; errors are intentionally surfaced instead of guessed around. The integration was reviewed against Qloo's public documentation repository, not treated as a substitute for an authenticated response.
+## What Qloo makes possible
 
-## Compliance checklist
+Qloo connects tastes across categories: a movie or artist can provide cultural context for restaurant, place, or other movie recommendations. UNISON makes that cross-domain value visible while evaluating the same options for multiple participants instead of optimizing a single user's suggestions.
 
-- [x] No key in client code, repository files, URLs, logs, or demo data.
-- [x] Demo evidence is fictional and prominently labeled.
-- [x] Qloo routes are limited to `/search` and `/v2/insights`.
-- [x] Native unit and HTTP tests cover ranking, validation, demo planning, and status.
-- [ ] Public hosted Node URL — requires explicit deployment authorization and a host configuration.
-- [ ] Event-key live smoke test — requires secure key configuration.
-- [ ] Add final public repository and live-demo URLs after verification.
+## Challenges and decisions
+
+The most important technical challenge was **not confusing observed Qloo data with invented or rank-derived confidence**. UNISON intentionally distinguishes original entities, local ordinal-fit estimates, missing data, and the fair-ranking formula. We also prevent recommendations with incomplete group observations from being presented as a consensus. City input is mandatory for live place plans to avoid the unrestricted worldwide suggestions that initially appeared.
+
+A second challenge was Qloo quota: users need to revise plans quickly without rerunning multiple search and insight requests. Local veto and weighting updates reuse the original result evidence; cache/retry bounds and server-level concurrency limits protect the integration.
+
+## Test and demonstration flow
+
+1. Open the public app, choose **Live Qloo** when enabled, and enter a city for place searches.
+2. Try an editable sample group or add two to five participants and their favorite cultural references.
+3. Submit the group brief. Inspect recommended entities and individual fit evidence.
+4. Change between **Balanced**, **Protect the Lowest Fit**, and **Group Average**, observing reordering without additional Qloo requests.
+5. Veto and restore a candidate. Inspect the trace for the local re-evaluation step.
+6. Copy the plan or share the editable group setup. Explain that group links encode names and favorites in the URL.
+7. Optionally switch to clearly labeled fictional demo mode to show the workflow independent of an API credential.
+
+## Integrity and current verification status
+
+The public Render service is deployed and the server status reports `live-ready` because the key is configured. A user screenshot shows live-mode recommendations. However, this alone is not a comprehensive live-response accuracy or browser-automation validation. The UI and integration still need a final cross-device, multi-city walkthrough before treating every use case as production-ready.
+
+We do not claim venue opening hours, reservation availability, guaranteed location accuracy, measured improvements in group satisfaction, or scientifically validated ranking weights.
+
+## Submission checklist
+
+- [x] Public GitHub repo and MIT license
+- [x] Public hosted Node web service
+- [x] Server-only Qloo secret and documented tool flow
+- [x] Demo results clearly labeled fictional
+- [x] Reproducible automated tests and CI
+- [x] Responsive interface and inspectable agent trace
+- [ ] Manual live Qloo testing of several city-and-favorite combinations
+- [ ] Desktop and mobile browser visual QA, including accessibility
+- [ ] Final Devpost project submission by its official deadline
