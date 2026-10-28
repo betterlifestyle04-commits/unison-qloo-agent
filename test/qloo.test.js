@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
-import {__resetQlooCache,insights,parseInsights,parseSearch,searchFavorite} from '../src/qloo.js';
+import {__resetQlooCache,insights,parseInsights,parseSearch,searchFavorite,matchSearchResults} from '../src/qloo.js';
 const fixtures=JSON.parse(await readFile(new URL('./fixtures/qloo-responses.json',import.meta.url)));
 const response=payload=>({ok:true,status:200,json:async()=>payload});
 test.beforeEach(()=>{process.env.QLOO_API_KEY='test-only-placeholder';__resetQlooCache();});
@@ -41,4 +41,27 @@ test('trusted Qloo image URLs are retained, unsafe image hosts are excluded',()=
   assert.equal(untrusted.imageUrl,undefined);
   const insecure=parseInsights({results:{entities:[entity('http://staging.images.qloo.com/i/example.jpg')]}})[0];
   assert.equal(insecure.imageUrl,undefined);
+});
+
+test('same name across different Qloo types must be explicitly disambiguated',()=>{
+  const options=[
+    {id:'movie-id',name:'Interstellar',type:'urn:entity:movie'},
+    {id:'album-id',name:'Interstellar',type:'urn:entity:album'},
+    {id:'book-id',name:'Interstellar',type:'urn:entity:book'}
+  ];
+  const result=matchSearchResults('Interstellar',options);
+  assert.equal(result.status,'ambiguous');
+  assert.equal(result.exact,null);
+  assert.equal(result.matches.length,3);
+  assert.equal(matchSearchResults('Interstellar',[options[0]]).status,'resolved');
+  assert.equal(matchSearchResults('Unknown',[]).status,'unresolved');
+});
+test('valid no-results Qloo Insights is not mistaken for an upstream failure',async()=>{
+  const fetchImpl=async()=>response({success:true,results:{entities:[]}});
+  const value=await insights(['urn:entity:movie:test'],'movies',{fetchImpl});
+  assert.deepEqual(value.results,[]);
+});
+test('malformed Insights response is rejected instead of silently returning zero results',async()=>{
+  const fetchImpl=async()=>response({unexpected:true});
+  await assert.rejects(()=>insights(['urn:entity:movie:test'],'movies',{fetchImpl}),/unsupported Insights response/);
 });
