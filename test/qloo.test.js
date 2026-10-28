@@ -31,3 +31,14 @@ test('Qloo descriptions and release years are surfaced only when present',()=>{
   assert.equal(result[0].year,2024);
   assert.equal(result[0].address,undefined);
 });
+
+test('trusted Qloo image URLs are retained, unsafe image hosts are excluded',()=>{
+  const entity=(image)=>({entity_id:'entity1',name:'Example Film',subtype:'urn:entity:movie',properties:{image:{url:image}}});
+  const image='https://staging.images.qloo.com/i/example.jpg';
+  const valid=parseInsights({results:{entities:[entity(image)]}})[0];
+  assert.equal(valid.imageUrl,image);
+  const untrusted=parseInsights({results:{entities:[entity('https://lookalike-qloo.com/x.jpg')]}})[0];
+  assert.equal(untrusted.imageUrl,undefined);
+  const insecure=parseInsights({results:{entities:[entity('http://staging.images.qloo.com/i/example.jpg')]}})[0];
+  assert.equal(insecure.imageUrl,undefined);
+});
