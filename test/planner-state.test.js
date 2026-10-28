@@ -74,3 +74,21 @@ test('decision styles change tradeoffs without modifying observed source evidenc
   assert.equal(average.decisionStyle,'average');
   assert.ok(average.trace.some(step=>/no new Qloo request/i.test(step.detail)));
 });
+
+test('specific Qloo entity identity survives a shareable brief',()=>{
+  const pinned={...sample,people:[
+    {name:'Alex',favorites:['Interstellar'],selectedEntities:[{name:'Interstellar',id:'057DA9D9-399B-437E-8BCA-A80E499125EF',type:'urn:entity:movie'}]},
+    {name:'Sam',favorites:['Jazz']}
+  ]};
+  const decoded=decodeShareBrief('#plan='+encodeShareBrief(pinned));
+  assert.equal(decoded.people[0].selectedEntities[0].id,'057DA9D9-399B-437E-8BCA-A80E499125EF');
+  assert.equal(decoded.people[0].selectedEntities[0].type,'urn:entity:movie');
+  assert.equal(decoded.people[1].selectedEntities,undefined);
+});
+test('shared Qloo entity selections are only accepted for listed favorites',()=>{
+  const invalid={...sample,people:[
+    {name:'Alex',favorites:['Interstellar'],selectedEntities:[{name:'Not listed',id:'057DA9D9-399B-437E-8BCA-A80E499125EF'}]},
+    {name:'Sam',favorites:['Jazz']}
+  ]};
+  assert.throws(()=>normalizeBrief(invalid),/Invalid selected Qloo entity/);
+});
