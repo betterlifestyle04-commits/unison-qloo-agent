@@ -46,6 +46,5 @@ test('device library retains no more than eight most recent saves',()=>{
 });
 test('saving a plan is not a Qloo request and requires meaningful data',()=>{
   assert.throws(()=>createPlanArchive(brief,result,{}),/unique plan ID/);
-  const bad=createPlanArchive({...brief,people:[{name:'One',favorites:[]}]},result,{id:'bad'});
-  assert.equal(bad,null);
+  assert.throws(()=>createPlanArchive({...brief,people:[{name:'One',favorites:[]}]},result,{id:'bad'}),/between two and five people/);
 });
