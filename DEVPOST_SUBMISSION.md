@@ -19,6 +19,9 @@ Users can:
 - Try balanced, protect-lowest-fit, or group-average decision styles; these re-rank existing evidence immediately.
 - Veto or restore a candidate without generating another Qloo API request.
 - Inspect the plan → search → insights → comparison → re-evaluation trace.
+- Use the optional **Qloo Taste Finder** to clarify cultural entity names without copying an API key into the browser.
+- Review grounded Qloo-supplied artwork and each candidate's **evidence inspector**, where native API metadata is separate from UNISON's rank-derived scores.
+- Record a session-only **Yes / Maybe / No** vote for each listed participant. This is an explicit human agreement step, not a machine prediction or a real-time multi-user vote.
 - Share an editable group setup through a consent-based link, or copy a plan summary.
 - Open a Google Maps search for a live place candidate; this is discovery, not a verified booking.
 - Explore a clearly labeled fictional demonstration if live API access isn't available.
@@ -73,3 +76,9 @@ We do not claim venue opening hours, reservation availability, guaranteed locati
 - [ ] Manual live Qloo testing of several city-and-favorite combinations
 - [ ] Desktop and mobile browser visual QA, including accessibility
 - [ ] Final Devpost project submission by its official deadline
+
+## New human-in-the-loop milestone
+
+UNISON now separates two decisions: **Qloo-informed candidate discovery and ranking** versus **explicit human approval**. The new per-candidate group ballot records Yes / Maybe / No responses only in the browser, and a unanimous approval badge appears only when every participant says Yes. This does not change the inferred preference fit or make any additional Qloo API request. It is an in-person convenience, not a remote voting system. The optional Qloo Taste Finder helps users discover official entity names on demand. Live recommendation artwork is accepted only from a Qloo-controlled image CDN, with no invented venue photographs.
+
+This improves the hackathon demonstration's clarity: an agent proposes and transparently evaluates options, but the group retains the final decision.
