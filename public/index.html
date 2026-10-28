@@ -69,6 +69,15 @@
           <p class="field-help">Give each person up to three specific favorites, separated by commas. Think films, artists, or cultural references.</p>
           <div id="people" class="people"></div>
           <button class="add-person" type="button" id="add-person"><span aria-hidden="true">＋</span> Add another person</button>
+          <section id="taste-finder" class="taste-finder" aria-label="Find cultural references using Qloo" hidden>
+            <div class="taste-finder-title"><strong>✧ Taste Finder</strong><span>Look up official cultural entity names using Qloo.</span></div>
+            <div class="taste-finder-form">
+              <label for="taste-query" class="input-label">Find a movie, musician, or cultural reference<input type="search" id="taste-query" maxlength="80" placeholder="e.g. Interstellar"></label>
+              <label for="taste-owner" class="input-label">Add to participant<select id="taste-owner"></select></label>
+              <button type="button" id="taste-find" class="taste-find-button">Search Qloo ↗</button>
+            </div>
+            <div id="taste-find-results" class="taste-find-results" role="status" aria-live="polite"><p>Search manually to avoid unnecessary API requests. Names are not sent to Qloo.</p></div>
+          </section>
         </fieldset>
         <fieldset class="field-section"><legend><span class="field-number">4</span> Choose your evidence</legend>
           <div class="mode" id="source-options">
