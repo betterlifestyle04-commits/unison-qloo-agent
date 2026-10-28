@@ -19,7 +19,7 @@ test('calendar values escape punctuation and cannot inject ICS properties',()=>{
   assert.equal(escapeIcs('Fun, food; friends\\'),String.raw`Fun\, food\; friends\\`);
   const ics=buildCalendarEvent({title:'Hello\nBEGIN:ALARM',date:'2026-11-14',startTime:'19:00',uid:'safe-id',location:'Main; Hall'});
   assert.equal((ics.match(/BEGIN:VEVENT/g)||[]).length,1);
-  assert.equal((ics.match(/BEGIN:ALARM/g)||[]).length,0);
+  assert.doesNotMatch(ics,/(?:^|\r\n)BEGIN:ALARM(?:\r\n|$)/);
   assert.ok(ics.includes('LOCATION:Main\\; Hall'));
 });
 test('invalid calendar inputs fail instead of generating misleading meeting details',()=>{
