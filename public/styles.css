@@ -53,3 +53,34 @@
 .decision-styles button:not([aria-pressed="true"]):hover{background:#eeeaff}
 .decision-tuning p{font-size:.65rem;color:#8583a0;line-height:1.5;margin:10px 0 0}
 @media(max-width:580px){.decision-tuning-head{align-items:flex-start;flex-direction:column}.decision-styles{grid-template-columns:1fr}.decision-styles button{text-align:left;padding:9px 11px}}
+
+/* Visual richness and human group confirmation: both are distinct from taste inference. */
+.candidate-visual{width:100%;height:118px;position:relative;overflow:hidden;background:linear-gradient(125deg,#eeeaff,#f8e5ef);border-radius:11px;margin-bottom:2px}
+.candidate-visual img{width:100%;height:100%;display:block;object-fit:cover}
+.candidate-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 35% 20%,#ded8ff 0%,#f4f1ff 55%,#fbe8ec 100%);color:#9a88da}
+.candidate-placeholder span{font-size:3.2rem;font-weight:650;line-height:1}
+.card:nth-child(3n+2) .candidate-placeholder{background:radial-gradient(circle at 30% 20%,#cbe9e7,#f1faf6 60%,#e0edff)}
+.card:nth-child(3n+3) .candidate-placeholder{background:radial-gradient(circle at 30% 20%,#f9dccc,#fbf5ee 55%,#e7e6fc)}
+.agree-mark{position:absolute;right:8px;bottom:8px;background:#e8fff1;color:#246f51;border-radius:7px;padding:5px 8px;font-size:.61rem;font-weight:800;box-shadow:0 3px 10px #182a3920}
+.voting-intro{background:#f0f7ff;border:1px solid #e1eafe;color:#496b9c;display:flex;flex-direction:column;gap:4px;border-radius:12px;padding:12px 13px;margin-bottom:15px}
+.voting-intro strong{font-size:.78rem}
+.voting-intro span{font-size:.68rem;line-height:1.55;color:#7085a3}
+.approved-choice{background:#edf9f2;border:1px solid #c5ebd2;color:#27794e;padding:12px 14px;border-radius:12px;margin-bottom:15px;font-size:.78rem;line-height:1.55}
+.group-ballot{margin:2px 0 8px;padding:9px 10px;background:#f8f9fe;border:1px solid #e5e8f5;border-radius:10px}
+.group-ballot>summary{display:block;font-size:.7rem;font-weight:850;cursor:pointer;color:#5b5f8a;list-style:none}
+.group-ballot>summary::-webkit-details-marker{display:none}
+.group-ballot>summary:after{content:' +';float:right}
+.group-ballot[open]>summary:after{content:' −'}
+.ballot-count{font-size:.61rem;color:#838da7;padding-left:5px;font-weight:630}
+.group-ballot p{font-size:.63rem;color:#848da1;margin:10px 0;line-height:1.55}
+.ballot-people{display:flex;flex-direction:column;gap:8px}
+.ballot-person{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.ballot-name{font-size:.72rem;color:#566176;font-weight:720;min-width:42px}
+.ballot-actions{display:flex;gap:3px;flex-wrap:wrap}
+.ballot-actions button{background:#fff;border:1px solid #e2e1ec;border-radius:7px;padding:6px 7px;font-weight:700;font-size:.62rem;color:#737991;line-height:1.2;min-height:28px}
+.ballot-actions button:hover{background:#f1eefc}
+.ballot-actions button[aria-pressed=true]{background:#e4dcff;border-color:#9e8ce9;color:#5e4da7}
+.ballot-actions button[data-vote-choice=yes][aria-pressed=true]{background:#e2f7e9;border-color:#8ac9a0;color:#24794b}
+.ballot-actions button[data-vote-choice=no][aria-pressed=true]{background:#ffebeb;border-color:#ebacb3;color:#a63f51}
+.ballot-unanimous{background:#e6f9ed;color:#217951;font-size:.65rem;font-weight:730;border-radius:7px;padding:8px;margin-top:10px}
+@media(max-width:580px){.candidate-visual{height:140px}.ballot-person{align-items:flex-start;flex-direction:column}.ballot-actions{width:100%}.ballot-actions button{flex:1}}
