@@ -16,7 +16,14 @@ async function get(pathname,params,fetchImpl=fetch){
   throw error('Qloo is temporarily unavailable after three safe GET attempts. No demo evidence was substituted.');
 }
 const array=value=>Array.isArray(value)?value:[];
-const candidates=payload=>array(payload?.results?.entities).length?payload.results.entities:array(payload?.results).length?payload.results:array(payload?.data?.entities).length?payload.data.entities:array(payload?.entities);
+// A valid empty Qloo entities array means 'no matches', not a malformed upstream envelope.
+const hasEntitiesArray=payload=>Array.isArray(payload?.results?.entities)||Array.isArray(payload?.results)||Array.isArray(payload?.data?.entities)||Array.isArray(payload?.entities);
+const candidates=payload=>{
+  if(Array.isArray(payload?.results?.entities))return payload.results.entities;
+  if(Array.isArray(payload?.results))return payload.results;
+  if(Array.isArray(payload?.data?.entities))return payload.data.entities;
+  return array(payload?.entities);
+};
 function normalize(item){
   const affinity=item?.query?.affinity??item?.affinity??null;
   const properties=item?.properties??{};
@@ -41,6 +48,20 @@ function normalize(item){
 }
 export function parseSearch(payload){return candidates(payload).map(normalize).filter(item=>item.id&&item.name);}
 export function parseInsights(payload){return candidates(payload).map(normalize).filter(item=>item.id&&item.name);}
-export async function searchFavorite(name,{fetchImpl=fetch}={}){const {payload,cached,url}=await get('/search',{query:name},fetchImpl);const matches=parseSearch(payload);const exact=matches.find(item=>item.name.trim().localeCompare(name.trim(),undefined,{sensitivity:'accent'})===0);return {status:exact?'resolved':matches.length?'ambiguous':'unresolved',exact,matches:matches.slice(0,5),cached,url:url.pathname+url.search};}
-export async function insights(entityIds,domain,{city,budget='any',shortlist=[],fetchImpl=fetch}={}){const ids=[...new Set(entityIds)].slice(0,3);if(!ids.length)throw error('At least one resolved Qloo entity is required.',422);const params={'filter.type':entityTypeFor(domain),'signal.interests.entities':ids.join(','),take:12};if(shortlist.length)params['filter.results.entities']=[...new Set(shortlist)].slice(0,12).join(',');if(domain==='places'&&city?.trim()){params['filter.location.query']=city.trim();params['filter.location.radius']=0;}if(domain==='places'&&budget!=='any')params['filter.price_level.max']={low:1,mid:2,high:4}[budget];const {payload,cached,url}=await get('/v2/insights',params,fetchImpl);const results=parseInsights(payload);if(!results.length)throw error('Qloo returned an empty or unsupported insights envelope. Inspect the documented response and retry with the event key.',502);return {results:results.slice(0,12),cached,url:url.pathname+url.search};}
+export function matchSearchResults(name,matches){
+  const sameName=matches.filter(item=>item.name.trim().localeCompare(name.trim(),undefined,{sensitivity:'accent'})===0);
+  // Multiple *different Qloo entity IDs* with the same visible name must be selected by a person.
+  // Returning the first item would silently confuse a film with an album, artist, or book.
+  const distinct=new Map(sameName.map(item=>[item.id,item]));
+  const exact=distinct.size===1?[...distinct.values()][0]:null;
+  return {status:exact?'resolved':matches.length?'ambiguous':'unresolved',exact,matches:matches.slice(0,8)};
+}
+export async function searchFavorite(name,{fetchImpl=fetch}={}){
+  const {payload,cached,url}=await get('/search',{query:name},fetchImpl);
+  if(!hasEntitiesArray(payload))throw error('Qloo search response had an unsupported structure.',502);
+  return {...matchSearchResults(name,parseSearch(payload)),cached,url:url.pathname+url.search};
+}
+export async function insights(entityIds,domain,{city,budget='any',shortlist=[],fetchImpl=fetch}={}){const ids=[...new Set(entityIds)].slice(0,3);if(!ids.length)throw error('At least one resolved Qloo entity is required.',422);const params={'filter.type':entityTypeFor(domain),'signal.interests.entities':ids.join(','),take:12};if(shortlist.length)params['filter.results.entities']=[...new Set(shortlist)].slice(0,12).join(',');if(domain==='places'&&city?.trim()){params['filter.location.query']=city.trim();params['filter.location.radius']=0;}if(domain==='places'&&budget!=='any')params['filter.price_level.max']={low:1,mid:2,high:4}[budget];const {payload,cached,url}=await get('/v2/insights',params,fetchImpl);if(!hasEntitiesArray(payload))throw error('Qloo returned an unsupported Insights response structure.',502);
+const results=parseInsights(payload);
+return {results:results.slice(0,12),cached,url:url.pathname+url.search};}
 export const __resetQlooCache=()=>cache.clear();
