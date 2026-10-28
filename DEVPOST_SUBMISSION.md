@@ -82,3 +82,11 @@ We do not claim venue opening hours, reservation availability, guaranteed locati
 UNISON now separates two decisions: **Qloo-informed candidate discovery and ranking** versus **explicit human approval**. The new per-candidate group ballot records Yes / Maybe / No responses only in the browser, and a unanimous approval badge appears only when every participant says Yes. This does not change the inferred preference fit or make any additional Qloo API request. It is an in-person convenience, not a remote voting system. The optional Qloo Taste Finder helps users discover official entity names on demand. Live recommendation artwork is accepted only from a Qloo-controlled image CDN, with no invented venue photographs.
 
 This improves the hackathon demonstration's clarity: an agent proposes and transparently evaluates options, but the group retains the final decision.
+
+## Decision Lab — comparing tradeoffs without invented metrics
+
+UNISON now provides an inspectable Decision Lab using only candidates with complete observed group coverage. It compares balanced, protect-lowest-fit, group-average-weighted rules, and an average-only baseline. The resulting explanation shows when a fairness-aware winner differs from the highest-mean candidate and whether the decision remains stable as weights change. No popularity statistics or satisfaction predictions are fabricated, and changing weights does not spend additional API quota.
+
+## Optional device-only plan library
+
+For returning visitors, UNISON can save up to eight group briefs and recommendation summaries **only when the user clicks Save**. Users can reopen a brief, copy a summary or delete it. We clearly warn that names and cultural preferences will be stored in this browser profile. Reopened briefs default to demo mode and require explicit opt-in before any live Qloo calls.
