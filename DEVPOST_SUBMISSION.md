@@ -61,7 +61,7 @@ A second challenge was Qloo quota: users need to revise plans quickly without re
 
 ## Integrity and current verification status
 
-The public Render service is deployed and the server status reports `live-ready` because the key is configured. A user screenshot shows live-mode recommendations. However, this alone is not a comprehensive live-response accuracy or browser-automation validation. The UI and integration still need a final cross-device, multi-city walkthrough before treating every use case as production-ready.
+The public Render service is deployed and the server status reports `live-ready` because the key is configured. An independently initiated, authenticated UNISON-to-Qloo cultural search for **Interstellar** returned real Qloo entity IDs for a movie, albums, a book, and an artist. This validates key authentication and the Qloo Search integration; it does **not** independently validate every Insights response, geographic recommendation, or browser workflow. A user screenshot also shows live-mode recommendations. The UI and integration still need a final cross-device, multi-city walkthrough before treating every use case as production-ready.
 
 We do not claim venue opening hours, reservation availability, guaranteed location accuracy, measured improvements in group satisfaction, or scientifically validated ranking weights.
 
