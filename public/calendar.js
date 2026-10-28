@@ -20,6 +20,20 @@ function validateLocalStart(date,time){
   if(start.getFullYear()!==y||start.getMonth()!==m-1||start.getDate()!==d||start.getHours()!==hour||start.getMinutes()!==minute)throw new Error('The chosen local date or time does not exist in this timezone.');
   return start;
 }
+export function foldIcsLine(line){
+  const encoder=new TextEncoder();
+  let result='',lineBytes=0;
+  for(const character of line){
+    const length=encoder.encode(character).length;
+    if(lineBytes+length>75){
+      result+='\r\n ';
+      lineBytes=1;
+    }
+    result+=character;
+    lineBytes+=length;
+  }
+  return result;
+}
 export function buildCalendarEvent({title,date,startTime,durationMinutes=120,location='',notes='',uid=''},now=new Date()){
   const eventTitle=text(title,120);
   if(!eventTitle)throw new Error('The event needs a name.');
@@ -41,7 +55,7 @@ export function buildCalendarEvent({title,date,startTime,durationMinutes=120,loc
     'DESCRIPTION:'+escapeIcs(description),
     'STATUS:TENTATIVE',
     'END:VEVENT','END:VCALENDAR',''
-  ].join('\r\n');
+  ].map(foldIcsLine).join('\r\n');
 }
 export function agendaText({title,date,startTime,durationMinutes=120,location='',timezone='',note=''}){
   if(!title||!date||!startTime)throw new Error('A choice, date and time are required.');
