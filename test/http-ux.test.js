@@ -62,3 +62,17 @@ test('real results UI offers a non-automatic on-device save action',async()=>{
   assert.match(body,/saveDevicePlan/);
   assert.match(body,/analyzeDecisionTradeoffs/);
 });
+
+test('calendar export is served as a first-party JavaScript module',async()=>{
+  const r=await request('/calendar.js');
+  assert.equal(r.response.status,200);
+  assert.match(r.response.headers.get('content-type'),/application\/javascript/);
+  assert.match(r.body,/buildCalendarEvent/);
+});
+test('recommendation meters avoid inline CSS forbidden by the app CSP',async()=>{
+  const [html,js]=await Promise.all([request('/'),request('/app.js')]);
+  assert.match(html.response.headers.get('content-security-policy'),/style-src 'self'/);
+  assert.match(js.body,/class="fit-meter"/);
+  assert.doesNotMatch(js.body,/style="width:\$\{/);
+  assert.match(js.body,/download-calendar/);
+});
