@@ -53,6 +53,8 @@ test('frontend directs validation focus to the actual brief problem',async()=>{
   assert.match(r.body,/function focusBriefProblem/);
   assert.match(r.body,/problem\.startsWith\('Give every participant'\)/);
   assert.match(r.body,/problem\.startsWith\('Enter a city'\)/);
+  assert.match(r.body,/function markInvalid/);
+  assert.match(r.body,/aria-invalid/);
   assert.doesNotMatch(r.body,/showError\(problem\);form\.querySelector\('#city'\)\?\.focus\(\);/);
 });
 

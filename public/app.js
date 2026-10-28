@@ -47,6 +47,12 @@ function addPerson(values=['',''],chosenEntities=[]){
 starters.forEach(addPerson);
 $('#add-person').addEventListener('click',()=>{if(people.children.length>=5)return;addPerson();people.lastElementChild.querySelector('[data-field=name]').focus();});
 function showError(message=''){error.textContent=message;}
+function markInvalid(input){
+  if(!input)return;
+  input.setAttribute('aria-invalid','true');input.setAttribute('aria-describedby','form-error');
+  const clear=()=>{input.removeAttribute('aria-invalid');input.removeAttribute('aria-describedby');};
+  input.addEventListener('input',clear,{once:true});input.addEventListener('change',clear,{once:true});
+}
 async function copyText(text){
   if(navigator.clipboard?.writeText){try{await navigator.clipboard.writeText(text);return true;}catch{}}
   const area=document.createElement('textarea');area.value=text;area.setAttribute('readonly','');area.style.cssText='position:fixed;opacity:0;pointer-events:none';document.body.append(area);area.select();
@@ -123,10 +129,10 @@ function validate(input){
 function focusBriefProblem(problem,input){
   if(problem.startsWith('Give every participant')){
     const row=[...people.querySelectorAll('.person')].find(person=>{const name=person.querySelector('[data-field=name]').value.trim();const favorite=person.querySelector('[data-field=favorite]').value.trim();return !name||!favorite;});
-    row?.querySelector(row.querySelector('[data-field=name]').value.trim()?'[data-field=favorite]':'[data-field=name]')?.focus();return;
+    const field=row?.querySelector(row.querySelector('[data-field=name]').value.trim()?'[data-field=favorite]':'[data-field=name]');markInvalid(field);field?.focus();return;
   }
-  if(problem.startsWith('Each participant')){const seen=new Set();const row=[...people.querySelectorAll('.person')].find(person=>{const name=person.querySelector('[data-field=name]').value.trim().toLocaleLowerCase();if(seen.has(name))return true;seen.add(name);return false;});row?.querySelector('[data-field=name]')?.focus();return;}
-  if(problem.startsWith('Enter a city')){$('#city')?.focus();return;}
+  if(problem.startsWith('Each participant')){const seen=new Set();const row=[...people.querySelectorAll('.person')].find(person=>{const name=person.querySelector('[data-field=name]').value.trim().toLocaleLowerCase();if(seen.has(name))return true;seen.add(name);return false;});const field=row?.querySelector('[data-field=name]');markInvalid(field);field?.focus();return;}
+  if(problem.startsWith('Enter a city')){const field=$('#city');markInvalid(field);field?.focus();return;}
   error.focus();
 }
 function sameBrief(a,b){if(!a||!b)return false;const extract=x=>JSON.stringify([x.domain,x.mode,x.city,x.budget,x.people]);return extract(a)===extract(b);}
