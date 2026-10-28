@@ -56,7 +56,15 @@ export function normalizeBrief(raw){
     const name=cleanText(person.name,32);
     const favorites=(Array.isArray(person.favorites)?person.favorites:[]).slice(0,3).map(f=>cleanText(f,75)).filter(Boolean);
     if(!name||favorites.length===0)throw new Error('Each participant needs a name and a favorite.');
-    return {name,favorites};
+    const choices=Array.isArray(person.selectedEntities)?person.selectedEntities:[];
+    if(choices.length>3)throw new Error('Too many selected Qloo entities.');
+    const selectedEntities=choices.map(choice=>{
+      if(!isObject(choice)||typeof choice.name!=='string'||typeof choice.id!=='string'||!favorites.some(f=>f.toLowerCase()===choice.name.trim().toLowerCase())||!/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(choice.id)){
+        throw new Error('Invalid selected Qloo entity in the shared brief.');
+      }
+      return {name:cleanText(choice.name,80),id:choice.id,type:cleanText(choice.type,80)};
+    });
+    return {name,favorites,...(selectedEntities.length?{selectedEntities}:{})};
   });
   if(new Set(people.map(p=>p.name.toLowerCase())).size!==people.length)throw new Error('Use different names for each participant.');
   return {
