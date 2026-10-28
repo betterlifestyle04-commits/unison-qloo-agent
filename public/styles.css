@@ -95,3 +95,21 @@
 .evidence-metadata strong,.evidence-metadata code{font-size:.62rem;font-weight:700;color:#5e6780;overflow-wrap:anywhere;max-width:66%;text-align:right}
 .evidence-metadata span:last-child:not(:first-child){text-align:right;overflow-wrap:anywhere}
 .evidence-details p{font-size:.62rem;line-height:1.55;color:#8f92a0;margin:10px 0 0}
+
+/* Manual, quota-conscious cultural entity discovery. */
+#taste-finder[hidden]{display:none}
+.taste-finder{margin:18px 0 4px;padding:15px;border:1px solid #dcd9f5;background:#fafaff;border-radius:13px}
+.taste-finder-title{display:flex;align-items:flex-start;gap:4px;flex-direction:column;margin-bottom:12px}
+.taste-finder-title strong{font-size:.82rem;color:#5e50b3}
+.taste-finder-title span{font-size:.68rem;color:#9192a7;line-height:1.5}
+.taste-finder-form{display:grid;grid-template-columns:1.3fr .75fr;gap:10px;align-items:end}
+.taste-finder-form .input-label input,.taste-finder-form .input-label select{min-width:0}
+.taste-find-button{grid-column:1/-1;border:0;border-radius:9px;background:#6556d7;color:white;padding:10px;font-weight:760;font-size:.75rem}
+.taste-find-button:disabled{opacity:.6;cursor:progress}
+.taste-find-results{margin-top:10px;display:grid;gap:7px}
+.taste-find-results p{color:#81879c;margin:3px 0;font-size:.68rem;line-height:1.6}
+.taste-match{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;border:1px solid #e8e5f1;background:#fff;padding:10px 11px;border-radius:9px;text-align:left}
+.taste-match:hover{background:#eeeaff;border-color:#b6abee}
+.taste-match strong{font-size:.74rem;color:#535b76;overflow-wrap:anywhere}
+.taste-match span{font-size:.65rem;text-transform:capitalize;color:#8278b3}
+@media(max-width:580px){.taste-finder-form{grid-template-columns:1fr}.taste-find-button{grid-column:auto}.taste-match{align-items:flex-start}}
