@@ -38,3 +38,11 @@ test('frontend keeps demo mode opt-in and provides clipboard fallback',async()=>
   assert.doesNotMatch(r.body,/if\(app\.configured&&!app\.hasChangedMode\)\{live\.checked=true;/);
   assert.match(r.body,/Qloo request/);
 });
+
+test('sample groups and shared plans never auto-opt into live Qloo',async()=>{
+  const r=await request('/app.js');
+  assert.equal(r.response.status,200);
+  assert.match(r.body,/applyBrief\(\{\.\.\.preset,mode:currentMode\(\)\}\)/);
+  assert.match(r.body,/applyBrief\(\{\.\.\.decodeShareBrief\(location\.hash\),mode:'demo'\}\)/);
+  assert.doesNotMatch(r.body,/applyBrief\(\{\.\.\.preset,mode:app\.configured\?'live':'demo'\}\)/);
+});
