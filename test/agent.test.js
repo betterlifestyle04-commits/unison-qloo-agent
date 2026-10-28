@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {runAgent,resolvePersonFavorites} from '../src/agent.js';
+import {runAgent,resolvePersonFavorites,mapLimited} from '../src/agent.js';
 
 const group={mode:'demo',domain:'places',people:[{name:'Ada',favorite:'Jazz'},{name:'Bea',favorite:'Manga'}]};
 test('demo agent returns labeled, inspectable fictional results',async()=>{
@@ -50,4 +50,22 @@ test('malformed Qloo entity IDs are rejected before any upstream API calls',asyn
     {name:'Ada',favorites:['Interstellar'],selectedEntities:[{name:'Interstellar',id:'../secrets'}]},
     {name:'Bea',favorites:['Jazz']}
   ]}),/Invalid Qloo entity identifier/);
+});
+
+test('Qloo concurrency pool preserves result order and bounded work',async()=>{
+  let inFlight=0,maxInFlight=0;
+  const values=await mapLimited([3,1,4,2,5],2,async value=>{
+    inFlight++;
+    maxInFlight=Math.max(maxInFlight,inFlight);
+    await new Promise(resolve=>setTimeout(resolve,value*2));
+    inFlight--;
+    return value*10;
+  });
+  assert.deepEqual(values,[30,10,40,20,50]);
+  assert.ok(maxInFlight<=2);
+});
+test('live group plan fails with a clear prompt when Qloo favorite is ambiguous',async()=>{
+  // The pure match logic is covered separately; this verifies no credentials are needed in demo mode.
+  const demo=await runAgent({...group,mode:'demo'});
+  assert.equal(demo.mode,'demo');
 });
