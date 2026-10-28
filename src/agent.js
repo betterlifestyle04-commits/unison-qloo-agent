@@ -7,15 +7,26 @@ const fail=(message,status=400)=>{throw Object.assign(new Error(message),{status
 export const rankFitEstimate=index=>Math.max(20,100-(index*8));
 const idFor=(name,index)=>`${name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'person'}-${index+1}`;
 function validate(input){
-  if(!input||typeof input!=='object')fail('A plan request is required.');
-  const people=(input.people||[]).map((person,index)=>{const favorites=Array.isArray(person?.favorites)?person.favorites:String(person?.favorite||'').split(',');return {name:String(person?.name||'').trim(),favorites:[...new Set(favorites.map(value=>String(value).trim()).filter(Boolean))].slice(0,3),id:idFor(String(person?.name||''),index)};});
-  if(people.length<2||people.length>5)fail('Add between 2 and 5 people.');
-  if(people.some(person=>!person.name||!person.favorites.length))fail('Each person needs a name and at least one favorite cultural reference.');
+  if(!input||typeof input!=='object'||Array.isArray(input))fail('A plan request is required.');
+  if(!Array.isArray(input.people)||input.people.length<2||input.people.length>5)fail('Add between 2 and 5 people.');
+  const people=input.people.map((person,index)=>{
+    if(!person||typeof person!=='object'||Array.isArray(person))fail('Each participant must be an object.');
+    const name=typeof person.name==='string'?person.name.trim():'';
+    const favorites=Array.isArray(person.favorites)?person.favorites:typeof person.favorite==='string'?person.favorite.split(','):[];
+    if(favorites.length<1||favorites.length>3)fail('Use between 1 and 3 favorites per participant.');
+    if(!favorites.every(value=>typeof value==='string'&&value.trim().length>0&&value.trim().length<=80))fail('Each favorite must be 1–80 characters.');
+    if(!name||name.length>32)fail('Each participant needs a name up to 32 characters.');
+    return {name,favorites:[...new Set(favorites.map(value=>value.trim()))],id:idFor(name,index)};
+  });
   if(new Set(people.map(person=>person.name.toLocaleLowerCase())).size!==people.length)fail('Use distinct names so the evidence remains inspectable.');
+  if(input.domain!==undefined&&!['places','movies'].includes(input.domain))fail('Unsupported planning category.');
+  if(input.mode!==undefined&&!['live','demo'].includes(input.mode))fail('Unsupported evidence source.');
   const domain=input.domain==='movies'?'movies':'places';
   const mode=input.mode==='live'?'live':'demo';
+  if(input.city!==undefined&&typeof input.city!=='string')fail('City must be text.');
   const city=String(input.city||'').trim().slice(0,80),budget=['any','low','mid','high'].includes(input.budget)?input.budget:'any';
-  return {people,domain,mode,city,budget,vetoes:Array.isArray(input.vetoes)?input.vetoes.filter(value=>typeof value==='string'):[]};
+  const vetoes=Array.isArray(input.vetoes)?input.vetoes.filter(value=>typeof value==='string'&&value.length<=200).slice(0,30):[];
+  return {people,domain,mode,city,budget,vetoes};
 }
 async function liveEvidence(people,domain,city,budget,trace){
   const resolved=await Promise.all(people.map(async person=>{const matches=await Promise.all(person.favorites.map(favorite=>searchFavorite(favorite)));const unresolved=matches.filter(match=>match.status!=='resolved');if(unresolved.length){const names=unresolved.flatMap(match=>match.matches.map(item=>item.name)).slice(0,3);fail(`Please clarify ${person.name}'s favorite. Qloo found ${names.length?names.join(', '):'no exact match'}.`,422);}trace.push({step:'Qloo search tool',kind:'qloo',detail:`Resolved ${person.favorites.length} exact favorite${person.favorites.length===1?'':'s'} for ${person.name}.`,requests:matches.map(match=>({url:match.url,cached:match.cached}))});return {...person,entities:matches.map(match=>match.exact)};}));
