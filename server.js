@@ -11,17 +11,17 @@ function send(res,status,payload){res.writeHead(status,{'Content-Type':'applicat
 export const server=http.createServer(async(req,res)=>{
   try {
     const url=new URL(req.url,'http://localhost');
-    if(req.method==='GET'&&url.pathname==='/api/status') return send(res,200,{configured:isLiveConfigured(),status:isLiveConfigured()?'Key present; live not yet verified':'Demo only; awaiting Qloo key',source:'server-configuration'});
+    if(req.method==='GET'&&url.pathname==='/api/status') return send(res,200,{configured:isLiveConfigured(),mode:isLiveConfigured()?'live-ready':'demo',status:isLiveConfigured()?'Key present; live requests can be attempted':'Demo only; awaiting Qloo key',source:'server-configuration'});
     if(req.method==='POST'&&url.pathname==='/api/plan'){
       const chunks=[]; let size=0;
       for await(const chunk of req){size+=chunk.length; if(size>64000){return send(res,413,{error:'Request too large'});}chunks.push(chunk);}
       let input;try{input=JSON.parse(Buffer.concat(chunks).toString('utf8'));}catch{return send(res,400,{error:'Invalid JSON'});}
       const result=await runAgent(input);return send(res,200,result);
     }
-    if(req.method==='GET'&&files.has(url.pathname)){
+    if((req.method==='GET'||req.method==='HEAD')&&files.has(url.pathname)){
       const file=files.get(url.pathname);
       const buf=await readFile(path.join(root,file));
-      res.writeHead(200,{'Content-Type':MIME[path.extname(file)],'X-Content-Type-Options':'nosniff','Cache-Control':'no-cache','Content-Security-Policy':"default-src 'self'; style-src 'self'; script-src 'self'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; object-src 'none'; frame-ancestors 'none'"});res.end(buf);return;
+      res.writeHead(200,{'Content-Type':MIME[path.extname(file)],'X-Content-Type-Options':'nosniff','Cache-Control':'no-cache','Content-Security-Policy':"default-src 'self'; style-src 'self'; script-src 'self'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; object-src 'none'; frame-ancestors 'none'"});res.end(req.method==='HEAD'?undefined:buf);return;
     }
     return send(res,404,{error:'Not found'});
   }catch(e){if(!res.headersSent)send(res,e.status||500,{error:e.status?e.message:'Internal server error'});}
