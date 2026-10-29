@@ -1,6 +1,6 @@
 # UNISON — Different tastes. One great plan.
 
-UNISON is a fairness-aware group taste negotiation agent for the [Qloo Agentic Hackathon](https://qloo.devpost.com/). Instead of recommending the most popular option or maximizing average taste, it tries to avoid outcomes that leave one participant unhappy. **The public application is deployed and the server reports the hackathon Qloo key as configured. A user-observed live-result example exists; production behavior remains subject to further authenticated end-to-end and visual testing.**
+UNISON is a fairness-aware group taste negotiation agent for the [Qloo Agentic Hackathon](https://qloo.devpost.com/). Instead of recommending the most popular option or maximizing average taste, it tries to avoid outcomes that leave one participant unhappy. **The public application is deployed. On October 29, 2026, independent one-time GitHub Actions checks confirmed real Qloo Search, Insights discovery and shortlist evaluation, plus a two-person live movie plan returning 12 real candidates, 11 with full participant coverage. Browser-level desktop/mobile and mocked-live interaction tests also pass. Other group sizes, location filters, and all venue facts remain outside the scope of these checks.**
 
 ## Fast start
 
@@ -218,3 +218,19 @@ The Live Qloo selection now contains an **optional "Check Qloo connection"** but
 The check runs **only on an explicit click in Live mode**, not when loading the page, opening a group link or switching modes. It is throttled to **two attempts per ten minutes per connection** and may use up to **three Qloo GET operations, plus Qloo-adapter retries on transient failures**. It is a limited integration diagnostic, not proof that every other movie, geographic place, budget filter or recommendation will work. A check with valid Search but no matching Insights returns `ok:false`, not a made-up success.
 
 The pure diagnostic is `src/qloo-diagnostics.js` (mock tests: `test/qloo-diagnostics.test.js`). Browser testing intercepts the health request with a labeled mock response to verify explicit consent and zero transfer of group data; those mocks must never be described as authenticated Qloo availability. To validate actual credentials, use the opt-in control on the deployed website and inspect its live result.
+
+## Verified production Qloo runs — October 29, 2026
+
+These **actual network-backed tests** ran from GitHub Actions against UNISON's production Render service using its existing server-side Qloo credential. They used only public movie names and fictional participants, without exposing an API key or uploading real group profiles.
+
+| Live test | What it actually verified | Result |
+|---|---|---|
+| [Search → discovery → shortlist](https://github.com/betterlifestyle04-commits/unison-qloo-agent/actions/runs/40877477130) | Exact *Interstellar* movie entity, Qloo Insights discovery and filtered shortlist | **Passed:** 3 returned movie candidates, 3 shortlisted matches |
+| [Two-person real plan](https://github.com/betterlifestyle04-commits/unison-qloo-agent/actions/runs/40878074739) | `/api/taste-lookup` for *Interstellar* and *Inception*, then `POST /api/plan` with two fictional participants and pinned UUIDs | **Passed:** 12 real movie candidates; 11 fully covered by both participants |
+| [Chromium UI checks](https://github.com/betterlifestyle04-commits/unison-qloo-agent/actions/runs/40871949229) | Demo and mocked-live UI, voting, local exports, privacy and responsive layouts | **Passed:** mocked network interactions only |
+
+Scope matters: the two production smoke checks are deliberately limited **one-shot runs**, not recurring quota consumption. They demonstrate that Qloo authenticated requests succeed for the tested movie workflow. They **do not** verify three-to-five-person performance, places by city, opening hours, bookability, or accuracy of UNISON's ordinal-fit heuristics. Browser tests use mocks for Qloo, but real Chromium interactions.
+
+## Decision Stability analysis
+
+With **three or more participants**, the results now include **Decision Stability**, a transparent leave-one-out stress test built from the exact same already observed shortlist. It hypothetically computes a winner while omitting each person's relative-fit evidence in turn, so groups can see when a decision is sensitive to a particular taste. No one is actually removed from the real decision and no new Qloo request occurs. A two-person group cannot run this diagnostic because removing one would no longer leave a group. It is not a vote or a prediction of enjoyment. See `public/group-stability.js` and `test/group-stability.test.js`.
