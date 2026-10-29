@@ -48,6 +48,12 @@ test('desktop: full demo workflow, votes, weighting, archive, report and calenda
     assert.ok(await page.locator('.decision-lab').count()>0);
     assert.ok(await page.locator('.evidence-audit').count()>0);
     assert.ok(await page.locator('.head-to-head').count()>0);
+    const stability=page.locator('.group-stability');
+    assert.equal(await stability.count(),1);
+    await stability.locator('summary').click();
+    assert.ok(await stability.locator('.stability-table tbody tr').count()>=3);
+    assert.match(await stability.innerText(),/hypothetical|Hypothetically/i);
+
     assert.equal(calls.length,1,'one-click demo must make exactly one planning request');
     assert.equal(JSON.parse(calls[0].body).mode,'demo');
     await page.screenshot({path:'browser-tests/screenshots/desktop-demo.png',fullPage:true});
