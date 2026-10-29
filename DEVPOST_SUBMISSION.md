@@ -61,21 +61,24 @@ A second challenge was Qloo quota: users need to revise plans quickly without re
 
 ## Integrity and current verification status
 
-The public Render service is deployed and the server status reports `live-ready` because the key is configured. An independently initiated, authenticated UNISON-to-Qloo cultural search for **Interstellar** returned real Qloo entity IDs for a movie, albums, a book, and an artist. This validates key authentication and the Qloo Search integration; it does **not** independently validate every Insights response, geographic recommendation, or browser workflow. A user screenshot also shows live-mode recommendations. The UI and integration still need a final cross-device, multi-city walkthrough before treating every use case as production-ready.
+As of October 29, 2026, UNISON has passed independently initiated, **authenticated production Qloo Search and Insights tests**: a two-person movie plan (12 candidates; 11 with complete evidence), two-person Oslo places (12 candidates, all fully covered), three-person Oslo places with the medium restaurant price-tier filter (12 candidates, all fully covered), and a five-person movie plan using two shared public taste anchors (12 candidates; 11 fully covered). These tests were executed against the live Render server and retain public GitHub Actions evidence. Tests also cover mocked-live and fictional-demo user journeys in real desktop/mobile Chromium browsers.
 
-We do not claim venue opening hours, reservation availability, guaranteed location accuracy, measured improvements in group satisfaction, or scientifically validated ranking weights.
+The new Decision Status dashboard, accessible workspace navigation, brief readiness guidance, manual venue checks, and privacy-aware exports provide additional group-control and execution transparency. We do **not** claim independently verified venue addresses, opening hours, reservation availability, guaranteed restaurant prices, calibrated enjoyment probabilities, or five independent cultural tastes in the five-person test.
+
+A standalone demo requires no account. Live Qloo is explicitly opt-in; the server keeps the API key private.
 
 ## Submission checklist
 
-- [x] Public GitHub repo and MIT license
-- [x] Public hosted Node web service
-- [x] Server-only Qloo secret and documented tool flow
-- [x] Demo results clearly labeled fictional
-- [x] Reproducible automated tests and CI
-- [x] Responsive interface and inspectable agent trace
-- [ ] Manual live Qloo testing of several city-and-favorite combinations
-- [ ] Desktop and mobile browser visual QA, including accessibility
-- [ ] Final Devpost project submission by its official deadline
+- [x] Public GitHub repository with detected MIT license and setup instructions
+- [x] Publicly hosted Node app (no sign-up)
+- [x] Server-only Qloo API key with real authenticated Search and Insights evidence
+- [x] Fictional demo clearly distinguished from real Qloo results
+- [x] GitHub Actions unit/integration checks and desktop/mobile Chromium browser tests
+- [x] Reproducible public results and honest limitation disclosures
+- [x] Public English description and two-minute judge walkthrough
+- [ ] **Submit the entry in Devpost** (the owner must complete the submission form)
+
+**Qloo Agentic Hackathon deadline: October 30, 2026, 11:45 p.m. EDT (October 31, 04:45 in Norway). Video not required.**
 
 ## New human-in-the-loop milestone
 
