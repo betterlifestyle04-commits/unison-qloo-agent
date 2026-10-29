@@ -155,6 +155,43 @@ test('mobile: working demo and responsive navigation without document overflow',
   }finally{await context.close();}
 });
 
+test('planner carries participant edits and practical constraints into demo requests',async()=>{
+  const context=await browser.newContext({viewport:{width:1280,height:800}});
+  const page=await context.newPage();trackErrors(page);
+  const plans=[];
+  page.on('request',request=>{if(request.url().includes('/api/plan'))plans.push(request.postDataJSON());});
+  try{
+    await page.goto(origin+'/',{waitUntil:'networkidle'});
+    assert.equal(await page.locator('#people .person').count(),3);
+    await page.locator('#add-person').click();
+    assert.equal(await page.locator('#people .person').count(),4);
+    assert.equal(await page.locator('#people .person').last().locator('[data-field=name]').evaluate(node=>document.activeElement===node),true);
+    await page.locator('#people .person').last().locator('.remove').click();
+    assert.equal(await page.locator('#people .person').count(),3);
+
+    await page.locator('#city').fill('Oslo');
+    await page.locator('#budget').selectOption('low');
+    await page.locator('#people .person').first().locator('[data-field=favorite]').fill('Studio Ghibli, jazz');
+    const firstPlan=page.waitForResponse(response=>response.url().includes('/api/plan')&&response.request().method()==='POST');
+    await page.locator('#submit-plan').click();
+    await firstPlan;
+    await waitForResults(page);
+    assert.equal(plans.length,1);
+    assert.deepEqual({domain:plans[0].domain,city:plans[0].city,budget:plans[0].budget},{domain:'places',city:'Oslo',budget:'low'});
+    assert.deepEqual(plans[0].people[0].favorites,['Studio Ghibli','jazz']);
+
+    await page.locator('input[name="domain"][value="movies"]').check({force:true});
+    const secondPlan=page.waitForResponse(response=>response.url().includes('/api/plan')&&response.request().method()==='POST');
+    await page.locator('#submit-plan').click();
+    await secondPlan;
+    await waitForResults(page);
+    assert.equal(plans.length,2);
+    assert.equal(plans[1].domain,'movies');
+    assert.equal(plans[1].mode,'demo');
+    assert.deepEqual(errors,[]);
+  }finally{await context.close();}
+});
+
 test('shared link remains demo-only even when status indicates Qloo is configured',async()=>{
   const context=await browser.newContext({viewport:{width:1280,height:800}});
   const page=await context.newPage();trackErrors(page);
