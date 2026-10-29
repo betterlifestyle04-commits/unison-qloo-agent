@@ -24,7 +24,8 @@ async function waitForResults(page){
 test.before(async()=>{
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
   origin='http://127.0.0.1:'+server.address().port;
-  browser=await chromium.launch({headless:true});
+  const executablePath=process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE;
+  browser=await chromium.launch({headless:true,...(executablePath?{executablePath,args:['--no-sandbox']}:{} )});
   await mkdir('browser-tests/screenshots',{recursive:true});
 });
 test.after(async()=>{
