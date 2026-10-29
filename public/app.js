@@ -52,7 +52,7 @@ $('#add-person').addEventListener('click',()=>{if(people.children.length>=5)retu
 function showError(message=''){error.textContent=message;}
 async function copyText(text){
   if(navigator.clipboard?.writeText){try{await navigator.clipboard.writeText(text);return true;}catch{}}
-  const area=document.createElement('textarea');area.value=text;area.setAttribute('readonly','');area.style.cssText='position:fixed;opacity:0;pointer-events:none';document.body.append(area);area.select();
+  const area=document.createElement('textarea');area.value=text;area.setAttribute('readonly','');area.className='clipboard-proxy';document.body.append(area);area.select();
   let copied=false;try{copied=typeof document.execCommand==='function'&&document.execCommand('copy');}catch{copied=false;}finally{area.remove();}return copied;
 }
 function currentMode(){return form.querySelector('input[name=mode]:checked')?.value||'demo';}
