@@ -119,3 +119,13 @@ test('clipboard fallback avoids blocked inline styling under strict Content Secu
   assert.doesNotMatch(app.body,/area\.style\.cssText/);
   assert.match(css.body,/\.clipboard-proxy/);
 });
+
+test('Agreement Pulse is served and participant vote control remains client-side',async()=>{
+  const [module,app]=await Promise.all([request('/consensus.js'),request('/app.js')]);
+  assert.equal(module.response.status,200);
+  assert.match(module.response.headers.get('content-type'),/javascript/);
+  assert.match(module.body,/agreementPulse/);
+  assert.match(app.body,/renderAgreementPulse/);
+  assert.match(app.body,/open-top-ballot/);
+  assert.match(app.body,/Only the people using this browser/);
+});
