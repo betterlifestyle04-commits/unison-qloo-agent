@@ -134,3 +134,33 @@ Automated tests inject duplicate, wrong-domain, and outside-shortlist candidates
 UNISON now offers a manual **Qloo connection diagnostic** visible only in live mode. A visitor can explicitly test a fixed public sample through real Search, Insights discovery and Insights shortlist evaluation. The results report each stage separately so a configured API key is never confused with verified Insights responses. No private group names or favorites are sent during this diagnostic. We limit frequency to protect API quota; passing a one-title movie diagnostic is not a guarantee that other filters or places will return good recommendations.
 
 Its logic has isolated tests with fake Qloo tools, and browser tests verify the control doesn't call the API without a click. We have **not** claimed an actual verified production Insights result until a user runs the live diagnostic successfully.
+
+## Verified real-Qloo production evidence — October 29, 2026
+
+We have now verified more than a configured key or mock tests. A one-time GitHub Actions smoke test against UNISON's actual Render production server successfully resolved the movie *Interstellar*, obtained three Qloo Insights discovery candidates, and re-evaluated all three through a filtered shortlist (see [workflow evidence](https://github.com/betterlifestyle04-commits/unison-qloo-agent/actions/runs/40877477130)).
+
+We then ran a second, independent full **live two-person group** workflow with fictional participants and the movies *Interstellar* and *Inception*. UNISON's real `/api/plan` completed entity selection, both Qloo discovery calls, both shared-shortlist evaluation calls, and returned **12 real movie candidates, including 11 supported by evidence for both people** ([production workflow evidence](https://github.com/betterlifestyle04-commits/unison-qloo-agent/actions/runs/40878074739)). No Qloo API key or personal information was committed.
+
+This is specifically live movie-planning evidence; we do not claim every places/city filter, three-to-five-person group or real-world venue fact was verified.
+
+## Decision stability under hypothetical group changes
+
+We added a **Decision Stability** stress test for groups of three to five. It re-ranks the same fully supported shortlist, hypothetically omitting each participant's taste evidence in turn, and discloses whether the top option changes. This highlights potential dependence on one voice without changing the actual group, consulting Qloo again, or confusing predicted preferences with human votes.
+
+## Confirmed live Oslo place workflow
+
+On October 29, 2026, an independent one-time production CI run verified **live Oslo-constrained Qloo places** end to end with two fictitious participants and public movie taste anchors. It returned **12 real Qloo place candidates and complete comparable signals for both participants on all 12**, with person-by-person discovery and shortlist evaluation traces. See [production evidence](https://github.com/betterlifestyle04-commits/unison-qloo-agent/actions/runs/40883494386). This confirms the API workflow for a sample Oslo request, not opening hours, physical address accuracy, price, bookability or other city/budget combinations.
+
+UNISON also now offers a **Venue Reality Check** under the tentative calendar handoff. Groups can explicitly mark address, hours, costs, and reservation/walk-in requirements reviewed for their selected option, with independent checklists per candidate. These markings are browser-local and self-reported: UNISON never claims to have verified or booked a venue.
+
+## Verified three-person budget-constrained live plan
+
+On October 29, 2026, a one-shot real production test with three fictitious participants and exact public Qloo movie taste anchors successfully returned **12 live places in the requested Oslo locality, with full person-level evidence for all 12**. Every discovery and shortlist Insights request carried the restaurant-specific `filter.price_level.max=2` parameter. [Test evidence](https://github.com/betterlifestyle04-commits/unison-qloo-agent/actions/runs/40885037384).
+
+We've also improved practical transparency. The application explains the difference between a Qloo restaurant price-level cap and actual group costs, discloses the scope of the locality query, identifies venue metadata as unverified, and only inserts a meeting location into an exported calendar event after a participant types it. Neither Qloo price tiers nor user-marked readiness checklists constitute a venue booking or confirmed availability.
+
+## Verified maximum group size
+
+The production service has now also completed a one-shot **five-person live Qloo movie plan** using fictional people and two repeated public movie preferences. It returned **12 Qloo candidates, 11 with complete evidence for all five people**, and recorded each participant's discovery and evaluation in the provenance trace. [Production five-person test](https://github.com/betterlifestyle04-commits/unison-qloo-agent/actions/runs/40886047104). Repeating two taste anchors tests orchestration capacity rather than distinct personal profiles; live preferences and venue facts are not independently validated.
+
+Our external Qloo evidence therefore spans **two**, **three** and **five** participants, with a real mid-budget Oslo places test for three; it does not imply that every location, price tier, group combination or user environment has been tested.

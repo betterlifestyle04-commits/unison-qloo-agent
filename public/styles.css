@@ -337,3 +337,51 @@
 @media(max-width:580px){.diagnostics-heading{align-items:stretch;flex-direction:column}.diagnostics-heading button{white-space:normal;width:100%}}
 .quick-start-options button[aria-pressed="true"]{background:#6556d7;border-color:#6556d7;color:#fff;box-shadow:0 5px 14px #5e4ecb2e}.quick-start-options button[aria-pressed="true"] span{color:#fff}
 .agreement-actions{display:flex;flex-wrap:wrap;gap:8px}.agreement-actions button:disabled{opacity:.55;cursor:not-allowed}
+
+/* Group decision stability: clearly hypothetical, no API calls or participant exclusion. */
+.group-stability{padding:15px;background:linear-gradient(130deg,#f6fcfa,#f6f9ff);border:1px solid #dce8e7;border-radius:14px;margin:0 0 17px}
+.group-stability>summary{cursor:pointer;color:#44786f;font-size:.77rem;font-weight:840;line-height:1.5;list-style:none}
+.group-stability>summary::-webkit-details-marker{display:none}
+.group-stability>summary:after{content:'+';float:right;margin-left:10px}
+.group-stability[open]>summary:after{content:'−'}
+.group-stability p{font-size:.71rem;color:#76878a;line-height:1.6;margin:11px 0}
+.group-stability strong{color:#396e63}
+.stability-overview{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:14px 0}
+.stability-overview>div{border:1px solid #e2e9e8;border-radius:10px;background:#fff;padding:12px;display:flex;flex-direction:column;gap:4px}
+.stability-overview>div strong{font-size:1.07rem;letter-spacing:-.02em;overflow-wrap:anywhere}
+.stability-overview>div span{font-size:.65rem;line-height:1.45;color:#859296}
+.stability-table{overflow-x:auto}
+.stability-table table{width:100%;min-width:330px;border-collapse:collapse}
+.stability-table th,.stability-table td{padding:9px 7px;border-bottom:1px solid #e0e8e6;text-align:left;font-size:.67rem;line-height:1.4;color:#667d80}
+.stability-table th{font-weight:790}
+.group-stability .stability-summary{color:#446b64;font-weight:720}
+.group-stability>small{display:block;font-size:.62rem;color:#87959a;line-height:1.6;margin-top:8px}
+@media(max-width:580px){.group-stability{padding:12px}.stability-overview{grid-template-columns:1fr}}
+
+/* Browser-only human venue reality check. Boxes are never a Qloo verification claim. */
+.venue-readiness{background:linear-gradient(135deg,#fbfcf6,#f5fbff);border:1px solid #dae8d9;border-radius:15px;padding:17px;margin:0 0 19px}
+.venue-readiness-head{display:flex;align-items:start;justify-content:space-between;gap:12px}
+.venue-readiness-head .overline{font-size:.61rem;color:#538471;margin:0 0 5px}
+.venue-readiness-head h4{font-size:1.11rem;letter-spacing:-.038em;color:#385b55;margin:0}
+.venue-readiness-count{background:#e9f5e8;border:1px solid #d8e9d7;border-radius:8px;color:#547b58;padding:7px 10px;font-size:.66rem;font-weight:830;white-space:nowrap}
+.venue-readiness-intro{color:#667b75;font-size:.72rem;line-height:1.65;margin:12px 0 15px}
+.venue-readiness-intro strong{color:#426f5b}
+.venue-readiness-items{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.venue-readiness-item{border:1px solid #dfe9e3;border-radius:11px;background:white;padding:12px;display:flex;gap:9px;align-items:start;cursor:pointer;min-width:0}
+.venue-readiness-item input{accent-color:#438268;flex:none;width:16px;height:16px;margin-top:2px}
+.venue-readiness-item span{display:flex;flex-direction:column;gap:4px}
+.venue-readiness-item strong{font-size:.72rem;line-height:1.4;color:#4e6962}
+.venue-readiness-item small{font-size:.64rem;line-height:1.5;color:#86948b}
+.venue-readiness-item:has(input:checked){background:#f0faf3;border-color:#b5d8bb}
+.venue-readiness-progress{display:flex;align-items:center;gap:12px;margin:13px 0 10px}
+.venue-readiness-progress .fit-meter{min-width:30px}
+.venue-readiness-progress p{flex:0 1 60%;font-size:.65rem;color:#658171;margin:0;line-height:1.45}
+.venue-readiness>small{display:block;color:#83958b;line-height:1.55;font-size:.63rem}
+@media(max-width:580px){.venue-readiness{padding:13px}.venue-readiness-head{flex-wrap:wrap}.venue-readiness-items{grid-template-columns:1fr}.venue-readiness-progress{display:block}.venue-readiness-progress .fit-meter{width:100%}.venue-readiness-progress p{margin-top:9px}}
+
+/* Ground each location or budget claim in the actual Qloo API filter used. */
+.place-filter-disclosure{border:1px solid #dedff2;background:linear-gradient(130deg,#f7f9ff,#f9fbfb);border-radius:11px;margin:0 0 13px;padding:11px 13px}
+.place-filter-disclosure summary{cursor:pointer;font-size:.73rem;color:#59649a;font-weight:810;line-height:1.45}
+.place-filter-disclosure summary:focus-visible{outline:2px solid #7161d8;outline-offset:4px}
+.place-filter-disclosure p{font-size:.69rem;color:#737b93;line-height:1.65;margin:10px 0 0}
+.place-filter-disclosure strong{color:#4f5886}

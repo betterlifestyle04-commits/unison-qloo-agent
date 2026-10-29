@@ -1,0 +1,65 @@
+name: One-time live five-person Qloo movie plan
+
+on:
+  push:
+    paths:
+      - '.github/workflows/qloo-five-person-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  five-person:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Complete one real five-person movie plan with public taste anchors
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE='https://unison-qloo.onrender.com'
+          echo '## Real five-person UNISON movie plan' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Fictional names and two previously verified public movie titles repeated across the group; only one plan submission, no retries.' >> "$GITHUB_STEP_SUMMARY"
+          # Two independently verified cultural anchors, repeated across five
+          # fictional participants. This validates max-size orchestration, not
+          # five distinct taste profiles.
+          for title in Interstellar Inception; do
+            file="/tmp/$title.json"
+            status=$(curl --silent --show-error --max-time 60 --retry 0 --get --data-urlencode "q=$title" --output "$file" --write-out '%{http_code}' "$BASE/api/taste-lookup")
+            if [ "$status" != "200" ] || ! jq -e '(.matches|type)=="array"' "$file" >/dev/null 2>&1; then
+              echo "❌ Taste Finder returned HTTP $status or non-JSON / unsupported content for $title. No group plan was submitted." >> "$GITHUB_STEP_SUMMARY"
+              echo "Response size: $(wc -c < "$file") bytes" >> "$GITHUB_STEP_SUMMARY"
+              exit 1
+            fi
+            id=$(jq -r --arg title "$title" '[.matches[] | select((.name | ascii_downcase)==($title | ascii_downcase)) | select(.type=="urn:entity:movie") | .id][0] // empty' "$file")
+            if [[ ! "$id" =~ ^[0-9a-fA-F-]{36}$ ]]; then
+              echo "❌ Exact public movie ID not returned for $title." >> "$GITHUB_STEP_SUMMARY"
+              exit 1
+            fi
+            if [ "$title" = Interstellar ]; then A="$id"; else B="$id"; fi
+          done
+          jq -n --arg a "$A" --arg b "$B" '{
+            mode:"live",domain:"movies",city:"",budget:"any",
+            people:[
+              {name:"Ada",favorites:["Interstellar"],selectedEntities:[{id:$a,name:"Interstellar",type:"urn:entity:movie"}]},
+              {name:"Bea",favorites:["Inception"],selectedEntities:[{id:$b,name:"Inception",type:"urn:entity:movie"}]},
+              {name:"Cam",favorites:["Interstellar"],selectedEntities:[{id:$a,name:"Interstellar",type:"urn:entity:movie"}]},
+              {name:"Dee",favorites:["Inception"],selectedEntities:[{id:$b,name:"Inception",type:"urn:entity:movie"}]},
+              {name:"Eli",favorites:["Interstellar"],selectedEntities:[{id:$a,name:"Interstellar",type:"urn:entity:movie"}]}
+            ]
+          }' > /tmp/five.json
+          CODE=$(curl --silent --show-error --max-time 210 --retry 0 --request POST --header 'Content-Type: application/json' --data-binary @/tmp/five.json --output /tmp/result.json --write-out '%{http_code}' "$BASE/api/plan")
+          if [ "$CODE" != 200 ]; then
+            echo "❌ Full five-person workflow returned HTTP $CODE" >> "$GITHUB_STEP_SUMMARY"
+            jq -r '.error // "Unexpected response"' /tmp/result.json >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          jq -r '"People: "+(.people|length|tostring)+" | Live candidates: "+(.ranked|length|tostring)+" | Full group coverage: "+(.supported|length|tostring)' /tmp/result.json | tee -a "$GITHUB_STEP_SUMMARY"
+          jq -r '.trace[] | select(.kind=="qloo") | "- "+.step+": "+.detail' /tmp/result.json >> "$GITHUB_STEP_SUMMARY"
+          jq -e '(.mode=="live") and (.domain=="movies") and (.people|length==5) and (.ranked|length>0) and (.quality.evaluation.accepted>0) and ([.trace[]|select(.step=="Qloo discovery tool")]|length==5) and ([.trace[]|select(.step=="Qloo shortlist evaluation tool")]|length==5)' /tmp/result.json >/dev/null || {
+            echo '❌ Five-person evidence or Qloo trace incomplete.' >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          }
+          echo '✅ Five per-person Qloo discovery and shortlist evaluation steps completed; identical taste requests may share cached results.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Actual satisfaction and film availability were not measured.' >> "$GITHUB_STEP_SUMMARY"

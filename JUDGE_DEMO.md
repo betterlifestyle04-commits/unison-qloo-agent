@@ -71,3 +71,25 @@ After a **live** recommendation appears, expand **Qloo response integrity** belo
 ## Optional live Qloo self-check (uses hackathon quota)
 
 After explicitly selecting **Live Qloo**, expand the evidence choices and click **Check Qloo connection**. This is an opt-in, limited live API check using a fixed public film: Search, discovery Insights, and shortlist Insights. Show the three labeled results. It never sends participant names/favorites and is limited to two checks per ten minutes per connection. **Only say the real Qloo Insights integration was verified if the button actually reports successful live steps**. A configured key or simulated browser mock does not count.
+
+## Verified production evidence for judges
+
+The app's **live Qloo Search + Insights** path passed one production smoke test on October 29, 2026 ([evidence](https://github.com/betterlifestyle04-commits/unison-qloo-agent/actions/runs/40877477130)). A separate **live two-person movie plan** with fictitious Ada/Bea identities and *Interstellar*/*Inception* anchors returned 12 Qloo movie candidates, including 11 with full group coverage ([evidence](https://github.com/betterlifestyle04-commits/unison-qloo-agent/actions/runs/40878074739)). These are real production Qloo requests, distinct from the Chromium mocked-live and fictional demo test suites. They do not demonstrate verified locations, hours, or other group sizes.
+
+For a three-person demo, expand **Decision Stability**: a leave-one-out hypothetical view shows whether the current fair winner would change if any one person's taste evidence were omitted. This uses only the existing results, does not change the actual decision or remove anyone, and requires no Qloo calls.
+
+## New: live Oslo places evidence and practical handoff
+
+The [one-time live production Oslo test](https://github.com/betterlifestyle04-commits/unison-qloo-agent/actions/runs/40883494386) returned 12 real Qloo places, with both fictional participants having candidate evidence for all 12. The test used a strict Oslo locality query and budget `any`. That verifies the integration's tested response path, not every individual venue fact.
+
+For the fictional outing demo, open **Make it happen** and **Venue Reality Check**. Check the address and opening hours boxes; the progress advances. Switch to another candidate and observe a separate, unchecked list; switch back to see the previous marks. These are manual group reminders—not provider checks, reservations, or automatic validation—and they do not spend Qloo quota.
+
+## Verified 3-person budgeted live place flow
+
+A separate production CI run on October 29, 2026 successfully generated **12 places and 12 fully covered recommendations for three fictional participants** in Oslo, with all six Qloo Insights requests carrying the `mid` restaurant price-level cap ([evidence](https://github.com/betterlifestyle04-commits/unison-qloo-agent/actions/runs/40885037384)). Be precise: these are Qloo place candidates, not independently address-verified venues or guaranteed restaurant prices.
+
+Expand **Location and budget · What was actually checked?** to demonstrate transparent constraints. Then open **Make it happen**, show that the calendar location stays blank until entered by a person, and use the manual Venue Reality Check without claiming to reserve or confirm anything.
+
+## Maximum-size live test evidence
+
+The [verified five-person real Qloo production run](https://github.com/betterlifestyle04-commits/unison-qloo-agent/actions/runs/40886047104) completed UNISON's full movie agent for fictional Ada/Bea/Cam/Dee/Eli, using *Interstellar* and *Inception* as repeated anchors. It returned 12 Qloo movie candidates; 11 were comparable for all five people. Explain that five-person support is **orchestration-tested**, but that using two repeated tastes does not validate five independent, contrasting profiles. The earlier live [three-person Oslo budget run](https://github.com/betterlifestyle04-commits/unison-qloo-agent/actions/runs/40885037384) separately confirmed Qloo's restaurant-specific mid price-tier filter reached all discovery/evaluation calls.

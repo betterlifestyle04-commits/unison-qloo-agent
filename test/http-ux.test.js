@@ -237,3 +237,33 @@ test('Qloo diagnostics are visible only after explicit Live mode and require a c
   assert.match(app.body,/method:'POST'/);
   assert.doesNotMatch(app.body,/fetch\('\/api\/qloo-diagnostics'\)\.then/);
 });
+
+test('group stability review is served locally and does not require another Qloo call',async()=>{
+ const [module,app,style]=await Promise.all([request('/group-stability.js'),request('/app.js'),request('/styles.css')]);
+ assert.equal(module.response.status,200);
+ assert.match(module.response.headers.get('content-type'),/javascript/);
+ assert.match(module.body,/analyzeGroupStability/);
+ assert.match(app.body,/renderGroupStability/);
+ assert.match(app.body,/hypothetical decision sensitivity/i);
+ assert.match(style.body,/\.group-stability/);
+});
+
+test('Venue Reality Check is a browser-only planning aid that never claims Qloo verified availability',async()=>{
+  const [helper,app,css]=await Promise.all([request('/venue-readiness.js'),request('/app.js'),request('/styles.css')]);
+  assert.equal(helper.response.status,200);
+  assert.match(helper.response.headers.get('content-type'),/application\/javascript/);
+  assert.match(helper.body,/venueCheckItems/);
+  assert.match(app.body,/renderVenueReadiness/);
+  assert.match(app.body,/data-readiness-key/);
+  assert.match(app.body,/venue details have not been independently verified/);
+  assert.match(css.body,/\.venue-readiness/);
+});
+
+test('place constraints disclose city and restaurant price tier without claiming cost verification',async()=>{
+  const [module,app,home]=await Promise.all([request('/place-constraints.js'),request('/app.js'),request('/')]);
+  assert.equal(module.response.status,200);
+  assert.match(module.body,/describePlaceConstraints/);
+  assert.match(app.body,/placeConstraintDisclosure/);
+  assert.match(app.body,/manuallyConfirmedMeetingLocation\(app\.agenda\.meeting\)/);
+  assert.match(home.body,/mainly to restaurants/);
+});

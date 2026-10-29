@@ -6,13 +6,16 @@ import {auditGroupEvidence,recoverySuggestions} from './evidence-audit.js';
 import {buildDecisionReport,reportFilename} from './decision-report.js';
 import {agreementPulse} from './consensus.js';
 import {eligibleComparisons,compareOptions} from './head-to-head.js';
+import {analyzeGroupStability} from './group-stability.js';
+import {venueCheckItems,updateVenueCheck,venueCheckProgress} from './venue-readiness.js';
+import {describePlaceConstraints,manuallyConfirmedMeetingLocation} from './place-constraints.js';
 import {planningRecovery} from './recovery.js';
 const $=selector=>document.querySelector(selector);
 const people=$('#people'),template=$('#person-template'),form=$('#plan-form'),results=$('#results'),error=$('#form-error'),submitBtn=$('#submit-plan'),statusBadge=$('#mode-status');
 const starters=[['Maya','Studio Ghibli'],['Jon','Anthony Bourdain'],['Priya','Knives Out']];
 const selectedByPerson=new WeakMap();
 function showPinned(node){const selections=[...(selectedByPerson.get(node)?.values()||[])];const hint=node.querySelector('[data-pinned]');if(hint)hint.textContent=selections.length?'Selected Qloo entity: '+selections.map(x=>x.name+' ('+String(x.type||'entity').replace(/^urn:entity:/,'')+')').join(', '):'';}
-const app={configured:false,requesting:false,lastInput:null,lastResult:null,showAll:false,hasChangedMode:false,baseResult:null,hashLoaded:false,decisionStyle:'balanced',ballots:{},compare:{left:'',right:''},lookupBusy:false,agenda:{choiceId:'',date:'',time:'19:00',duration:'120',meeting:'',notes:''}};
+const app={configured:false,requesting:false,lastInput:null,lastResult:null,showAll:false,hasChangedMode:false,baseResult:null,hashLoaded:false,decisionStyle:'balanced',ballots:{},compare:{left:'',right:''},venueChecks:{},lookupBusy:false,agenda:{choiceId:'',date:'',time:'19:00',duration:'120',meeting:'',notes:''}};
 const escape=value=>{const element=document.createElement('span');element.textContent=String(value??'');return element.innerHTML.replace(/\"/g,'&quot;').replace(/'/g,'&#39;');};
 const number=value=>Number.isFinite(value)?String(Math.round(value)):null;
 const initial=value=>String(value||'?').trim().slice(0,1).toUpperCase();
@@ -210,7 +213,7 @@ function card(item,index,data){
       ${voteStatus.unanimous?'<span class="agree-mark">✓ Group approved</span>':''}
     </div>
     <div class="card-top"><span class="rank-pill">${label}</span><strong>${val}<small>${item.score===null?'':'/100'}</small></strong></div>
-    <h4>${title}</h4><p class="candidate-meta">${kind}${item.price?' · '+escape('Price tier '+item.price):''}</p>${note?`<p class="candidate-note">${escape(note)}</p>`:''}
+    <h4>${title}</h4><p class="candidate-meta">${kind}${item.price?' · '+escape('Price tier '+item.price):''}</p>${note?`<p class="candidate-note">${data.mode==='live'&&data.domain==='places'?'Qloo-supplied venue detail (unverified): ':''}${escape(note)}</p>`:''}
     <div class="divider-line"></div>
     <div class="stat-row"><span class="label">Lowest fit</span>${fitBar(item.minimum)}</div>
     <div class="stat-row"><span class="label">Average fit</span>${fitBar(item.average)}</div>
@@ -257,7 +260,7 @@ function planHandoff(data,choices,groupApproved){
       <label class="input-label handoff-wide">Meeting place / address (optional)<input id="agenda-meeting" maxlength="160" value="${escape(agenda.meeting)}" placeholder="Specify your agreed meeting point"></label>
       <label class="input-label handoff-wide">Notes (optional)<input id="agenda-notes" maxlength="240" value="${escape(agenda.notes)}" placeholder="What should everyone bring or confirm?"></label>
     </div>
-    <p class="handoff-timezone">Time interpreted using your browser timezone: <strong>${escape(timezone)}</strong>. For a different city or timezone, check the calendar entry before sharing.</p>
+    <p class="handoff-timezone">For a place outing, the meeting location stays blank until your group enters one. Qloo-supplied addresses are suggestions, not verified meeting points. Time interpreted using your browser timezone: <strong>${escape(timezone)}</strong>. For a different city or timezone, check the calendar entry before sharing.</p>
     <div class="handoff-actions"><button type="button" id="download-calendar">↓ Download tentative calendar event</button><button type="button" id="copy-agenda">Copy meeting details</button></div>
     <p class="handoff-footnote">UNISON does not check venue opening hours or availability, make reservations, or send invitations. Confirm details with everyone before treating this as final.</p>
     <p id="agenda-message" class="handoff-message" role="status" aria-live="polite"></p>
@@ -316,6 +319,32 @@ function renderAgreementPulse(data){
     <p class="agreement-privacy">Only the people using this browser can record votes here. Voting doesn't change Qloo results or automatically make a booking.</p>
   </section>`;
 }
+function renderGroupStability(data){
+  const report=analyzeGroupStability(data,app.decisionStyle);
+  if(!report.comparable)return `<details class="group-stability">
+    <summary>Decision Stability · Does everyone affect the choice?</summary>
+    <p>${escape(report.reason)}</p>
+  </details>`;
+  const rows=report.trials.map(trial=>`<tr>
+    <th scope="row">${escape(trial.personName)}</th>
+    <td>${escape(trial.winnerName)}</td>
+    <td>${trial.changesWinner?'Different leader':'Same leader'}</td>
+  </tr>`).join('');
+  return `<details class="group-stability" aria-label="Hypothetical decision sensitivity">
+    <summary>Decision Stability · Is the shared match sensitive to one voice?</summary>
+    <p class="stability-intro">A transparent stress test using ${report.eligible} fully supported candidates and the current <strong>${escape(decisionStyles[report.style].label)}</strong> weighting. Everyone remains included in the real result.</p>
+    <div class="stability-overview">
+      <div><strong>${report.changes} / ${report.trials.length}</strong><span>Hypothetical comparisons that change the leading option</span></div>
+      <div><strong>${escape(report.winner.name)}</strong><span>Leader with all participants included</span></div>
+    </div>
+    <div class="stability-table"><table>
+      <thead><tr><th scope="col">Hypothetically omit</th><th scope="col">Alternative leader</th><th scope="col">Outcome</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>
+    <p class="stability-summary">${escape(report.explanation)}</p>
+    <small>This is not a vote, an instruction to remove people, a happiness prediction or another Qloo query. Every scenario reuses exactly the same observed candidate signals.</small>
+  </details>`;
+}
 function renderHeadToHead(data){
   const choices=eligibleComparisons(data);
   if(choices.length<2)return '<section class="head-to-head"><p class="overline">EXPLORE THE TRADE-OFFS</p><h4>Head-to-Head</h4><p>At least two fully supported, non-vetoed options are needed before you can compare them fairly.</p></section>';
@@ -356,6 +385,31 @@ function integrityReview(data){
     <small>This validates response membership only. It does not independently verify a venue's address, opening hours, price or bookability, and the per-person fit remains a relative UNISON heuristic.</small>
   </details>`;
 }
+function placeConstraintDisclosure(data){
+  const info=describePlaceConstraints(data);
+  if(!info)return '';
+  return `<details class="place-filter-disclosure" aria-label="What Qloo has and has not checked">
+    <summary>Location and budget · What was actually checked?</summary>
+    <p><strong>Location filter:</strong> ${escape(info.location)}</p>
+    <p><strong>Price filter:</strong> ${escape(info.price)}</p>
+    <p><strong>Before sharing:</strong> Verify the actual venue address, travel distance, opening hours, accessibility, prices and booking arrangements yourself. UNISON does not contact venues.</p>
+  </details>`;
+}
+function renderVenueReadiness(data,choices){
+  if(data.domain!=='places'||!choices.length)return '';
+  const selected=choices.find(item=>item.id===app.agenda.choiceId)||choices[0];
+  const progress=venueCheckProgress(app.venueChecks,selected.id);
+  const example=data.mode==='demo';
+  return `<section class="venue-readiness" aria-labelledby="venue-readiness-heading">
+    <div class="venue-readiness-head"><div><span class="overline">BEFORE YOUR GROUP GOES</span><h4 id="venue-readiness-heading">Venue Reality Check</h4></div><span class="venue-readiness-count" id="venue-readiness-count">${progress.marked} / ${progress.total} reviewed</span></div>
+    <p class="venue-readiness-intro">For <strong>${escape(selected.name)}</strong>: ${example?'This is a fictional demo venue.':'This is a real Qloo candidate, but venue details have not been independently verified.'} Mark what <em>your group</em> has checked before sharing a final plan.</p>
+    <div class="venue-readiness-items">
+      ${venueCheckItems.map(item=>`<label class="venue-readiness-item"><input type="checkbox" data-readiness-key="${item.id}" data-readiness-candidate="${escape(selected.id)}" ${app.venueChecks[selected.id]?.[item.id]?'checked':''}><span><strong>${escape(item.label)}</strong><small>${escape(item.hint)}</small></span></label>`).join('')}
+    </div>
+    <div class="venue-readiness-progress"><meter class="fit-meter" min="0" max="100" value="${progress.percent}" aria-label="Venue reality checklist ${progress.percent} percent marked reviewed" id="venue-readiness-meter">${progress.percent}%</meter><p id="venue-readiness-message" role="status" aria-live="polite">${escape(progress.label)}</p></div>
+    <small>Checklist marks stay in this page only. They are self-reported, do not change Qloo ranking, do not verify venue facts, and do not make or confirm bookings. Changing options displays that option's separate checklist.</small>
+  </section>`;
+}
 function render(data){
   app.lastResult=data;
   const approved=data.ranked.filter(item=>item.sufficient&&!item.vetoed);
@@ -367,6 +421,7 @@ function render(data){
   results.innerHTML=`<div class="result-topline"><div><p class="overline">${escape(status)}</p><h3>${top?'Your best shared match':'We need a little more evidence'}</h3><p class="result-sub">${escape(data.domain==='places'?(data.city?'Planning for '+data.city:'No city selected'):'Movie night')} · ${data.people.length} people · ${count} fully covered option${count===1?'':'s'}</p></div><div class="result-actions"><button id="download-report" class="text-button" type="button">↓ Decision report</button><button id="save-plan" class="text-button" type="button">Save on this device</button><button id="copy-plan" class="text-button" type="button" ${top?'':'disabled'}>Copy plan ↗</button><button id="reset-veto" class="text-button" type="button">Clear vetoes</button></div></div>
     <div class="source-banner ${data.mode==='live'?'live':''}" role="status"><strong>${escape(sourceName(data))}.</strong> ${escape(data.disclaimer)}</div>
     ${integrityReview(data)}
+    ${placeConstraintDisclosure(data)}
     <p class="report-privacy"><span aria-hidden="true">◈</span> The Decision Report downloads to your device and includes group names, cultural favorites, and any votes recorded here. Share it thoughtfully.</p>
     <p id="report-message" class="report-message" role="status" aria-live="polite"></p>
     <section class="decision-tuning" aria-label="How should we balance the group's preferences?">
@@ -375,6 +430,7 @@ function render(data){
       <p>${escape(decisionStyles[app.decisionStyle].description)} These weights are UNISON heuristics, not measurements of happiness.</p>
     </section>
     ${decisionLab(data)}
+    ${renderGroupStability(data)}
     ${renderHeadToHead(data)}
     ${renderEvidenceAudit(data)}
     ${renderAgreementPulse(data)}
@@ -384,20 +440,30 @@ function render(data){
     ${top?`<article class="winner"><div class="winner-inner"><p class="eyebrow">✳ THE BEST CURRENT COMPROMISE</p><h3>${escape(top.name)}</h3><div class="winner-meta"><span>${escape(data.domain==='movies'?'Movie recommendation':'Place recommendation')}</span><span>${escape(data.mode==='live'?'Qloo candidates':'Fictional demo candidates')}</span>${data.city&&data.domain==='places'?'<span>'+escape(data.city)+'</span>':''}</div><p>${escape(top.note||top.address||'Recommended based on the available cross-person taste signals.')}</p><div class="winner-stats"><div><strong>${escape(top.score)}</strong><small>UNISON relative score / 100</small></div><div><strong>${number(top.minimum)}</strong><small>Lowest relative fit</small></div><div><strong>${Math.round(top.coverage*100)}%</strong><small>Signal coverage</small></div></div></div></article>`:''}
     ${top?`<div class="compromise-context"><span class="context-icon">◎</span><span><strong>What makes this a compromise?</strong><small>${escape(leastMatched?leastMatched.name+' has the lowest relative fit at '+number(top.minimum)+'/100. UNISON considers this alongside the group average when ranking options.':'UNISON compares each participant using relative-fit evidence.')}</small></span></div>`:''}
     ${planHandoff(data,approved,groupApproved)}
+    ${renderVenueReadiness(data,approved)}
     <div class="cards-heading"><h4>Explore the shortlist</h4><small>${data.ranked.length} candidate${data.ranked.length===1?'':'s'}</small></div>
     <div class="cards">${show.map((item,i)=>card(item,i,data)).join('')}</div>
     ${data.ranked.length>6?`<button id="show-all" class="add-person" type="button">${app.showAll?'Show fewer options':'Show all '+data.ranked.length+' options'} <span aria-hidden="true">↓</span></button>`:''}
     <details class="trace"><summary>How UNISON reached this decision · ${data.trace.length} steps</summary><ol>${data.trace.map(step=>{const label=step.kind==='qloo'?'Qloo request':step.kind==='demo'?'Simulated evidence':'Local computation';const tone=step.kind==='qloo'?'qloo':step.kind==='demo'?'demo':'local';return `<li class="trace-step trace-${tone}"><span class="trace-kind">${label}</span><strong>${escape(step.step)}</strong> — ${escape(step.detail)}${step.requests?.length?`<span class="trace-url">${step.requests.map(request=>escape(request.url+(request.cached?' (cached)':''))).join(' · ')}</span>`:''}</li>`;}).join('')}</ol></details>`;
   const agendaFields={choiceId:'#agenda-choice',date:'#agenda-date',time:'#agenda-time',duration:'#agenda-duration',meeting:'#agenda-meeting',notes:'#agenda-notes'};
   for(const [key,selector] of Object.entries(agendaFields)){
-    results.querySelector(selector)?.addEventListener('change',event=>{app.agenda[key]=event.target.value;});
+    results.querySelector(selector)?.addEventListener('change',event=>{app.agenda[key]=event.target.value;if(key==='choiceId'&&data.domain==='places')render(data);});
     if(key==='meeting'||key==='notes')results.querySelector(selector)?.addEventListener('input',event=>{app.agenda[key]=event.target.value;});
   }
+  results.querySelectorAll('[data-readiness-key]').forEach(box=>box.addEventListener('change',event=>{
+    const candidate=event.target.dataset.readinessCandidate,key=event.target.dataset.readinessKey;
+    app.venueChecks=updateVenueCheck(app.venueChecks,candidate,key,event.target.checked);
+    const progress=venueCheckProgress(app.venueChecks,candidate);
+    const count=results.querySelector('#venue-readiness-count'),meter=results.querySelector('#venue-readiness-meter'),message=results.querySelector('#venue-readiness-message');
+    if(count)count.textContent=progress.marked+' / '+progress.total+' reviewed';
+    if(meter){meter.value=progress.percent;meter.setAttribute('aria-label','Venue reality checklist '+progress.percent+' percent marked reviewed');}
+    if(message)message.textContent=progress.label;
+  }));
   const agendaDetails=()=>{
     const chosen=approved.find(item=>item.id===app.agenda.choiceId);
     if(!chosen)throw new Error('Choose an available option before scheduling.');
     const title=(data.mode==='demo'?'[Fictional demo] ':'')+chosen.name;
-    const meeting=app.agenda.meeting.trim()||(data.mode==='live'&&data.domain==='places'?[chosen.name,chosen.address||data.city].filter(Boolean).join(', '):'');
+    const meeting=manuallyConfirmedMeetingLocation(app.agenda.meeting);
     const timezone=Intl.DateTimeFormat().resolvedOptions().timeZone||'device local time';
     if(!app.agenda.date||!app.agenda.time)throw new Error('Choose a calendar date and starting time.');
     return {title,date:app.agenda.date,startTime:app.agenda.time,durationMinutes:Number(app.agenda.duration),location:meeting,notes:app.agenda.notes.trim(),timezone};
@@ -540,6 +606,7 @@ async function submitPlan(input,{preserveScroll=false}={}){
     if(!response.ok){const failure=new Error(data.error||'We could not create this plan.');failure.status=response.status;throw failure;}
     app.ballots={};
     app.compare={left:'',right:''};
+    app.venueChecks={};
     app.agenda={choiceId:'',date:'',time:'19:00',duration:'120',meeting:'',notes:''};
     app.baseResult=data;
     render(app.decisionStyle==='balanced'?data:applyVetoLocally(data,[],app.decisionStyle));
@@ -587,7 +654,7 @@ function applyBrief(raw){
   $('#budget').value=input.budget;
   people.replaceChildren();
   input.people.forEach(p=>addPerson([p.name,p.favorites.join(', ')],p.selectedEntities||[]));
-  app.lastInput=null;app.lastResult=null;app.baseResult=null;app.ballots={};app.compare={left:'',right:''};app.agenda={choiceId:'',date:'',time:'19:00',duration:'120',meeting:'',notes:''};app.showAll=false;
+  app.lastInput=null;app.lastResult=null;app.baseResult=null;app.ballots={};app.compare={left:'',right:''};app.venueChecks={};app.agenda={choiceId:'',date:'',time:'19:00',duration:'120',meeting:'',notes:''};app.showAll=false;
   results.innerHTML='<div class="empty"><span class="eyebrow">READY FOR YOUR GROUP</span><h3>Different tastes, one plan.</h3><p>Review the group brief and select Find our common ground to create a new shortlist.</p></div>';
   showError();updateFormPresentation();
 }

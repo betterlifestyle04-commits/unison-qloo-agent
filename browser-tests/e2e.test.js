@@ -49,6 +49,23 @@ test('desktop: full demo workflow, votes, weighting, archive, report and calenda
     assert.ok(await page.locator('.decision-lab').count()>0);
     assert.ok(await page.locator('.evidence-audit').count()>0);
     assert.ok(await page.locator('.head-to-head').count()>0);
+    const stability=page.locator('.group-stability');
+    assert.equal(await stability.count(),1);
+    await stability.locator('summary').click();
+    assert.ok(await stability.locator('.stability-table tbody tr').count()>=3);
+    assert.match(await stability.innerText(),/hypothetical|Hypothetically/i);
+    const venue=page.locator('.venue-readiness');
+    assert.equal(await venue.count(),1);
+    assert.match(await venue.innerText(),/fictional demo venue/i);
+    await venue.locator('[data-readiness-key="location"]').check();
+    await venue.locator('[data-readiness-key="hours"]').check();
+    assert.match(await page.locator('#venue-readiness-count').innerText(),/2 \/ 4 reviewed/);
+    await page.locator('#agenda-choice').selectOption({index:1});
+    assert.match(await page.locator('#venue-readiness-count').innerText(),/0 \/ 4 reviewed/);
+    await page.locator('#agenda-choice').selectOption({index:0});
+    assert.match(await page.locator('#venue-readiness-count').innerText(),/2 \/ 4 reviewed/);
+
+
     assert.equal(calls.length,1,'one-click demo must make exactly one planning request');
     assert.equal(JSON.parse(calls[0].body).mode,'demo');
     await page.screenshot({path:'browser-tests/screenshots/desktop-demo.png',fullPage:true});
@@ -112,6 +129,13 @@ test('desktop: full demo workflow, votes, weighting, archive, report and calenda
     const calendarText=await readFile(await calendar.path(),'utf8');
     assert.match(calendarText,/STATUS:TENTATIVE/);
     assert.match(calendarText,/No reservation or booking/);
+    assert.match(calendarText,/LOCATION:\r?\n/,'unverified venues must not be silently used as confirmed meeting points');
+    await page.locator('#agenda-meeting').fill('Main entrance, Oslo');
+    const secondCalendarEvent=page.waitForEvent('download');
+    await page.locator('#download-calendar').click();
+    const secondCalendar=await secondCalendarEvent;
+    assert.match(await readFile(await secondCalendar.path(),'utf8'),/LOCATION:Main entrance\\, Oslo/);
+    assert.ok(await page.locator('.place-filter-disclosure').count()>0);
     assert.deepEqual(errors,[], 'no uncaught browser JavaScript errors');
   }finally{await context.close();}
 });
