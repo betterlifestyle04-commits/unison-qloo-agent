@@ -58,14 +58,15 @@ export async function resolvePersonFavorites(person,search=searchFavorite){
   });
 }
 async function liveEvidence(people,domain,city,budget,trace){
-  const resolved=await Promise.all(people.map(async person=>{
+  // Limit concurrent participant resolution. Each participant resolves at most two favorites at once.
+  const resolved=await mapLimited(people,2,async person=>{
     const matches=await resolvePersonFavorites(person);
     const unresolved=matches.filter(match=>match.status!=='resolved');
     if(unresolved.length){const names=unresolved.flatMap(match=>match.matches.map(item=>item.name+(item.type?' ('+item.type.replace(/^urn:entity:/,'')+')':''))).slice(0,5);fail(`Please clarify ${person.name}'s favorite using Taste Finder. Qloo found ${names.length?names.join(', '):'no exact match'}; titles shared by movies, albums, artists, or books must be selected explicitly.`,422);}
     const picked=matches.filter(match=>match.picked).length;
     trace.push({step:'Qloo entity resolution',kind:'qloo',detail:`Resolved ${person.favorites.length} favorite(s) for ${person.name}, including ${picked} explicitly selected Qloo entity ID(s).`,requests:matches.filter(match=>match.url).map(match=>({url:match.url,cached:match.cached}))});
     return {...person,entities:matches.map(match=>match.exact)};
-  }));
+  });
   const discoveries=await mapLimited(resolved,2,async person=>{
     const response=await insights(person.entities.map(entity=>entity.id),domain,{city,budget});
     trace.push({step:'Qloo discovery tool',kind:'qloo',detail:`Requested ${domain} candidates for ${person.name}${city&&domain==='places'?` within ${city}`:''}.`,requests:[{url:response.url,cached:response.cached}]});
