@@ -119,6 +119,8 @@ test('desktop: full demo workflow, votes, weighting, archive, report and calenda
     await page.locator('#device-plans [data-open-device]').first().click();
     assert.equal(await page.locator('input[name="mode"][value="demo"]').isChecked(),true);
     assert.equal(calls.length,before,'restoring a saved brief must not submit a new plan');
+    await page.locator('#device-plans [data-delete-device]').first().click();
+    assert.match(await page.locator('#device-plans').innerText(),/No saved plans yet/i);
 
     await page.locator('#instant-demo').click();
     await page.locator('#results .result-topline').waitFor();
