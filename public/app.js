@@ -39,7 +39,7 @@ function addPerson(values=['',''],chosenEntities=[]){
   const node=template.content.firstElementChild.cloneNode(true);
   const name=node.querySelector('[data-field=name]'),favorite=node.querySelector('[data-field=favorite]');
   name.value=values[0];favorite.value=values[1];
-  selectedByPerson.set(node,new Map(chosenEntities.map(item=>[item.name.toLowerCase(),item])));
+  selectedByPerson.set(node,new Map((Array.isArray(chosenEntities)?chosenEntities:[]).filter(item=>item&&typeof item.name==='string').map(item=>[item.name.toLowerCase(),item])));
   favorite.addEventListener('input',()=>{
     const stillListed=new Set(favorite.value.split(',').map(x=>x.trim().toLowerCase()).filter(Boolean));
     const saved=selectedByPerson.get(node);
