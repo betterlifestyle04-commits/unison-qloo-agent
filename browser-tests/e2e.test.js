@@ -66,6 +66,10 @@ test('desktop: full demo workflow, votes, weighting, archive, report and calenda
     await chosen.locator('[data-vote-choice="yes"]').first().click();
     assert.match(await page.locator('.agreement-count').innerText(),/1\s*\/\s*3/);
     assert.equal(calls.length,before,'voting and local fairness controls cannot call Qloo');
+    await page.locator('#clear-local-votes').click();
+    assert.match(await page.locator('.agreement-count').innerText(),/0\s*\/\s*3/);
+    assert.equal(await page.locator('#clear-local-votes').isDisabled(),true);
+    assert.equal(calls.length,before,'clearing local votes cannot call Qloo');
 
     const reportEvent=page.waitForEvent('download');
     await page.locator('#download-report').click();
