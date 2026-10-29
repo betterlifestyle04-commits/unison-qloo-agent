@@ -104,3 +104,9 @@ To make the result genuinely portable, UNISON can now download a **Decision Repo
 ## Public privacy disclosure
 
 A dedicated privacy page explains what enters our backend, which cultural signals are sent to Qloo, what stays on the visitor's device, why share-link fragments are not encrypted, and why human votes are only session-local. The website also avoids CSP-blocked inline styling for its clipboard fallback. These changes improve product trust without introducing accounts, tracking, or another dependency.
+
+## Human agreement and Qloo quota efficiency
+
+The new **Agreement Pulse** makes the human-in-the-loop component more visible. It shows actual Yes/Maybe/No votes, who still needs to answer, and where the leading recommendation has been rejected. It may suggest discussing a different supported choice but never replaces the Qloo-derived shortlist or fabricates consent.
+
+UNISON now also deduplicates concurrent identical Qloo requests and limits cross-site browser requests to its API endpoints. These changes protect limited API quota and keep the hackathon experience more reliable without introducing accounts, a new database, or paid dependencies.
