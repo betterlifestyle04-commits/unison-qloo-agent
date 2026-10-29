@@ -183,6 +183,7 @@ test('planner carries participant edits and practical constraints into demo requ
     assert.equal(await page.locator('#people .person').last().locator('[data-field=name]').evaluate(node=>document.activeElement===node),true);
     await page.locator('#people .person').last().locator('.remove').click();
     assert.equal(await page.locator('#people .person').count(),3);
+    assert.equal(await page.locator('#people .person').last().locator('[data-field=name]').evaluate(node=>document.activeElement===node),true,'removing a participant returns keyboard focus to a remaining participant');
 
     await page.locator('#city').fill('Oslo');
     await page.locator('#budget').selectOption('low');

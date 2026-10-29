@@ -51,7 +51,14 @@ function addPerson(values=['',''],chosenEntities=[]){
     showPinned(node);
   });
   name.addEventListener('input',updateGroup);
-  node.querySelector('.remove').addEventListener('click',()=>{if(people.children.length<=2){showError('A group needs at least two people.');return;}node.remove();updateGroup();});
+  node.querySelector('.remove').addEventListener('click',()=>{
+    if(people.children.length<=2){showError('A group needs at least two people.');return;}
+    const next=node.nextElementSibling?.querySelector('[data-field=name]');
+    const previous=node.previousElementSibling?.querySelector('[data-field=name]');
+    node.remove();
+    updateGroup();
+    (next||previous)?.focus();
+  });
   people.append(node);showPinned(node);updateGroup();
 }
 // forEach also passes an index; addPerson's second parameter is an entity array, not the index.
