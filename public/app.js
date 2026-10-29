@@ -8,6 +8,7 @@ import {agreementPulse} from './consensus.js';
 import {eligibleComparisons,compareOptions} from './head-to-head.js';
 import {analyzeGroupStability} from './group-stability.js';
 import {venueCheckItems,updateVenueCheck,venueCheckProgress} from './venue-readiness.js';
+import {describePlaceConstraints,manuallyConfirmedMeetingLocation} from './place-constraints.js';
 import {planningRecovery} from './recovery.js';
 const $=selector=>document.querySelector(selector);
 const people=$('#people'),template=$('#person-template'),form=$('#plan-form'),results=$('#results'),error=$('#form-error'),submitBtn=$('#submit-plan'),statusBadge=$('#mode-status');
@@ -202,7 +203,7 @@ function card(item,index,data){
       ${voteStatus.unanimous?'<span class="agree-mark">✓ Group approved</span>':''}
     </div>
     <div class="card-top"><span class="rank-pill">${label}</span><strong>${val}<small>${item.score===null?'':'/100'}</small></strong></div>
-    <h4>${title}</h4><p class="candidate-meta">${kind}${item.price?' · '+escape('Price tier '+item.price):''}</p>${note?`<p class="candidate-note">${escape(note)}</p>`:''}
+    <h4>${title}</h4><p class="candidate-meta">${kind}${item.price?' · '+escape('Price tier '+item.price):''}</p>${note?`<p class="candidate-note">${data.mode==='live'&&data.domain==='places'?'Qloo-supplied venue detail (unverified): ':''}${escape(note)}</p>`:''}
     <div class="divider-line"></div>
     <div class="stat-row"><span class="label">Lowest fit</span>${fitBar(item.minimum)}</div>
     <div class="stat-row"><span class="label">Average fit</span>${fitBar(item.average)}</div>
@@ -249,7 +250,7 @@ function planHandoff(data,choices,groupApproved){
       <label class="input-label handoff-wide">Meeting place / address (optional)<input id="agenda-meeting" maxlength="160" value="${escape(agenda.meeting)}" placeholder="Specify your agreed meeting point"></label>
       <label class="input-label handoff-wide">Notes (optional)<input id="agenda-notes" maxlength="240" value="${escape(agenda.notes)}" placeholder="What should everyone bring or confirm?"></label>
     </div>
-    <p class="handoff-timezone">Time interpreted using your browser timezone: <strong>${escape(timezone)}</strong>. For a different city or timezone, check the calendar entry before sharing.</p>
+    <p class="handoff-timezone">For a place outing, the meeting location stays blank until your group enters one. Qloo-supplied addresses are suggestions, not verified meeting points. Time interpreted using your browser timezone: <strong>${escape(timezone)}</strong>. For a different city or timezone, check the calendar entry before sharing.</p>
     <div class="handoff-actions"><button type="button" id="download-calendar">↓ Download tentative calendar event</button><button type="button" id="copy-agenda">Copy meeting details</button></div>
     <p class="handoff-footnote">UNISON does not check venue opening hours or availability, make reservations, or send invitations. Confirm details with everyone before treating this as final.</p>
     <p id="agenda-message" class="handoff-message" role="status" aria-live="polite"></p>
@@ -373,6 +374,16 @@ function integrityReview(data){
     <small>This validates response membership only. It does not independently verify a venue's address, opening hours, price or bookability, and the per-person fit remains a relative UNISON heuristic.</small>
   </details>`;
 }
+function placeConstraintDisclosure(data){
+  const info=describePlaceConstraints(data);
+  if(!info)return '';
+  return `<details class="place-filter-disclosure" aria-label="What Qloo has and has not checked">
+    <summary>Location and budget · What was actually checked?</summary>
+    <p><strong>Location filter:</strong> ${escape(info.location)}</p>
+    <p><strong>Price filter:</strong> ${escape(info.price)}</p>
+    <p><strong>Before sharing:</strong> Verify the actual venue address, travel distance, opening hours, accessibility, prices and booking arrangements yourself. UNISON does not contact venues.</p>
+  </details>`;
+}
 function renderVenueReadiness(data,choices){
   if(data.domain!=='places'||!choices.length)return '';
   const selected=choices.find(item=>item.id===app.agenda.choiceId)||choices[0];
@@ -399,6 +410,7 @@ function render(data){
   results.innerHTML=`<div class="result-topline"><div><p class="overline">${escape(status)}</p><h3>${top?'Your best shared match':'We need a little more evidence'}</h3><p class="result-sub">${escape(data.domain==='places'?(data.city?'Planning for '+data.city:'No city selected'):'Movie night')} · ${data.people.length} people · ${count} fully covered option${count===1?'':'s'}</p></div><div class="result-actions"><button id="download-report" class="text-button" type="button">↓ Decision report</button><button id="save-plan" class="text-button" type="button">Save on this device</button><button id="copy-plan" class="text-button" type="button" ${top?'':'disabled'}>Copy plan ↗</button><button id="reset-veto" class="text-button" type="button">Clear vetoes</button></div></div>
     <div class="source-banner ${data.mode==='live'?'live':''}"><strong>${escape(sourceName(data))}.</strong> ${escape(data.disclaimer)}</div>
     ${integrityReview(data)}
+    ${placeConstraintDisclosure(data)}
     <p class="report-privacy"><span aria-hidden="true">◈</span> The Decision Report downloads to your device and includes group names, cultural favorites, and any votes recorded here. Share it thoughtfully.</p>
     <p id="report-message" class="report-message" role="status" aria-live="polite"></p>
     <section class="decision-tuning" aria-label="How should we balance the group's preferences?">
@@ -440,7 +452,7 @@ function render(data){
     const chosen=approved.find(item=>item.id===app.agenda.choiceId);
     if(!chosen)throw new Error('Choose an available option before scheduling.');
     const title=(data.mode==='demo'?'[Fictional demo] ':'')+chosen.name;
-    const meeting=app.agenda.meeting.trim()||(data.mode==='live'&&data.domain==='places'?[chosen.name,chosen.address||data.city].filter(Boolean).join(', '):'');
+    const meeting=manuallyConfirmedMeetingLocation(app.agenda.meeting);
     const timezone=Intl.DateTimeFormat().resolvedOptions().timeZone||'device local time';
     if(!app.agenda.date||!app.agenda.time)throw new Error('Choose a calendar date and starting time.');
     return {title,date:app.agenda.date,startTime:app.agenda.time,durationMinutes:Number(app.agenda.duration),location:meeting,notes:app.agenda.notes.trim(),timezone};
