@@ -1,6 +1,6 @@
 # UNISON — Different tastes. One great plan.
 
-UNISON is a fairness-aware group taste negotiation agent for the [Qloo Agentic Hackathon](https://qloo.devpost.com/). Instead of recommending the most popular option or maximizing average taste, it tries to avoid outcomes that leave one participant unhappy. **The public application is deployed. On October 29, 2026, independent one-time GitHub Actions checks confirmed real Qloo Search, Insights discovery and shortlist evaluation, plus a two-person live movie plan returning 12 real candidates, 11 with full participant coverage. Browser-level desktop/mobile and mocked-live interaction tests also pass. Other group sizes, location filters, and all venue facts remain outside the scope of these checks.**
+UNISON is a fairness-aware group taste negotiation agent for the [Qloo Agentic Hackathon](https://qloo.devpost.com/). Instead of recommending the most popular option or maximizing average taste, it tries to avoid outcomes that leave one participant unhappy. **Production verification (October 29, 2026):** UNISON completed live authenticated Qloo Search, Insights discovery and shortlist evaluation, plus two-person movie planning, two-person Oslo places, three-person mid-budget Oslo places, and five-person movie planning with repeated public taste anchors. All current desktop/mobile Chromium UI tests pass. Venue facts, unseen taste combinations, and real-world satisfaction remain unverified.
 
 ## Fast start
 
@@ -52,15 +52,16 @@ This is an **unvalidated heuristic, not probability, objective satisfaction, or 
 4. Build a bounded shared shortlist, then evaluate that shortlist per person with `filter.results.entities`. An affinity returned by Qloo is retained as observed; a rank-derived signal is labeled as local context. Absence means unknown, not dislike.
 5. A candidate needs observed evidence from every participant before UNISON calls it a group compromise. Otherwise the app asks for a meaningful next step rather than naming a winner. Vetoes trigger replanning, and the trace labels Qloo tool calls separately from local computation.
 
-## Important next steps before hackathon submission
+## Submission-ready checklist
 
-- Add the event-issued API key as a secret in the hosting provider.
-- Validate `GET /search` and `GET /v2/insights` response envelopes with that actual key and refine the parser if necessary. The documented Insights entity envelope is covered by sanitized fixtures from Qloo's public docs, but **live API was not tested without the key**.
-- Add integration smoke tests against a redacted real-response fixture; handle quota and errors.
-- Deploy publicly to Render (included `render.yaml`) or another Node-capable host; GitHub Pages alone cannot host this secure server.
-- Verify live end-to-end from two different browser/device sessions, mobile usability, input edge cases, and proper error flows.
-- Make repository **public** and ensure MIT `LICENSE` is visible at the top repo UI.
-- Submit the **public hosted app + repository URL + written project description** to Devpost by Oct 30, 2026 at 11:45pm EDT (Oct 31, 04:45am Oslo); demo video is optional.
+- [x] Public source repository with GitHub-detected MIT license and setup instructions.
+- [x] Externally hosted working Node application, with server-only Qloo credentials.
+- [x] Live authenticated Qloo Search and Insights tests, including limited two-, three- and five-person planning cases.
+- [x] Chromium checks for desktop, mobile, demo, mocked live errors, voting, exports and accessibility controls.
+- [x] English project description, limitations, reproducible demo and verified results.
+- [ ] Complete and submit the project entry in Devpost; this must be done by the account owner and is not automatic.
+
+**Official deadline:** October 30, 2026 at 11:45 p.m. EDT (October 31, 2026 at 04:45 CET in Norway). **This event does not require a demonstration video.** Keep the public app reachable for judging November 2–5; see [HACKATHON_RELEASE.md](HACKATHON_RELEASE.md).
 
 ## Environment & security
 
@@ -107,7 +108,7 @@ The service can report `live-ready` when a server-side key is present, but that 
 - The venue data is Qloo's recommendation evidence. UNISON does not guarantee geographic accuracy, opening hours, reservations, availability, or prices.
 - Local fairness controls do not trigger new Qloo requests and therefore cannot discover new candidate entities; submit a new brief to perform a fresh discovery.
 - Share links expose voluntarily included names and favorites. Do not put private secrets or sensitive personal information in the planner.
-- Browser-based end-to-end accessibility and layout testing, and live response accuracy checks across several cities and preference groups, remain ongoing.
+- Automated Chromium accessibility/interaction and desktop/mobile layout checks pass; independent manual accessibility audits and live geographic accuracy checks across multiple cities remain outstanding.
 
 ## Trust and human decision features
 
@@ -229,7 +230,7 @@ These **actual network-backed tests** ran from GitHub Actions against UNISON's p
 | [Two-person real plan](https://github.com/betterlifestyle04-commits/unison-qloo-agent/actions/runs/40878074739) | `/api/taste-lookup` for *Interstellar* and *Inception*, then `POST /api/plan` with two fictional participants and pinned UUIDs | **Passed:** 12 real movie candidates; 11 fully covered by both participants |
 | [Chromium UI checks](https://github.com/betterlifestyle04-commits/unison-qloo-agent/actions/runs/40871949229) | Demo and mocked-live UI, voting, local exports, privacy and responsive layouts | **Passed:** mocked network interactions only |
 
-Scope matters: the two production smoke checks are deliberately limited **one-shot runs**, not recurring quota consumption. They demonstrate that Qloo authenticated requests succeed for the tested movie workflow. They **do not** verify three-to-five-person performance, places by city, opening hours, bookability, or accuracy of UNISON's ordinal-fit heuristics. Browser tests use mocks for Qloo, but real Chromium interactions.
+Scope matters: these production smoke checks are deliberately limited **one-shot runs**, not recurring quota consumption. Additional verified runs cover three-person Oslo places with a mid restaurant price-tier cap and a five-person movie workflow with shared public anchors, detailed further below. They do **not** verify every participant preference combination, city, business address, opening hour, booking, or accuracy of UNISON's ordinal-fit heuristics. Browser tests use mocks for Qloo, but real Chromium interactions.
 
 ## Decision Stability analysis
 
