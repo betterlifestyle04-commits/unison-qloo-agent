@@ -146,3 +146,9 @@ This is specifically live movie-planning evidence; we do not claim every places/
 ## Decision stability under hypothetical group changes
 
 We added a **Decision Stability** stress test for groups of three to five. It re-ranks the same fully supported shortlist, hypothetically omitting each participant's taste evidence in turn, and discloses whether the top option changes. This highlights potential dependence on one voice without changing the actual group, consulting Qloo again, or confusing predicted preferences with human votes.
+
+## Confirmed live Oslo place workflow
+
+On October 29, 2026, an independent one-time production CI run verified **live Oslo-constrained Qloo places** end to end with two fictitious participants and public movie taste anchors. It returned **12 real Qloo place candidates and complete comparable signals for both participants on all 12**, with person-by-person discovery and shortlist evaluation traces. See [production evidence](https://github.com/betterlifestyle04-commits/unison-qloo-agent/actions/runs/40883494386). This confirms the API workflow for a sample Oslo request, not opening hours, physical address accuracy, price, bookability or other city/budget combinations.
+
+UNISON also now offers a **Venue Reality Check** under the tentative calendar handoff. Groups can explicitly mark address, hours, costs, and reservation/walk-in requirements reviewed for their selected option, with independent checklists per candidate. These markings are browser-local and self-reported: UNISON never claims to have verified or booked a venue.
