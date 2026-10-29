@@ -198,3 +198,15 @@ The response includes an aggregate `quality` object with counts of accepted and 
 This protects candidate *membership*, not geographic truth or factual metadata: UNISON does **not** independently certify venue addresses, city boundaries, opening hours, prices, or bookability. Scores remain ordinal UNISON heuristics, not measured satisfaction.
 
 Qloo's published [Insights parameter reference](https://github.com/qloo/docs-public/blob/main/reference/insights-api-deep-dive.md) documents `filter.results.entities` for the shared-candidate evaluation. The extra local screening is UNISON's own safeguard. See `test/candidate-integrity.test.js` and the contamination scenarios in `test/live-pipeline.test.js`.
+
+## Actual Chromium browser acceptance testing
+
+UNISON now has a dedicated **Chromium end-to-end job in GitHub Actions** (in addition to the existing fast unit/integration suite). It opens and uses the actual HTML/JavaScript interface rather than merely checking that the source contains expected strings.
+
+The browser suite in `browser-tests/e2e.test.js` covers desktop and mobile fictional demo planning, fairness reweighting, Head-to-Head, Yes/Maybe/No voting, download of a Decision Report and tentative calendar entry, local saved plans, and shared-link safety. A separate **mocked live UI** scenario validates explicit Live Qloo opt-in, Taste Finder entity pinning and error recovery without using a credential or making Qloo API calls.
+
+The first browser run uncovered a production startup crash: `starters.forEach(addPerson)` passed each loop index as the helper's `chosenEntities` argument, causing `chosenEntities.map is not a function`. This is fixed by passing the group row explicitly with `starters.forEach(values=>addPerson(values))`, plus defensive optional-argument validation.
+
+In CI, screenshots of the working desktop and mobile demo are uploaded as a **unison-browser-screenshots** artifact retained for seven days. Browser automation runs only in CI with an ephemeral Playwright installation, so **production still has no extra runtime dependencies**. Local developers can run `npm install --no-save playwright@1.64.1`, `npx playwright install chromium`, then `npm run test:e2e`.
+
+A successful mocked-live browser test **does not establish real authenticated Qloo Insights availability**; live API verification remains a separate acceptance criterion.
