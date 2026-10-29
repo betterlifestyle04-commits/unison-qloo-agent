@@ -426,6 +426,7 @@ function renderVenueReadiness(data,choices){
   const selected=choices.find(item=>item.id===app.agenda.choiceId)||choices[0];
   const progress=venueCheckProgress(app.venueChecks,selected.id);
   const example=data.mode==='demo';
+  const external=venueCheckLinks({name:selected.name,address:selected.address,city:data.city,demo:example});
   return `<section id="venue-readiness" class="venue-readiness" aria-labelledby="venue-readiness-heading">
     <div class="venue-readiness-head"><div><span class="overline">BEFORE YOUR GROUP GOES</span><h4 id="venue-readiness-heading">Venue Reality Check</h4></div><span class="venue-readiness-count" id="venue-readiness-count">${progress.marked} / ${progress.total} reviewed</span></div>
     <p class="venue-readiness-intro">For <strong>${escape(selected.name)}</strong>: ${example?'This is a fictional demo venue.':'This is a real Qloo candidate, but venue details have not been independently verified.'} Mark what <em>your group</em> has checked before sharing a final plan.</p>
@@ -433,6 +434,13 @@ function renderVenueReadiness(data,choices){
       ${venueCheckItems.map(item=>`<label class="venue-readiness-item"><input type="checkbox" data-readiness-key="${item.id}" data-readiness-candidate="${escape(selected.id)}" ${app.venueChecks[selected.id]?.[item.id]?'checked':''}><span><strong>${escape(item.label)}</strong><small>${escape(item.hint)}</small></span></label>`).join('')}
     </div>
     <div class="venue-readiness-progress"><meter class="fit-meter" min="0" max="100" value="${progress.percent}" aria-label="Venue reality checklist ${progress.percent} percent marked reviewed" id="venue-readiness-meter">${progress.percent}%</meter><p id="venue-readiness-message" role="status" aria-live="polite">${escape(progress.label)}</p></div>
+    ${external?`<div class="venue-external">
+      <a href="${escape(external.maps)}" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer">Check address &amp; current hours in Google Maps ↗</a>
+      <a href="${escape(external.official)}" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer">Search for the official venue website ↗</a>
+      <button type="button" id="venue-copy-inquiry">Copy group reservation enquiry</button>
+      <p id="venue-inquiry-message" role="status" aria-live="polite"></p>
+      <p>External sites may show hours, prices or booking links, but results can be outdated or for a similarly named venue. Verify exact identity and arrangements with the venue before ticking any box. UNISON does not retrieve, check or confirm their availability.</p>
+    </div>`:''}
     <small>Checklist marks stay in this page only. They are self-reported, do not change Qloo ranking, do not verify venue facts, and do not make or confirm bookings. Changing options displays that option's separate checklist.</small>
   </section>`;
 }
