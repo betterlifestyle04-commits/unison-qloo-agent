@@ -174,3 +174,12 @@ test('error recovery does not fabricate live evidence or auto-submit demo',async
   assert.match(app.body,/mode\]\[value=demo/);
   assert.match(module.body,/never|not pretend|without inventing/i);
 });
+
+test('live results disclose candidate integrity screening and its limits',async()=>{
+  const [app,css]=await Promise.all([request('/app.js'),request('/styles.css')]);
+  assert.equal(app.response.status,200);
+  assert.match(app.body,/function integrityReview\(data\)/);
+  assert.match(app.body,/outside shortlist/);
+  assert.match(app.body,/It does not independently verify a venue/);
+  assert.match(css.body,/\.integrity-review/);
+});
