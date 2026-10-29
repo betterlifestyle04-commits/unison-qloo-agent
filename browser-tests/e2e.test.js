@@ -194,6 +194,33 @@ test('planner carries participant edits and practical constraints into demo requ
   }finally{await context.close();}
 });
 
+test('copied group setup restores in explicit demo mode without a plan request',async()=>{
+  const context=await browser.newContext({viewport:{width:1280,height:800},permissions:['clipboard-read','clipboard-write']});
+  const page=await context.newPage();trackErrors(page);
+  const planRequests=[];
+  page.on('request',request=>{if(request.url().includes('/api/plan'))planRequests.push(request.url());});
+  try{
+    await page.goto(origin+'/',{waitUntil:'networkidle'});
+    await page.locator('#city').fill('Oslo');
+    await page.locator('#share-brief').click();
+    await page.waitForFunction(()=>Boolean(document.querySelector('#share-message')?.textContent));
+    assert.match(await page.locator('#share-message').innerText(),/Group setup link copied/i);
+    const sharedUrl=await page.evaluate(()=>navigator.clipboard.readText());
+    assert.ok(sharedUrl.startsWith(origin+'/#plan='));
+
+    const restored=await context.newPage();trackErrors(restored);
+    const restoredRequests=[];
+    restored.on('request',request=>{if(request.url().includes('/api/plan'))restoredRequests.push(request.url());});
+    await restored.goto(sharedUrl,{waitUntil:'networkidle'});
+    assert.equal(await restored.locator('input[name="mode"][value="demo"]').isChecked(),true);
+    assert.equal(await restored.locator('#city').inputValue(),'Oslo');
+    assert.match(await restored.locator('#share-message').innerText(),/Shared group loaded in demo mode/i);
+    assert.equal(planRequests.length,0);
+    assert.equal(restoredRequests.length,0);
+    assert.deepEqual(errors,[]);
+  }finally{await context.close();}
+});
+
 test('shared link remains demo-only even when status indicates Qloo is configured',async()=>{
   const context=await browser.newContext({viewport:{width:1280,height:800}});
   const page=await context.newPage();trackErrors(page);
