@@ -225,3 +225,12 @@ test('Venue Reality Check is a browser-only planning aid that never claims Qloo 
   assert.match(app.body,/venue details have not been independently verified/);
   assert.match(css.body,/\.venue-readiness/);
 });
+
+test('place constraints disclose city and restaurant price tier without claiming cost verification',async()=>{
+  const [module,app,home]=await Promise.all([request('/place-constraints.js'),request('/app.js'),request('/')]);
+  assert.equal(module.response.status,200);
+  assert.match(module.body,/describePlaceConstraints/);
+  assert.match(app.body,/placeConstraintDisclosure/);
+  assert.match(app.body,/manuallyConfirmedMeetingLocation\(app\.agenda\.meeting\)/);
+  assert.match(home.body,/mainly to restaurants/);
+});
