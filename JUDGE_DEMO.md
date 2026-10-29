@@ -67,3 +67,7 @@ For engineering judges, `test/live-pipeline.test.js` verifies the full two-pass 
 ## Optional extension — Candidate evidence integrity
 
 After a **live** recommendation appears, expand **Qloo response integrity** below the source banner. Explain that the agent does not trust upstream data blindly: it checks candidate types, removes duplicates, and enforces that every per-person evaluation matches the exact shared shortlist. These checks use no extra Qloo calls, and the agent trace labels them as local steps. The counts show what was accepted or excluded in that particular result. They **do not** certify addresses, geographic correctness, reservations, or happiness. The same checks are exercised in `test/candidate-integrity.test.js` and `test/live-pipeline.test.js` using intentionally contaminated mock responses.
+
+## Optional live Qloo self-check (uses hackathon quota)
+
+After explicitly selecting **Live Qloo**, expand the evidence choices and click **Check Qloo connection**. This is an opt-in, limited live API check using a fixed public film: Search, discovery Insights, and shortlist Insights. Show the three labeled results. It never sends participant names/favorites and is limited to two checks per ten minutes per connection. **Only say the real Qloo Insights integration was verified if the button actually reports successful live steps**. A configured key or simulated browser mock does not count.
