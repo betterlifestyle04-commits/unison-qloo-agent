@@ -3,6 +3,7 @@ import {ballotChoices,updateBallot,summarizeBallot,winningAgreement} from './bal
 import {createPlanArchive,loadDevicePlans,saveDevicePlan,removeDevicePlan} from './saved-plans.js';
 import {buildCalendarEvent,agendaText} from './calendar.js';
 import {auditGroupEvidence,recoverySuggestions} from './evidence-audit.js';
+import {buildDecisionReport,reportFilename} from './decision-report.js';
 const $=selector=>document.querySelector(selector);
 const people=$('#people'),template=$('#person-template'),form=$('#plan-form'),results=$('#results'),error=$('#form-error'),submitBtn=$('#submit-plan'),statusBadge=$('#mode-status');
 const starters=[['Maya','Studio Ghibli'],['Jon','Anthony Bourdain'],['Priya','Knives Out']];
@@ -262,8 +263,10 @@ function render(data){
   const leastMatched=top?data.people.find(p=>top.signals?.[p.id]===top.minimum):null;
   const show=data.ranked.slice(0,app.showAll?data.ranked.length:6);
   const status=data.mode==='live'?'Qloo API · Live evidence':'Demo · Simulated evidence';
-  results.innerHTML=`<div class="result-topline"><div><p class="overline">${escape(status)}</p><h3>${top?'Your best shared match':'We need a little more evidence'}</h3><p class="result-sub">${escape(data.domain==='places'?(data.city?'Planning for '+data.city:'No city selected'):'Movie night')} · ${data.people.length} people · ${count} fully covered option${count===1?'':'s'}</p></div><div class="result-actions"><button id="save-plan" class="text-button" type="button">Save on this device</button><button id="copy-plan" class="text-button" type="button" ${top?'':'disabled'}>Copy plan ↗</button><button id="reset-veto" class="text-button" type="button">Clear vetoes</button></div></div>
+  results.innerHTML=`<div class="result-topline"><div><p class="overline">${escape(status)}</p><h3>${top?'Your best shared match':'We need a little more evidence'}</h3><p class="result-sub">${escape(data.domain==='places'?(data.city?'Planning for '+data.city:'No city selected'):'Movie night')} · ${data.people.length} people · ${count} fully covered option${count===1?'':'s'}</p></div><div class="result-actions"><button id="download-report" class="text-button" type="button">↓ Decision report</button><button id="save-plan" class="text-button" type="button">Save on this device</button><button id="copy-plan" class="text-button" type="button" ${top?'':'disabled'}>Copy plan ↗</button><button id="reset-veto" class="text-button" type="button">Clear vetoes</button></div></div>
     <div class="source-banner ${data.mode==='live'?'live':''}"><strong>${escape(sourceName(data))}.</strong> ${escape(data.disclaimer)}</div>
+    <p class="report-privacy"><span aria-hidden="true">◈</span> The Decision Report downloads to your device and includes group names, cultural favorites, and any votes recorded here. Share it thoughtfully.</p>
+    <p id="report-message" class="report-message" role="status" aria-live="polite"></p>
     <section class="decision-tuning" aria-label="How should we balance the group's preferences?">
       <div class="decision-tuning-head"><strong>How should we choose?</strong><span>Adjusts ranking only · no new Qloo requests</span></div>
       <div class="decision-styles">${Object.entries(decisionStyles).map(([key,style])=>`<button type="button" data-style="${key}" aria-pressed="${app.decisionStyle===key}">${escape(style.label)}</button>`).join('')}</div>
@@ -338,6 +341,18 @@ function render(data){
     render(applyVetoLocally(app.baseResult,app.lastInput?.vetoes||[],app.decisionStyle));
   }));
   $('#show-all')?.addEventListener('click',()=>{app.showAll=!app.showAll;render(data);});
+  $('#download-report')?.addEventListener('click',()=>{
+    const message=results.querySelector('#report-message');
+    try{
+      const markdown=buildDecisionReport(data,{ballots:app.ballots,decisionStyle:app.decisionStyle,brief:app.lastInput});
+      const blob=new Blob([markdown],{type:'text/markdown;charset=utf-8'});
+      const url=URL.createObjectURL(blob);
+      const link=document.createElement('a');
+      link.href=url;link.download=reportFilename(data.mode);document.body.append(link);link.click();link.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),1500);
+      message.textContent='Report downloaded locally. It includes group preferences and votes; review before forwarding.';
+    }catch(e){message.textContent='Could not export report: '+String(e.message||'Unknown error');}
+  });
   $('#save-plan')?.addEventListener('click',()=>{
     try{
       if(!app.lastInput)throw new Error('Create a plan before saving.');
