@@ -6,7 +6,7 @@ const group={mode:'live',domain:'places',city:'Oslo',budget:'mid',people:[
  {name:'Ada',favorites:['Jazz']},{name:'Bea',favorites:['Knives Out']}
 ]};
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
-function fakeTools({partial=false,empty=false}={}){
+function fakeTools({partial=false,empty=false,contaminated=false}={}){
  const calls=[];
  return {
   calls,
@@ -25,6 +25,13 @@ function fakeTools({partial=false,empty=false}={}){
    const shared={id:'qloo-shared',name:'Shared Venue',type:'urn:entity:place',affinity:83};
    const unique={id:'qloo-'+person,name:person+' Venue',type:'urn:entity:place',affinity:null};
    const results=partial&&evaluation&&person==='Bea'?[]:[shared,unique];
+   if(contaminated&&evaluation){
+     // Simulate a broken or unexpected Qloo response ignoring the requested whitelist.
+     results.unshift({id:'not-requested',name:'Unrequested result',type:'urn:entity:place'});
+     results.push(shared);
+     results.push({id:'wrong-domain',name:'Film in place response',type:'urn:entity:movie'});
+   }
+
    return {results,url:'/v2/insights?stage='+(evaluation?'comparison':'discovery')+'&person='+person,cached:false};
   }
  };
@@ -75,4 +82,20 @@ test('live place city is mandatory before the fake Qloo tools run',async()=>{
  const tools=fakeTools();
  await assert.rejects(()=>runAgent({...group,city:''},{qlooTools:tools}),/Choose a city/);
  assert.equal(tools.calls.length,0);
+});
+
+test('live evaluation excludes foreign, wrong-type and duplicate Qloo results before scoring',async()=>{
+  const tools=fakeTools({contaminated:true});
+  const result=await runAgent(group,{qlooTools:tools});
+  assert.deepEqual(result.ranked.map(item=>item.id).sort(),['qloo-Ada','qloo-Bea','qloo-shared']);
+  assert.equal(result.quality.shortlistSize,3);
+  assert.equal(result.quality.evaluation.outsideShortlist,2);
+  assert.equal(result.quality.evaluation.wrongType,2);
+  assert.equal(result.quality.evaluation.duplicates,2);
+  assert.equal(result.quality.evaluation.accepted,4);
+  const shared=result.ranked.find(item=>item.id==='qloo-shared');
+  assert.equal(shared.sufficient,true);
+  assert.equal(shared.signals[result.people[0].id],100);
+  assert.equal(shared.signals[result.people[1].id],100);
+  assert.ok(result.trace.some(step=>step.step==='Shortlist integrity gate'&&step.kind==='local'&&step.detail.includes('unrequested entities')));
 });
