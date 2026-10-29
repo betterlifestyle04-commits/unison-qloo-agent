@@ -258,3 +258,11 @@ Per [Qloo's parameter reference](https://github.com/qloo/docs-public/blob/main/r
 The interface now includes an expandable **Location and budget: What was actually checked?** explanation and describes Qloo-supplied venue information as **unverified**. To prevent a fictional or mistaken reservation implication, **tentative calendar exports leave the meeting location blank until a group member explicitly enters it**; no Qloo-supplied address is silently copied into the calendar.
 
 The scope of the production test is **Oslo, Norway**, with three people and the `mid` tier only. Other cities, price limits, and real-world venue conditions have not been checked. Tests: `test/place-constraints.test.js`, `test/http-ux.test.js`, and the Chromium browser export workflow.
+
+## Verified production maximum-size group — October 29, 2026
+
+A separate one-time production test verified UNISON's advertised **maximum five-person group** through the real `POST /api/plan` workflow. Five fictional participants (Ada, Bea, Cam, Dee, and Eli) reused two independently verified public movie anchors (*Interstellar* and *Inception*). UNISON returned **12 real Qloo movie candidates; 11 had complete five-person relative-fit evidence**. The trace had five participant-level discovery steps and five shortlist evaluation steps. Qloo's caching and identical-request deduplication can reduce the actual number of external calls for the shared anchors.
+
+See [real five-person production smoke test](https://github.com/betterlifestyle04-commits/unison-qloo-agent/actions/runs/40886047104). This validates the five-person orchestration path, **not the accuracy of five unique taste profiles**, the reliability of all possible inputs, film availability or calibrated happiness. The first smoke attempt encountered unexpected non-JSON content before it submitted any plan; the successful rerun used two previously verified anchors and explicit response validation. Both results are retained in GitHub Actions.
+
+The verified production coverage now includes 2-person live movie, 2-person Oslo places without a price tier, 3-person Oslo places with a mid restaurant price-level cap, and 5-person live movies with shared public anchors. Browser tests still use explicitly mocked Qloo responses, independently of these real network checks.
