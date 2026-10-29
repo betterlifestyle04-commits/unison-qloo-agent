@@ -306,7 +306,7 @@ function renderAgreementPulse(data){
   const approved=pulse.unanimous.length>0;
   const hasVotes=Object.values(app.ballots).some(ballot=>Object.keys(ballot||{}).length>0);
   return `<section class="agreement-pulse" aria-label="Current human vote progress">
-    <div class="agreement-head"><div><p class="overline">HUMAN AGREEMENT / NEXT STEP</p><h4>${approved?'A group-approved choice!':'See what everyone thinks.'}</h4></div><span class="agreement-count">${top.voted} / ${top.total} responses</span></div>
+    <div class="agreement-head"><div><p class="overline">HUMAN AGREEMENT / NEXT STEP</p><h4 id="agreement-heading" tabindex="-1">${approved?'A group-approved choice!':'See what everyone thinks.'}</h4></div><span class="agreement-count">${top.voted} / ${top.total} responses</span></div>
     <p class="agreement-message">${escape(pulse.message)}</p>
     <div class="agreement-meter-row"><meter class="fit-meter" min="0" max="100" value="${fill}" aria-label="${fill} percent of participants have voted on the leading option">${fill}%</meter><strong>${fill}%</strong></div>
     <div class="agreement-totals"><span>✓ Yes: ${top.yes}</span><span>~ Maybe: ${top.maybe}</span><span>× No: ${top.no}</span></div>
@@ -431,7 +431,7 @@ function render(data){
     if(!panel&&!app.showAll){app.showAll=true;render(data);panel=[...results.querySelectorAll('[data-ballot-panel]')].find(node=>node.dataset.ballotPanel===target.id);}
     if(panel){panel.open=true;panel.scrollIntoView({behavior:'smooth',block:'center'});}
   });
-  results.querySelector('#clear-local-votes')?.addEventListener('click',()=>{app.ballots={};render(data);});
+  results.querySelector('#clear-local-votes')?.addEventListener('click',()=>{app.ballots={};render(data);results.querySelector('#agreement-heading')?.focus();});
   for(const [selector,key] of [['#compare-left','left'],['#compare-right','right']]){
     results.querySelector(selector)?.addEventListener('change',event=>{
       app.compare[key]=event.target.value;
@@ -441,29 +441,36 @@ function render(data){
         app.compare[key==='left'?'right':'left']=other?.id||'';
       }
       render(data);
+      results.querySelector(selector)?.focus();
     });
   }
   // Human votes are distinct from preference predictions; no network request.
   results.querySelectorAll('[data-vote-choice]').forEach(button=>button.addEventListener('click',()=>{
     const id=button.dataset.voteCandidate;
-    app.ballots=updateBallot(app.ballots,id,button.dataset.votePerson,button.dataset.voteChoice);
+    const person=button.dataset.votePerson,choice=button.dataset.voteChoice;
+    app.ballots=updateBallot(app.ballots,id,person,choice);
     render(data);
     const ballot=[...results.querySelectorAll('[data-ballot-panel]')].find(panel=>panel.dataset.ballotPanel===id);
     if(ballot)ballot.open=true;
+    [...results.querySelectorAll('[data-vote-choice]')].find(next=>next.dataset.voteCandidate===id&&next.dataset.votePerson===person&&next.dataset.voteChoice===choice)?.focus();
   }));
   // Vetoes only re-rank existing evidence locally: no Qloo quota spent on each click.
   results.querySelectorAll('[data-veto]').forEach(button=>button.addEventListener('click',()=>{
+    const id=button.dataset.veto;
     const vetoes=new Set(app.lastInput.vetoes||[]);
-    vetoes.has(button.dataset.veto)?vetoes.delete(button.dataset.veto):vetoes.add(button.dataset.veto);
+    vetoes.has(id)?vetoes.delete(id):vetoes.add(id);
     app.lastInput.vetoes=[...vetoes];
     render(applyVetoLocally(app.baseResult,app.lastInput.vetoes,app.decisionStyle));
+    [...results.querySelectorAll('[data-veto]')].find(next=>next.dataset.veto===id)?.focus();
   }));
-  $('#reset-veto')?.addEventListener('click',()=>{app.lastInput.vetoes=[];render(applyVetoLocally(app.baseResult,[],app.decisionStyle));});
+  $('#reset-veto')?.addEventListener('click',()=>{app.lastInput.vetoes=[];render(applyVetoLocally(app.baseResult,[],app.decisionStyle));results.querySelector('#reset-veto')?.focus();});
   results.querySelectorAll('[data-style]').forEach(button=>button.addEventListener('click',()=>{
-    app.decisionStyle=button.dataset.style;
+    const style=button.dataset.style;
+    app.decisionStyle=style;
     render(applyVetoLocally(app.baseResult,app.lastInput?.vetoes||[],app.decisionStyle));
+    [...results.querySelectorAll('[data-style]')].find(next=>next.dataset.style===style)?.focus();
   }));
-  $('#show-all')?.addEventListener('click',()=>{app.showAll=!app.showAll;render(data);});
+  $('#show-all')?.addEventListener('click',()=>{app.showAll=!app.showAll;render(data);results.querySelector('#show-all')?.focus();});
   $('#download-report')?.addEventListener('click',()=>{
     const message=results.querySelector('#report-message');
     try{

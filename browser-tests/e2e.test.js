@@ -54,8 +54,10 @@ test('desktop: full demo workflow, votes, weighting, archive, report and calenda
     await page.screenshot({path:'browser-tests/screenshots/desktop-demo.png',fullPage:true});
 
     const before=calls.length;
-    await page.locator('[data-style="protective"]').click();
+    await page.locator('[data-style="protective"]').focus();
+    await page.keyboard.press('Enter');
     assert.equal(await page.locator('[data-style="protective"]').getAttribute('aria-pressed'),'true');
+    assert.equal(await page.locator('[data-style="protective"]').evaluate(node=>document.activeElement===node),true,'fairness control keeps keyboard focus after local re-ranking');
     const left=page.locator('#compare-left'),right=page.locator('#compare-right');
     assert.ok(await left.locator('option').count()>=2);
     await right.selectOption({index:1});
@@ -63,12 +65,15 @@ test('desktop: full demo workflow, votes, weighting, archive, report and calenda
 
     await page.locator('#open-top-ballot').click();
     const chosen=page.locator('.group-ballot[open]').first();
-    await chosen.locator('[data-vote-choice="yes"]').first().click();
+    await chosen.locator('[data-vote-choice="yes"]').first().focus();
+    await page.keyboard.press('Space');
     assert.match(await page.locator('.agreement-count').innerText(),/1\s*\/\s*3/);
+    assert.equal(await page.locator('[data-vote-choice="yes"]').first().evaluate(node=>document.activeElement===node),true,'vote control keeps keyboard focus after local re-render');
     assert.equal(calls.length,before,'voting and local fairness controls cannot call Qloo');
     await page.locator('#clear-local-votes').click();
     assert.match(await page.locator('.agreement-count').innerText(),/0\s*\/\s*3/);
     assert.equal(await page.locator('#clear-local-votes').isDisabled(),true);
+    assert.equal(await page.locator('#agreement-heading').evaluate(node=>document.activeElement===node),true,'clearing votes moves focus to the refreshed agreement status');
     assert.equal(calls.length,before,'clearing local votes cannot call Qloo');
 
     const reportEvent=page.waitForEvent('download');
