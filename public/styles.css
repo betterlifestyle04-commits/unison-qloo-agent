@@ -376,3 +376,10 @@
 .venue-readiness-progress p{flex:0 1 60%;font-size:.65rem;color:#658171;margin:0;line-height:1.45}
 .venue-readiness>small{display:block;color:#83958b;line-height:1.55;font-size:.63rem}
 @media(max-width:580px){.venue-readiness{padding:13px}.venue-readiness-head{flex-wrap:wrap}.venue-readiness-items{grid-template-columns:1fr}.venue-readiness-progress{display:block}.venue-readiness-progress .fit-meter{width:100%}.venue-readiness-progress p{margin-top:9px}}
+
+/* Ground each location or budget claim in the actual Qloo API filter used. */
+.place-filter-disclosure{border:1px solid #dedff2;background:linear-gradient(130deg,#f7f9ff,#f9fbfb);border-radius:11px;margin:0 0 13px;padding:11px 13px}
+.place-filter-disclosure summary{cursor:pointer;font-size:.73rem;color:#59649a;font-weight:810;line-height:1.45}
+.place-filter-disclosure summary:focus-visible{outline:2px solid #7161d8;outline-offset:4px}
+.place-filter-disclosure p{font-size:.69rem;color:#737b93;line-height:1.65;margin:10px 0 0}
+.place-filter-disclosure strong{color:#4f5886}
