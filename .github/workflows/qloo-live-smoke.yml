@@ -1,0 +1,42 @@
+name: One-time production Qloo Insights smoke check
+
+on:
+  push:
+    paths:
+      - '.github/workflows/qloo-live-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Confirm public status and execute ONE opt-in diagnostic
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE='https://unison-qloo.onrender.com'
+          echo "## UNISON production Qloo verification" >> "$GITHUB_STEP_SUMMARY"
+          echo "Triggered manually or once when this workflow was first added. Uses zero group data." >> "$GITHUB_STEP_SUMMARY"
+          curl --fail --silent --show-error --location --max-time 45 "$BASE/api/status" > /tmp/unison-status.json
+          if [ "$(jq -r '.configured' /tmp/unison-status.json)" != "true" ]; then
+            echo "❌ Production reports no configured Qloo key." >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          echo "✅ Server key detected (not itself an API success)." >> "$GITHUB_STEP_SUMMARY"
+          CODE=$(curl --silent --show-error --max-time 110 --retry 0 --output /tmp/unison-qloo-smoke.json --write-out '%{http_code}' --request POST "$BASE/api/qloo-diagnostics")
+          if [ "$CODE" != "200" ]; then
+            echo "❌ HTTP diagnostic failed with status $CODE" >> "$GITHUB_STEP_SUMMARY"
+            jq -r '.error // "Unexpected response"' /tmp/unison-qloo-smoke.json >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          jq -r '.stages[] | (if .status=="passed" then "✅ " else "❌ " end) + .step + ": " + .detail' /tmp/unison-qloo-smoke.json >> "$GITHUB_STEP_SUMMARY"
+          jq -r '.stages[] | [.step, .status, .detail] | @tsv' /tmp/unison-qloo-smoke.json
+          if [ "$(jq -r '.ok' /tmp/unison-qloo-smoke.json)" != "true" ]; then
+            echo "❌ One or more real Qloo API stages failed or returned insufficient evidence." >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          echo "✅ Real Search + Insights discovery + shortlist test succeeded for one sample movie." >> "$GITHUB_STEP_SUMMARY"
