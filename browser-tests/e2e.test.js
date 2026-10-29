@@ -136,6 +136,17 @@ test('mocked live browser journey: explicit opt-in, precise Taste Finder and hon
   const page=await context.newPage();
   trackErrors(page);
   const submissions=[];
+  const diagnosticsRequests=[];
+  await page.route('**/api/qloo-diagnostics',route=>{
+    diagnosticsRequests.push({method:route.request().method(),body:route.request().postData()});
+    return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({
+      ok:true,source:'Live Qloo tools',stages:[
+        {step:'Search',status:'passed',detail:'One exact movie'},
+        {step:'Insights discovery',status:'passed',detail:'Three candidates'},
+        {step:'Insights shortlist',status:'passed',detail:'Three shortlisted candidates'}
+      ],note:'This is a sample check.'
+    })});
+  });
   await page.route('**/api/status',route=>route.fulfill({
     status:200,contentType:'application/json',
     body:JSON.stringify({configured:true,mode:'live-ready',source:'server-configuration'})
@@ -155,6 +166,16 @@ test('mocked live browser journey: explicit opt-in, precise Taste Finder and hon
     await page.locator('input[name="mode"][value="live"]').check({force:true});
     await page.locator('#city').fill('Oslo');
     assert.equal(await page.locator('#taste-finder').isVisible(),true);
+    assert.equal(await page.locator('#qloo-diagnostics').isVisible(),true);
+    assert.equal(diagnosticsRequests.length,0,'diagnostics cannot run on page load or mode change');
+    await page.locator('#qloo-check').click();
+    await page.locator('#qloo-check-results strong').waitFor();
+    assert.match(await page.locator('#qloo-check-results').innerText(),/All three live Qloo stages passed/);
+    assert.equal(diagnosticsRequests.length,1);
+    assert.equal(diagnosticsRequests[0].method,'POST');
+    assert.equal(diagnosticsRequests[0].body,null,'never send participant data to connection check');
+    assert.equal(submissions.length,0);
+
     await page.locator('#taste-query').fill('Interstellar');
     await page.locator('#taste-find').click();
     await page.locator('.taste-match').first().click();
