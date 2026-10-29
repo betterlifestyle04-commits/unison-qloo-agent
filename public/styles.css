@@ -335,6 +335,8 @@
 .diagnostics-results li{overflow-wrap:anywhere}
 .diagnostics-results p{margin:7px 0 0;color:#79889d}
 @media(max-width:580px){.diagnostics-heading{align-items:stretch;flex-direction:column}.diagnostics-heading button{white-space:normal;width:100%}}
+.quick-start-options button[aria-pressed="true"]{background:#6556d7;border-color:#6556d7;color:#fff;box-shadow:0 5px 14px #5e4ecb2e}.quick-start-options button[aria-pressed="true"] span{color:#fff}
+.agreement-actions{display:flex;flex-wrap:wrap;gap:8px}.agreement-actions button:disabled{opacity:.55;cursor:not-allowed}
 
 /* Group decision stability: clearly hypothetical, no API calls or participant exclusion. */
 .group-stability{padding:15px;background:linear-gradient(130deg,#f6fcfa,#f6f9ff);border:1px solid #dce8e7;border-radius:14px;margin:0 0 17px}
@@ -383,3 +385,16 @@
 .place-filter-disclosure summary:focus-visible{outline:2px solid #7161d8;outline-offset:4px}
 .place-filter-disclosure p{font-size:.69rem;color:#737b93;line-height:1.65;margin:10px 0 0}
 .place-filter-disclosure strong{color:#4f5886}
+
+/* A concise, live view of whether the group brief is actionable. */
+.brief-readiness{margin:0 0 17px;padding:14px;border:1px solid #dde5f2;border-radius:13px;background:linear-gradient(135deg,#f7f9ff,#f8fcfa)}
+.brief-readiness-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.brief-readiness-head .overline{font-size:.56rem;margin:0 0 3px}.brief-readiness h4{font-size:.78rem;color:#4d5873;margin:0}.brief-readiness-head>strong{font-size:.74rem;color:#5f52b3;background:#edeaff;border-radius:999px;padding:5px 8px;white-space:nowrap}
+.brief-readiness meter{display:block;width:100%;height:8px;margin:12px 0 10px}.brief-readiness meter::-webkit-meter-bar{background:#e5e8f1;border-radius:999px}.brief-readiness meter::-webkit-meter-optimum-value{background:linear-gradient(90deg,#7b6ae5,#42a778);border-radius:999px}
+.brief-readiness-items{display:grid;gap:5px}.brief-readiness-items p{display:flex;align-items:baseline;gap:7px;margin:0;color:#778298;font-size:.66rem;line-height:1.45}.brief-readiness-items p span{color:#8e82d9;font-weight:900}.brief-readiness-items p.is-ready{color:#477f65}.brief-readiness-items p.is-ready span{color:#369969}.brief-readiness-note{font-size:.62rem;color:#8b93a3;line-height:1.5;margin:10px 0 0}
+@media(max-width:580px){.brief-readiness{padding:13px}.brief-readiness-head{align-items:center}.brief-readiness h4{font-size:.75rem}}
+
+/* In-page orientation for the decision workspace, not a second recommendation system. */
+.decision-workspace-nav{display:flex;gap:6px;overflow-x:auto;padding:1px 0 11px;margin:0 0 5px;scrollbar-width:thin}.decision-workspace-nav a{flex:0 0 auto;border:1px solid #e3e1ed;border-radius:999px;background:#fff;color:#6b6393;padding:6px 9px;font-size:.63rem;font-weight:760;line-height:1.2}.decision-workspace-nav a:hover{border-color:#b9acec;background:#f4f1ff;color:#5848aa}.decision-workspace-nav a[aria-current="page"]{background:#6254d6;border-color:#6254d6;color:#fff;box-shadow:0 3px 9px #5e50bf25}.decision-workspace-nav a:focus-visible{outline-offset:1px}
+
+/* A truthful handoff dashboard: evidence, consent and logistics stay separate. */
+.decision-status{padding:14px;margin:0 0 16px;border:1px solid #e1e6ee;border-radius:14px;background:linear-gradient(135deg,#fbfcff,#f7fbf8)}.decision-status-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:11px}.decision-status-head .overline{font-size:.55rem;margin:0 0 3px}.decision-status h4{font-size:.8rem;color:#46536c;margin:0}.decision-status-head>small{font-size:.6rem;color:#858d9d;max-width:24ch;text-align:right;line-height:1.45}.decision-status-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.decision-status-grid>a,.decision-status-grid>div{display:flex;flex-direction:column;gap:4px;min-width:0;padding:10px;border:1px solid #e5e8ee;border-radius:10px;background:#fff;color:#687388}.decision-status-grid>a:hover{border-color:#b8b1e9;background:#faf9ff}.decision-status-grid span{font-size:.58rem;text-transform:uppercase;letter-spacing:.06em;font-weight:850;color:#8376bc}.decision-status-grid strong{font-size:.7rem;line-height:1.35;color:#566174;overflow-wrap:anywhere}.decision-status-grid small{font-size:.59rem;line-height:1.45;color:#9199a8}.decision-status-grid .is-ready{border-color:#ccebd8;background:#f5fcf7}.decision-status-grid .is-ready span{color:#4a9870}.decision-status-grid .is-ready strong{color:#397758}@media(max-width:580px){.decision-status-grid{grid-template-columns:1fr}.decision-status-head>small{text-align:left}.decision-status{padding:13px}}

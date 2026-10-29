@@ -24,7 +24,8 @@ async function waitForResults(page){
 test.before(async()=>{
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
   origin='http://127.0.0.1:'+server.address().port;
-  browser=await chromium.launch({headless:true});
+  const executablePath=process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE;
+  browser=await chromium.launch({headless:true,...(executablePath?{executablePath,args:['--no-sandbox']}:{} )});
   await mkdir('browser-tests/screenshots',{recursive:true});
 });
 test.after(async()=>{
@@ -48,6 +49,16 @@ test('desktop: full demo workflow, votes, weighting, archive, report and calenda
     assert.ok(await page.locator('.decision-lab').count()>0);
     assert.ok(await page.locator('.evidence-audit').count()>0);
     assert.ok(await page.locator('.head-to-head').count()>0);
+    assert.equal(await page.locator('.decision-status-grid>*').count(),3);
+    assert.match(await page.locator('.decision-status').innerText(),/EVIDENCE|GROUP AGREEMENT|PRACTICAL CHECK/);
+    await page.locator('.decision-status a[href="#venue-readiness"]').click();
+    assert.match(page.url(),/#venue-readiness$/);
+    assert.ok(await page.locator('#venue-readiness').isVisible());
+    assert.ok(await page.locator('.decision-workspace-nav a').count()>=4);
+    await page.locator('.decision-workspace-nav a[href="#evidence-audit"]').click();
+    assert.match(page.url(),/#evidence-audit$/);
+    assert.equal(await page.locator('.decision-workspace-nav a[href="#evidence-audit"]').getAttribute('aria-current'),'page');
+    assert.ok(await page.locator('#evidence-audit').isVisible());
     const stability=page.locator('.group-stability');
     assert.equal(await stability.count(),1);
     await stability.locator('summary').click();
@@ -60,6 +71,7 @@ test('desktop: full demo workflow, votes, weighting, archive, report and calenda
     await venue.locator('[data-readiness-key="hours"]').check();
     assert.match(await page.locator('#venue-readiness-count').innerText(),/2 \/ 4 reviewed/);
     await page.locator('#agenda-choice').selectOption({index:1});
+    assert.equal(await page.locator('#agenda-choice').evaluate(node=>document.activeElement===node),true,'switching a venue keeps focus on the choice control');
     assert.match(await page.locator('#venue-readiness-count').innerText(),/0 \/ 4 reviewed/);
     await page.locator('#agenda-choice').selectOption({index:0});
     assert.match(await page.locator('#venue-readiness-count').innerText(),/2 \/ 4 reviewed/);
@@ -70,8 +82,21 @@ test('desktop: full demo workflow, votes, weighting, archive, report and calenda
     await page.screenshot({path:'browser-tests/screenshots/desktop-demo.png',fullPage:true});
 
     const before=calls.length;
-    await page.locator('[data-style="protective"]').click();
+    await page.locator('[data-style="protective"]').focus();
+    await page.keyboard.press('Enter');
     assert.equal(await page.locator('[data-style="protective"]').getAttribute('aria-pressed'),'true');
+    assert.equal(await page.locator('[data-style="protective"]').evaluate(node=>document.activeElement===node),true,'fairness control keeps keyboard focus after local re-ranking');
+    const veto=page.locator('[data-veto="demo:olive-table"]');
+    await veto.focus();
+    await page.keyboard.press('Enter');
+    assert.equal(await page.locator('[data-veto="demo:olive-table"]').innerText(),'↶ Restore option');
+    assert.equal(await page.locator('[data-veto="demo:olive-table"]').evaluate(node=>node.closest('.card')?.classList.contains('vetoed')),true);
+    assert.equal(await page.locator('[data-veto="demo:olive-table"]').evaluate(node=>document.activeElement===node),true,'veto keeps keyboard focus after local replanning');
+    assert.equal(calls.length,before,'vetoing cannot call Qloo');
+    await page.keyboard.press('Space');
+    assert.equal(await page.locator('[data-veto="demo:olive-table"]').innerText(),'× Not for our group');
+    assert.equal(await page.locator('[data-veto="demo:olive-table"]').evaluate(node=>node.closest('.card')?.classList.contains('vetoed')),false);
+    assert.equal(calls.length,before,'restoring a veto cannot call Qloo');
     const left=page.locator('#compare-left'),right=page.locator('#compare-right');
     assert.ok(await left.locator('option').count()>=2);
     await right.selectOption({index:1});
@@ -79,9 +104,17 @@ test('desktop: full demo workflow, votes, weighting, archive, report and calenda
 
     await page.locator('#open-top-ballot').click();
     const chosen=page.locator('.group-ballot[open]').first();
-    await chosen.locator('[data-vote-choice="yes"]').first().click();
+    assert.equal(await chosen.locator('[data-vote-choice]').first().evaluate(node=>document.activeElement===node),true,'opening participant voting moves focus into the vote controls');
+    await chosen.locator('[data-vote-choice="yes"]').first().focus();
+    await page.keyboard.press('Space');
     assert.match(await page.locator('.agreement-count').innerText(),/1\s*\/\s*3/);
+    assert.equal(await page.locator('[data-vote-choice="yes"]').first().evaluate(node=>document.activeElement===node),true,'vote control keeps keyboard focus after local re-render');
     assert.equal(calls.length,before,'voting and local fairness controls cannot call Qloo');
+    await page.locator('#clear-local-votes').click();
+    assert.match(await page.locator('.agreement-count').innerText(),/0\s*\/\s*3/);
+    assert.equal(await page.locator('#clear-local-votes').isDisabled(),true);
+    assert.equal(await page.locator('#agreement-heading').evaluate(node=>document.activeElement===node),true,'clearing votes moves focus to the refreshed agreement status');
+    assert.equal(calls.length,before,'clearing local votes cannot call Qloo');
 
     const reportEvent=page.waitForEvent('download');
     await page.locator('#download-report').click();
@@ -96,6 +129,8 @@ test('desktop: full demo workflow, votes, weighting, archive, report and calenda
     await page.locator('#device-plans [data-open-device]').first().click();
     assert.equal(await page.locator('input[name="mode"][value="demo"]').isChecked(),true);
     assert.equal(calls.length,before,'restoring a saved brief must not submit a new plan');
+    await page.locator('#device-plans [data-delete-device]').first().click();
+    assert.match(await page.locator('#device-plans').innerText(),/No saved plans yet/i);
 
     await page.locator('#instant-demo').click();
     await page.locator('#results .result-topline').waitFor();
@@ -130,6 +165,89 @@ test('mobile: working demo and responsive navigation without document overflow',
     const width=await page.evaluate(()=>({page:document.documentElement.scrollWidth,viewport:window.innerWidth}));
     assert.ok(width.page<=width.viewport+2,'mobile page must not have horizontal overflow: '+JSON.stringify(width));
     await page.screenshot({path:'browser-tests/screenshots/mobile-demo.png',fullPage:true});
+    assert.deepEqual(errors,[]);
+  }finally{await context.close();}
+});
+
+test('skip link moves keyboard focus to the planner',async()=>{
+  const context=await browser.newContext({viewport:{width:1280,height:800}});
+  const page=await context.newPage();trackErrors(page);
+  try{
+    await page.goto(origin+'/',{waitUntil:'networkidle'});
+    await page.keyboard.press('Tab');
+    assert.equal(await page.locator('.skip').evaluate(node=>document.activeElement===node),true);
+    await page.keyboard.press('Enter');
+    assert.equal(await page.locator('#planner').evaluate(node=>document.activeElement===node),true);
+    assert.deepEqual(errors,[]);
+  }finally{await context.close();}
+});
+
+test('planner carries participant edits and practical constraints into demo requests',async()=>{
+  const context=await browser.newContext({viewport:{width:1280,height:800}});
+  const page=await context.newPage();trackErrors(page);
+  const plans=[];
+  page.on('request',request=>{if(request.url().includes('/api/plan'))plans.push(request.postDataJSON());});
+  try{
+    await page.goto(origin+'/',{waitUntil:'networkidle'});
+    assert.equal(await page.locator('#people .person').count(),3);
+    assert.equal(await page.locator('#brief-ready-score').innerText(),'3 / 3 ready');
+    await page.locator('#add-person').click();
+    assert.equal(await page.locator('#people .person').count(),4);
+    assert.equal(await page.locator('#people .person').last().locator('[data-field=name]').evaluate(node=>document.activeElement===node),true);
+    assert.equal(await page.locator('#brief-ready-score').innerText(),'2 / 3 ready');
+    await page.locator('#people .person').last().locator('[data-field=name]').fill('Lina');
+    await page.locator('#people .person').last().locator('[data-field=favorite]').fill('jazz');
+    assert.equal(await page.locator('#brief-ready-score').innerText(),'3 / 3 ready');
+    await page.locator('#people .person').last().locator('.remove').click();
+    assert.equal(await page.locator('#people .person').count(),3);
+    assert.equal(await page.locator('#people .person').last().locator('[data-field=name]').evaluate(node=>document.activeElement===node),true,'removing a participant returns keyboard focus to a remaining participant');
+
+    await page.locator('#city').fill('Oslo');
+    await page.locator('#budget').selectOption('low');
+    await page.locator('#people .person').first().locator('[data-field=favorite]').fill('Studio Ghibli, jazz');
+    const firstPlan=page.waitForResponse(response=>response.url().includes('/api/plan')&&response.request().method()==='POST');
+    await page.locator('#submit-plan').click();
+    await firstPlan;
+    await waitForResults(page);
+    assert.equal(plans.length,1);
+    assert.deepEqual({domain:plans[0].domain,city:plans[0].city,budget:plans[0].budget},{domain:'places',city:'Oslo',budget:'low'});
+    assert.deepEqual(plans[0].people[0].favorites,['Studio Ghibli','jazz']);
+
+    await page.locator('input[name="domain"][value="movies"]').check({force:true});
+    const secondPlan=page.waitForResponse(response=>response.url().includes('/api/plan')&&response.request().method()==='POST');
+    await page.locator('#submit-plan').click();
+    await secondPlan;
+    await waitForResults(page);
+    assert.equal(plans.length,2);
+    assert.equal(plans[1].domain,'movies');
+    assert.equal(plans[1].mode,'demo');
+    assert.deepEqual(errors,[]);
+  }finally{await context.close();}
+});
+
+test('copied group setup restores in explicit demo mode without a plan request',async()=>{
+  const context=await browser.newContext({viewport:{width:1280,height:800},permissions:['clipboard-read','clipboard-write']});
+  const page=await context.newPage();trackErrors(page);
+  const planRequests=[];
+  page.on('request',request=>{if(request.url().includes('/api/plan'))planRequests.push(request.url());});
+  try{
+    await page.goto(origin+'/',{waitUntil:'networkidle'});
+    await page.locator('#city').fill('Oslo');
+    await page.locator('#share-brief').click();
+    await page.waitForFunction(()=>Boolean(document.querySelector('#share-message')?.textContent));
+    assert.match(await page.locator('#share-message').innerText(),/Group setup link copied/i);
+    const sharedUrl=await page.evaluate(()=>navigator.clipboard.readText());
+    assert.ok(sharedUrl.startsWith(origin+'/#plan='));
+
+    const restored=await context.newPage();trackErrors(restored);
+    const restoredRequests=[];
+    restored.on('request',request=>{if(request.url().includes('/api/plan'))restoredRequests.push(request.url());});
+    await restored.goto(sharedUrl,{waitUntil:'networkidle'});
+    assert.equal(await restored.locator('input[name="mode"][value="demo"]').isChecked(),true);
+    assert.equal(await restored.locator('#city').inputValue(),'Oslo');
+    assert.match(await restored.locator('#share-message').innerText(),/Shared group loaded in demo mode/i);
+    assert.equal(planRequests.length,0);
+    assert.equal(restoredRequests.length,0);
     assert.deepEqual(errors,[]);
   }finally{await context.close();}
 });
@@ -188,7 +306,15 @@ test('mocked live browser journey: explicit opt-in, precise Taste Finder and hon
     assert.equal(await page.locator('input[name="mode"][value="demo"]').isChecked(),true);
     assert.equal(await page.locator('input[name="mode"][value="live"]').isEnabled(),true);
     await page.locator('input[name="mode"][value="live"]').check({force:true});
+    assert.equal(await page.locator('#brief-ready-score').innerText(),'2 / 3 ready');
+    await page.locator('#submit-plan').click();
+    assert.match(await page.locator('#form-error').innerText(),/Enter a city/i);
+    assert.equal(await page.locator('#city').evaluate(node=>document.activeElement===node),true,'missing live city focuses the practical constraint that needs attention');
+    assert.equal(await page.locator('#city').getAttribute('aria-invalid'),'true');
+    assert.equal(submissions.length,0,'client validation cannot call the planner');
     await page.locator('#city').fill('Oslo');
+    assert.equal(await page.locator('#city').getAttribute('aria-invalid'),null);
+    assert.equal(await page.locator('#brief-ready-score').innerText(),'3 / 3 ready');
     assert.equal(await page.locator('#taste-finder').isVisible(),true);
     assert.equal(await page.locator('#qloo-diagnostics').isVisible(),true);
     assert.equal(diagnosticsRequests.length,0,'diagnostics cannot run on page load or mode change');
@@ -207,6 +333,7 @@ test('mocked live browser journey: explicit opt-in, precise Taste Finder and hon
     await page.locator('#submit-plan').click();
     await page.locator('.plan-recovery').waitFor({timeout:10000});
     assert.match(await page.locator('#recovery-title').innerText(),/clarification/i);
+    assert.equal(await page.locator('#recovery-title').evaluate(node=>document.activeElement===node),true,'failed planning moves keyboard focus to the recovery explanation');
     assert.equal(submissions.length,1);
     assert.equal(submissions[0].mode,'live');
     assert.ok(submissions[0].people[0].selectedEntities.some(item=>item.id==='057DA9D9-399B-437E-8BCA-A80E499125EF'));

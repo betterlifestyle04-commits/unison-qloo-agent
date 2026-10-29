@@ -70,7 +70,7 @@ The public `/api/plan` endpoint limits each client to 20 requests per minute and
 
 ## Render deployment
 
-1. Create a Render **Web Service** from this repository. Render's existing configuration uses `npm install`, `npm start`, and `/api/status` as its health check.
+1. Create a Render **Web Service** from this repository. Render's existing configuration uses `npm ci --omit=dev`, `npm start`, and `/api/status` as its health check. Browser-test tooling remains a development dependency and is not installed in the production service.
 2. Set Node 22 (already declared in `render.yaml`). Do not add `QLOO_API_KEY` for a demo-only deployment; `/api/status` will report `demo` and the app remains functional.
 3. For live mode, add `QLOO_API_KEY` as a Render secret, optionally set `QLOO_BASE_URL` to `https://hackathon.api.qloo.com`, deploy, and make one authenticated smoke request. Do not describe live mode as verified until that succeeds.
 4. Confirm the public homepage and `/api/status` return 200 after deployment; add the verified URL to the Devpost material only then.
@@ -207,7 +207,7 @@ The browser suite in `browser-tests/e2e.test.js` covers desktop and mobile ficti
 
 The first browser run uncovered a production startup crash: `starters.forEach(addPerson)` passed each loop index as the helper's `chosenEntities` argument, causing `chosenEntities.map is not a function`. This is fixed by passing the group row explicitly with `starters.forEach(values=>addPerson(values))`, plus defensive optional-argument validation.
 
-In CI, screenshots of the working desktop and mobile demo are uploaded as a **unison-browser-screenshots** artifact retained for seven days. Browser automation runs only in CI with an ephemeral Playwright installation, so **production still has no extra runtime dependencies**. Local developers can run `npm install --no-save playwright@1.64.1`, `npx playwright install chromium`, then `npm run test:e2e`.
+In CI, screenshots of the working desktop and mobile demo are uploaded as a **unison-browser-screenshots** artifact retained for seven days. Playwright is a development-only dependency, so **production still has no extra runtime dependencies**. Local developers can run `npm install`, `npx playwright install chromium`, then `npm run test:e2e`.
 
 A successful mocked-live browser test **does not establish real authenticated Qloo Insights availability**; live API verification remains a separate acceptance criterion.
 

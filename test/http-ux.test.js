@@ -38,6 +38,37 @@ test('frontend keeps demo mode opt-in and provides clipboard fallback',async()=>
   assert.doesNotMatch(r.body,/if\(app\.configured&&!app\.hasChangedMode\)\{live\.checked=true;/);
   assert.match(r.body,/Qloo request/);
 });
+test('shortlist updates announce concise provenance instead of the whole rerendered page',async()=>{
+  const [page,app]=await Promise.all([request('/'),request('/app.js')]);
+  assert.equal(page.response.status,200);
+  assert.doesNotMatch(page.body,/id="results" class="results" aria-live="polite"/);
+  assert.match(app.body,/class="source-banner \$\{data\.mode==='live'\?'live':''\}" role="status"/);
+});
+test('Taste Finder accurately distinguishes group names from the submitted Qloo search',async()=>{
+  const r=await request('/');
+  assert.equal(r.response.status,200);
+  assert.match(r.body,/Your group members' names are not sent to Qloo\./);
+  assert.doesNotMatch(r.body,/Search manually to avoid unnecessary API requests\. Names are not sent to Qloo\./);
+});
+test('planner exposes an accessible preset state and shortlist navigation',async()=>{
+  const r=await request('/');
+  assert.equal(r.response.status,200);
+  assert.match(r.body,/href="#results-heading"/);
+  assert.match(r.body,/data-preset="friends" aria-pressed="false"/);
+  const app=await request('/app.js');
+  assert.match(app.body,/function setActivePreset/);
+  assert.match(app.body,/setActivePreset\(preset\.id\)/);
+});
+test('frontend directs validation focus to the actual brief problem',async()=>{
+  const r=await request('/app.js');
+  assert.equal(r.response.status,200);
+  assert.match(r.body,/function focusBriefProblem/);
+  assert.match(r.body,/problem\.startsWith\('Give every participant'\)/);
+  assert.match(r.body,/problem\.startsWith\('Enter a city'\)/);
+  assert.match(r.body,/function markInvalid/);
+  assert.match(r.body,/aria-invalid/);
+  assert.doesNotMatch(r.body,/showError\(problem\);form\.querySelector\('#city'\)\?\.focus\(\);/);
+});
 
 test('sample groups and shared plans never auto-opt into live Qloo',async()=>{
   const r=await request('/app.js');
@@ -128,6 +159,8 @@ test('Agreement Pulse is served and participant vote control remains client-side
   assert.match(app.body,/renderAgreementPulse/);
   assert.match(app.body,/open-top-ballot/);
   assert.match(app.body,/Only the people using this browser/);
+  assert.match(app.body,/id="clear-local-votes"/);
+  assert.match(app.body,/app\.ballots=\{\};render\(data\)/);
 });
 
 test('cross-site browser calls cannot spend Qloo quota',async()=>{

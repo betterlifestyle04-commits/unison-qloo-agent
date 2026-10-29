@@ -7,6 +7,7 @@
   <meta name="description" content="UNISON turns different tastes into one considered group plan. Real cultural taste intelligence, transparent compromise, and decisions everyone can understand.">
   <meta property="og:title" content="UNISON — Different tastes. One great plan.">
   <meta property="og:description" content="A new way to find your group's common ground, powered by Qloo's Taste AI.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%236556d7'/%3E%3Cpath d='M18 23h28M18 32h28M18 41h28' stroke='white' stroke-width='6' stroke-linecap='round'/%3E%3C/svg%3E">
   <title>UNISON — Find your common ground</title>
   <link rel="stylesheet" href="/styles.css">
 </head>
@@ -15,7 +16,7 @@
 <div class="site-shell">
   <nav class="site-nav" aria-label="Main navigation">
     <a class="brand" href="#top" aria-label="UNISON home"><span class="brand-symbol" aria-hidden="true"><i></i><i></i><i></i></span><span>unison<span class="brand-period">.</span></span></a>
-    <div class="nav-links"><a href="#planner">Plan together</a><a href="#how-it-works">How it works</a><a href="https://github.com/betterlifestyle04-commits/unison-qloo-agent" target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a></div>
+    <div class="nav-links"><a href="#planner">Plan together</a><a href="#results-heading">Shortlist</a><a href="#how-it-works">How it works</a><a href="https://github.com/betterlifestyle04-commits/unison-qloo-agent" target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a></div>
     <span class="nav-chip">Built for Qloo Hackathon '26</span>
   </nav>
 
@@ -38,7 +39,7 @@
   </header>
 </div>
 
-<main id="planner" class="workspace">
+<main id="planner" class="workspace" tabindex="-1">
   <div class="workspace-intro"><div><p class="overline">01 / THE GROUP PLANNER</p><h2>A plan made for <em>all</em> of you.</h2><p>Tell us who's coming and what each person loves. We'll make the trade-offs visible.</p></div><div id="mode-status" class="status-chip" role="status" aria-live="polite"><span class="status-dot"></span> Checking Qloo access…</div></div>
   <div class="workspace-grid">
     <section class="panel setup" aria-labelledby="brief-heading">
@@ -46,14 +47,14 @@
       <div class="quick-start" aria-label="Quick start with a sample group">
         <div class="quick-start-head"><strong>Get started with a sample group</strong><span>Or enter your own below</span></div>
         <div class="quick-start-options">
-          <button type="button" data-preset="friends"><span aria-hidden="true">✳</span><b>Friends night out</b></button>
-          <button type="button" data-preset="movie"><span aria-hidden="true">▣</span><b>Movie night</b></button>
-          <button type="button" data-preset="date"><span aria-hidden="true">♡</span><b>Date night</b></button>
+          <button type="button" data-preset="friends" aria-pressed="false"><span aria-hidden="true">✳</span><b>Friends night out</b></button>
+          <button type="button" data-preset="movie" aria-pressed="false"><span aria-hidden="true">▣</span><b>Movie night</b></button>
+          <button type="button" data-preset="date" aria-pressed="false"><span aria-hidden="true">♡</span><b>Date night</b></button>
         </div>
         <button type="button" id="instant-demo" class="instant-demo"><span aria-hidden="true">▶</span> Run a one-click fictional demonstration <span aria-hidden="true">↗</span></button>
         <p class="demo-explainer">For judges and first-time visitors. Uses deterministic fictional taste evidence, not Qloo API calls.</p>
       </div>
-      <form id="plan-form">
+      <form id="plan-form" novalidate>
         <fieldset class="field-section"><legend><span class="field-number">1</span> What are you planning?</legend>
           <div class="toggle">
             <label class="option-tile"><input type="radio" name="domain" value="places" checked><span class="option-emoji" aria-hidden="true">📍</span><span><b>Go somewhere</b><small>Find a place everyone likes</small></span></label>
@@ -78,7 +79,7 @@
               <label for="taste-owner" class="input-label">Add to participant<select id="taste-owner"></select></label>
               <button type="button" id="taste-find" class="taste-find-button">Search Qloo ↗</button>
             </div>
-            <div id="taste-find-results" class="taste-find-results" role="status" aria-live="polite"><p>Search manually to avoid unnecessary API requests. Names are not sent to Qloo.</p></div>
+            <div id="taste-find-results" class="taste-find-results" role="status" aria-live="polite"><p>Search manually to avoid unnecessary API requests. Your group members' names are not sent to Qloo.</p></div>
           </section>
         </fieldset>
         <fieldset class="field-section"><legend><span class="field-number">4</span> Choose your evidence</legend>
@@ -93,13 +94,23 @@
             <div id="qloo-check-results" class="diagnostics-results" role="status" aria-live="polite"></div>
           </div>
         </fieldset>
+        <section id="brief-readiness" class="brief-readiness" aria-labelledby="brief-readiness-heading">
+          <div class="brief-readiness-head"><div><span class="overline">BRIEF READINESS</span><h4 id="brief-readiness-heading">A plan starts with a clear brief.</h4></div><strong id="brief-ready-score">—</strong></div>
+          <meter id="brief-ready-meter" min="0" max="3" value="0" aria-label="Group brief readiness">0 of 3</meter>
+          <div class="brief-readiness-items">
+            <p id="brief-ready-people"><span aria-hidden="true">○</span> Checking participant tastes</p>
+            <p id="brief-ready-context"><span aria-hidden="true">○</span> Checking planning context</p>
+            <p id="brief-ready-evidence"><span aria-hidden="true">○</span> Checking evidence mode</p>
+          </div>
+          <p id="brief-ready-note" class="brief-readiness-note">UNISON only sends a request when you choose to generate a plan.</p>
+        </section>
         <button class="primary" type="submit" id="submit-plan"><span id="submit-label">Find our common ground</span><span aria-hidden="true">↗</span></button>
         <div class="share-tools">
           <button class="share-brief" id="share-brief" type="button"><span aria-hidden="true">↗</span> Copy a group setup link</button>
           <span class="share-explainer">The link contains names and favorites you entered. Only share it with people you trust.</span>
           <p id="share-message" class="share-message" role="status" aria-live="polite"></p>
         </div>
-        <p id="form-error" class="error" role="alert"></p>
+        <p id="form-error" class="error" role="alert" tabindex="-1"></p>
         <p class="form-note"><span aria-hidden="true">♢</span> Transparent methodology. No sign-up required. Names are not sent to Qloo.</p>
       </form>
       <section class="device-library" aria-labelledby="device-library-heading">
@@ -111,7 +122,7 @@
     </section>
     <section class="panel results-panel" aria-labelledby="results-heading">
       <div class="section-heading result-section-heading"><span class="step-no accent-step">02</span><div><p class="overline">YOUR SHARED SHORTLIST</p><h3 id="results-heading">Where tastes meet.</h3></div></div>
-      <div id="results" class="results" aria-live="polite" aria-busy="false"><div class="empty">
+      <div id="results" class="results" aria-busy="false"><div class="empty">
         <div class="empty-art" aria-hidden="true"><span class="empty-orbit o1"></span><span class="empty-orbit o2"></span><span class="empty-heart">✳</span><span class="empty-dot d1"></span><span class="empty-dot d2"></span><span class="empty-dot d3"></span></div>
         <span class="eyebrow">GOOD PLANS START HERE</span><h3>Something everyone<br>can say yes to.</h3><p>Fill in the group brief, then explore recommendations ranked with everyone's preferences in mind.</p><div class="empty-steps"><span>01  Add your people</span><span>02  Connect their tastes</span><span>03  Find the overlap</span></div>
       </div></div>

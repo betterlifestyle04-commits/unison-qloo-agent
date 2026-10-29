@@ -15,12 +15,13 @@ const people=$('#people'),template=$('#person-template'),form=$('#plan-form'),re
 const starters=[['Maya','Studio Ghibli'],['Jon','Anthony Bourdain'],['Priya','Knives Out']];
 const selectedByPerson=new WeakMap();
 function showPinned(node){const selections=[...(selectedByPerson.get(node)?.values()||[])];const hint=node.querySelector('[data-pinned]');if(hint)hint.textContent=selections.length?'Selected Qloo entity: '+selections.map(x=>x.name+' ('+String(x.type||'entity').replace(/^urn:entity:/,'')+')').join(', '):'';}
-const app={configured:false,requesting:false,lastInput:null,lastResult:null,showAll:false,hasChangedMode:false,baseResult:null,hashLoaded:false,decisionStyle:'balanced',ballots:{},compare:{left:'',right:''},venueChecks:{},lookupBusy:false,agenda:{choiceId:'',date:'',time:'19:00',duration:'120',meeting:'',notes:''}};
+const app={configured:false,requesting:false,lastInput:null,lastResult:null,showAll:false,hasChangedMode:false,baseResult:null,hashLoaded:false,decisionStyle:'balanced',ballots:{},compare:{left:'',right:''},venueChecks:{},workspaceObserver:null,lookupBusy:false,agenda:{choiceId:'',date:'',time:'19:00',duration:'120',meeting:'',notes:''}};
 const escape=value=>{const element=document.createElement('span');element.textContent=String(value??'');return element.innerHTML.replace(/\"/g,'&quot;').replace(/'/g,'&#39;');};
 const number=value=>Number.isFinite(value)?String(Math.round(value)):null;
 const initial=value=>String(value||'?').trim().slice(0,1).toUpperCase();
 const percent=value=>Math.max(0,Math.min(100,Number(value)||0));
 const sourceName=data=>data.mode==='live'?'Real Qloo results':'Fictional demonstration';
+function setActivePreset(id=null){document.querySelectorAll('[data-preset]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.preset===id)));}
 function updateTasteOwners(){
   const owner=$('#taste-owner');if(!owner)return;
   const previous=owner.value;
@@ -48,15 +49,25 @@ function addPerson(values=['',''],chosenEntities=[]){
     const saved=selectedByPerson.get(node);
     for(const key of saved.keys())if(!stillListed.has(key))saved.delete(key);
     showPinned(node);
+    updateBriefReadiness();
   });
-  name.addEventListener('input',updateGroup);
-  node.querySelector('.remove').addEventListener('click',()=>{if(people.children.length<=2){showError('A group needs at least two people.');return;}node.remove();updateGroup();});
+  name.addEventListener('input',()=>{updateGroup();updateBriefReadiness();});
+  node.querySelector('.remove').addEventListener('click',()=>{
+    if(people.children.length<=2){showError('A group needs at least two people.');return;}
+    const next=node.nextElementSibling?.querySelector('[data-field=name]');
+    const previous=node.previousElementSibling?.querySelector('[data-field=name]');
+    node.remove();
+    updateGroup();
+    (next||previous)?.focus();
+    updateBriefReadiness();
+  });
   people.append(node);showPinned(node);updateGroup();
 }
 // forEach also passes an index; addPerson's second parameter is an entity array, not the index.
 starters.forEach(values=>addPerson(values));
-$('#add-person').addEventListener('click',()=>{if(people.children.length>=5)return;addPerson();people.lastElementChild.querySelector('[data-field=name]').focus();});
+$('#add-person').addEventListener('click',()=>{if(people.children.length>=5)return;addPerson();updateBriefReadiness();people.lastElementChild.querySelector('[data-field=name]').focus();});
 function showError(message=''){error.textContent=message;}
+function markInvalid(input){if(!input)return;input.setAttribute('aria-invalid','true');input.setAttribute('aria-describedby','form-error');const clear=()=>{input.removeAttribute('aria-invalid');input.removeAttribute('aria-describedby');};input.addEventListener('input',clear,{once:true});input.addEventListener('change',clear,{once:true});}
 async function copyText(text){
   if(navigator.clipboard?.writeText){try{await navigator.clipboard.writeText(text);return true;}catch{}}
   const area=document.createElement('textarea');area.value=text;area.setAttribute('readonly','');area.className='clipboard-proxy';document.body.append(area);area.select();
@@ -64,6 +75,22 @@ async function copyText(text){
 }
 function currentMode(){return form.querySelector('input[name=mode]:checked')?.value||'demo';}
 function currentDomain(){return form.querySelector('input[name=domain]:checked')?.value||'places';}
+function updateBriefReadiness(){
+  const panel=$('#brief-readiness');if(!panel)return;
+  const rows=[...people.querySelectorAll('.person')];
+  const completed=rows.filter(row=>row.querySelector('[data-field=name]').value.trim()&&row.querySelector('[data-field=favorite]').value.split(',').some(value=>value.trim())).length;
+  const peopleReady=rows.length>=2&&completed===rows.length;
+  const needsCity=currentDomain()==='places'&&currentMode()==='live';
+  const contextReady=!needsCity||Boolean($('#city').value.trim());
+  const score=Number(peopleReady)+Number(contextReady)+1;
+  const item=(id,ready,text)=>{const node=$(id);if(!node)return;node.classList.toggle('is-ready',ready);node.firstElementChild.textContent=ready?'✓':'○';node.lastChild.textContent=' '+text;};
+  $('#brief-ready-score').textContent=score+' / 3 ready';
+  const meter=$('#brief-ready-meter');meter.value=score;meter.textContent=score+' of 3';meter.setAttribute('aria-label','Group brief readiness: '+score+' of 3 checks complete');
+  item('#brief-ready-people',peopleReady,peopleReady?completed+' participant'+(completed===1?'':'s')+' have a taste signal':completed+' of '+rows.length+' participants have a name and favorite');
+  item('#brief-ready-context',contextReady,currentDomain()==='movies'?'Movie night has no city requirement':needsCity?(contextReady?'City selected for live place discovery':'Choose a city for live place discovery'):$('#city').value.trim()?'City noted for this demo':'City is optional in demo mode');
+  item('#brief-ready-evidence',true,currentMode()==='live'?'Live Qloo evidence selected':'Fictional demo evidence selected');
+  $('#brief-ready-note').textContent=score===3?'Ready when you are. Generating a plan is the only step that sends a planning request.':'Complete the highlighted brief details before asking UNISON to compare the group.';
+}
 function updateFormPresentation(){
   const places=currentDomain()==='places';
   $('#place-constraints').hidden=!places;
@@ -74,7 +101,9 @@ function updateFormPresentation(){
   $('#qloo-diagnostics').hidden=!(app.configured&&currentMode()==='live');
   $('#submit-label').textContent=places?'Find our common ground':'Find our movie night';
 }
-form.querySelectorAll('input[name=domain],input[name=mode]').forEach(input=>input.addEventListener('change',()=>{if(input.name==='mode')app.hasChangedMode=true;updateFormPresentation();}));
+form.querySelectorAll('input[name=domain],input[name=mode]').forEach(input=>input.addEventListener('change',()=>{if(input.name==='mode')app.hasChangedMode=true;setActivePreset();updateFormPresentation();updateBriefReadiness();}));
+form.addEventListener('input',()=>{setActivePreset();updateBriefReadiness();});
+form.addEventListener('change',()=>{setActivePreset();updateBriefReadiness();});
 const diagnosticBtn=$('#qloo-check');
 const diagnosticResults=$('#qloo-check-results');
 function showDiagnostic(text){diagnosticResults.replaceChildren(Object.assign(document.createElement('p'),{textContent:text}));}
@@ -137,7 +166,7 @@ async function lookupTaste(){
 lookupBtn.addEventListener('click',lookupTaste);
 $('#taste-query').addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();lookupTaste();}});
 
-document.querySelectorAll('.city-quick').forEach(button=>button.addEventListener('click',()=>{$('#city').value=button.dataset.city;showError();}));
+document.querySelectorAll('.city-quick').forEach(button=>button.addEventListener('click',()=>{$('#city').value=button.dataset.city;showError();updateBriefReadiness();}));
 function brief(){
   const data=new FormData(form);
   return {domain:data.get('domain'),mode:data.get('mode'),city:String(data.get('city')||'').trim(),budget:data.get('budget')||'any',
@@ -154,6 +183,12 @@ function validate(input){
   if(input.domain==='places'&&input.mode==='live'&&!input.city)return 'Enter a city for a live place plan so results stay in your chosen area.';
   if(input.mode==='live'&&!app.configured)return 'Live Qloo is not available right now. Choose demo mode.';
   return '';
+}
+function focusBriefProblem(problem){
+  if(problem.startsWith('Give every participant')){const row=[...people.querySelectorAll('.person')].find(person=>{const name=person.querySelector('[data-field=name]').value.trim();const favorite=person.querySelector('[data-field=favorite]').value.trim();return !name||!favorite;});const field=row?.querySelector(row.querySelector('[data-field=name]').value.trim()?'[data-field=favorite]':'[data-field=name]');markInvalid(field);field?.focus();return;}
+  if(problem.startsWith('Each participant')){const seen=new Set();const row=[...people.querySelectorAll('.person')].find(person=>{const name=person.querySelector('[data-field=name]').value.trim().toLocaleLowerCase();if(seen.has(name))return true;seen.add(name);return false;});const field=row?.querySelector('[data-field=name]');markInvalid(field);field?.focus();return;}
+  if(problem.startsWith('Enter a city')){const field=$('#city');markInvalid(field);field?.focus();return;}
+  error.focus();
 }
 function sameBrief(a,b){if(!a||!b)return false;const extract=x=>JSON.stringify([x.domain,x.mode,x.city,x.budget,x.people]);return extract(a)===extract(b);}
 function fitBar(value){return value===null||value===undefined?'<span class="unknown">No signal</span>':`<meter class="fit-meter" min="0" max="100" value="${percent(value)}" aria-label="Relative fit ${number(value)} out of 100">${number(value)}/100</meter><span class="value">${number(value)}</span>`;}
@@ -277,7 +312,7 @@ function renderEvidenceAudit(data){
     <p>A missing signal means the Qloo comparison did not return evidence for that participant; it must not be counted as a negative reaction.</p>
   </details>`:''; 
   const suggestions=audit.complete===0?recoverySuggestions(data,audit):[];
-  return `<section class="evidence-audit" aria-labelledby="audit-heading">
+  return `<section id="evidence-audit" class="evidence-audit" aria-labelledby="audit-heading">
     <div class="audit-head"><div><span class="eyebrow">GROUP EVIDENCE · ${data.mode==='demo'?'SIMULATED':'QLOO-INFORMED'}</span><h4 id="audit-heading">Are we comparing everyone fairly?</h4></div><span class="audit-coverage">${audit.complete}/${audit.total} comparable</span></div>
     <p class="audit-summary">${escape(audit.summary)}</p>
     <div class="audit-overview"><div><strong>${coverage}%</strong><small>Active options with complete group evidence</small></div><div><strong>${audit.people.length}</strong><small>Participants being considered</small></div>${audit.winner?`<div><strong>${Math.round(audit.spread)}</strong><small>Top option's estimated max–min fit gap</small></div>`:''}</div>
@@ -292,19 +327,20 @@ function renderEvidenceAudit(data){
 function renderAgreementPulse(data){
   const pulse=agreementPulse(data,app.ballots);
   if(!pulse.top){
-    return '<section class="agreement-pulse"><p class="overline">HUMAN AGREEMENT / NEXT STEP</p><h4>We need an eligible choice first.</h4><p>'+escape(pulse.nextAction)+'</p></section>';
+    return '<section id="group-agreement" class="agreement-pulse"><p class="overline">HUMAN AGREEMENT / NEXT STEP</p><h4>We need an eligible choice first.</h4><p>'+escape(pulse.nextAction)+'</p></section>';
   }
   const top=pulse.top;
   const fill=top.total?Math.round(top.voted/top.total*100):0;
   const approved=pulse.unanimous.length>0;
-  return `<section class="agreement-pulse" aria-label="Current human vote progress">
-    <div class="agreement-head"><div><p class="overline">HUMAN AGREEMENT / NEXT STEP</p><h4>${approved?'A group-approved choice!':'See what everyone thinks.'}</h4></div><span class="agreement-count">${top.voted} / ${top.total} responses</span></div>
+  const hasVotes=Object.values(app.ballots).some(ballot=>Object.keys(ballot||{}).length>0);
+  return `<section id="group-agreement" class="agreement-pulse" aria-label="Current human vote progress">
+    <div class="agreement-head"><div><p class="overline">HUMAN AGREEMENT / NEXT STEP</p><h4 id="agreement-heading" tabindex="-1">${approved?'A group-approved choice!':'See what everyone thinks.'}</h4></div><span class="agreement-count">${top.voted} / ${top.total} responses</span></div>
     <p class="agreement-message">${escape(pulse.message)}</p>
     <div class="agreement-meter-row"><meter class="fit-meter" min="0" max="100" value="${fill}" aria-label="${fill} percent of participants have voted on the leading option">${fill}%</meter><strong>${fill}%</strong></div>
     <div class="agreement-totals"><span>✓ Yes: ${top.yes}</span><span>~ Maybe: ${top.maybe}</span><span>× No: ${top.no}</span></div>
     <p class="agreement-next">${escape(pulse.nextAction)}</p>
     ${pulse.unanimous.length?`<p class="agreement-winner">Unanimous approval recorded for: <strong>${escape(pulse.unanimous.map(item=>item.name).join(', '))}</strong></p>`:''}
-    <button type="button" id="open-top-ballot">Open participant voting ↓</button>
+    <div class="agreement-actions"><button type="button" id="open-top-ballot">Open participant voting ↓</button><button type="button" id="clear-local-votes" ${hasVotes?'':'disabled'}>Clear local votes</button></div>
     <p class="agreement-privacy">Only the people using this browser can record votes here. Voting doesn't change Qloo results or automatically make a booking.</p>
   </section>`;
 }
@@ -336,14 +372,14 @@ function renderGroupStability(data){
 }
 function renderHeadToHead(data){
   const choices=eligibleComparisons(data);
-  if(choices.length<2)return '<section class="head-to-head"><p class="overline">EXPLORE THE TRADE-OFFS</p><h4>Head-to-Head</h4><p>At least two fully supported, non-vetoed options are needed before you can compare them fairly.</p></section>';
+  if(choices.length<2)return '<section id="option-comparison" class="head-to-head"><p class="overline">EXPLORE THE TRADE-OFFS</p><h4>Head-to-Head</h4><p>At least two fully supported, non-vetoed options are needed before you can compare them fairly.</p></section>';
   const validIds=new Set(choices.map(item=>item.id));
   if(!validIds.has(app.compare.left))app.compare.left=choices[0].id;
   if(!validIds.has(app.compare.right)||app.compare.right===app.compare.left)app.compare.right=choices.find(item=>item.id!==app.compare.left).id;
   const analysis=compareOptions(data,app.compare.left,app.compare.right);
   const optionList=selected=>choices.map(choice=>`<option value="${escape(choice.id)}" ${selected===choice.id?'selected':''}>${escape(choice.name)}</option>`).join('');
   const people=analysis.people.map(person=>`<tr><th scope="row">${escape(person.name)}</th><td>${person.left}/100</td><td>${person.right}/100</td><td>${person.preference==='tie'?'Equal':person.preference==='left'?'Prefers A':'Prefers B'}</td></tr>`).join('');
-  return `<section class="head-to-head" aria-labelledby="comparison-heading">
+  return `<section id="option-comparison" class="head-to-head" aria-labelledby="comparison-heading">
     <p class="overline">A BETTER GROUP DECISION</p><h4 id="comparison-heading">Head-to-Head</h4>
     <p>Compare any two fully supported options against the same group's available relative-fit evidence.</p>
     <div class="head-to-head-picker">
@@ -389,7 +425,7 @@ function renderVenueReadiness(data,choices){
   const selected=choices.find(item=>item.id===app.agenda.choiceId)||choices[0];
   const progress=venueCheckProgress(app.venueChecks,selected.id);
   const example=data.mode==='demo';
-  return `<section class="venue-readiness" aria-labelledby="venue-readiness-heading">
+  return `<section id="venue-readiness" class="venue-readiness" aria-labelledby="venue-readiness-heading">
     <div class="venue-readiness-head"><div><span class="overline">BEFORE YOUR GROUP GOES</span><h4 id="venue-readiness-heading">Venue Reality Check</h4></div><span class="venue-readiness-count" id="venue-readiness-count">${progress.marked} / ${progress.total} reviewed</span></div>
     <p class="venue-readiness-intro">For <strong>${escape(selected.name)}</strong>: ${example?'This is a fictional demo venue.':'This is a real Qloo candidate, but venue details have not been independently verified.'} Mark what <em>your group</em> has checked before sharing a final plan.</p>
     <div class="venue-readiness-items">
@@ -397,6 +433,47 @@ function renderVenueReadiness(data,choices){
     </div>
     <div class="venue-readiness-progress"><meter class="fit-meter" min="0" max="100" value="${progress.percent}" aria-label="Venue reality checklist ${progress.percent} percent marked reviewed" id="venue-readiness-meter">${progress.percent}%</meter><p id="venue-readiness-message" role="status" aria-live="polite">${escape(progress.label)}</p></div>
     <small>Checklist marks stay in this page only. They are self-reported, do not change Qloo ranking, do not verify venue facts, and do not make or confirm bookings. Changing options displays that option's separate checklist.</small>
+  </section>`;
+}
+function renderDecisionWorkspaceNav(data,top){
+  const links=[];
+  if(top)links.push(['#decision-summary','Recommendation']);
+  if(eligibleComparisons(data).length>=2)links.push(['#option-comparison','Compare']);
+  links.push(['#evidence-audit','Evidence'],['#group-agreement','Group vote'],['#decision-trace','Agent trace']);
+  return `<nav class="decision-workspace-nav" aria-label="Decision workspace">${links.map(([href,label])=>`<a href="${href}">${label}</a>`).join('')}</nav>`;
+}
+function wireDecisionWorkspaceNav(){
+  app.workspaceObserver?.disconnect();
+  const nav=results.querySelector('.decision-workspace-nav');if(!nav)return;
+  const links=[...nav.querySelectorAll('a')];
+  const activate=id=>links.forEach(link=>{if(link.hash===id)link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');});
+  links.forEach(link=>link.addEventListener('click',()=>activate(link.hash)));
+  if(!('IntersectionObserver'in window))return;
+  const visible=new Map();
+  app.workspaceObserver=new IntersectionObserver(entries=>{
+    for(const entry of entries){const id='#'+entry.target.id;if(entry.isIntersecting)visible.set(id,entry.intersectionRatio);else visible.delete(id);}
+    const active=[...visible.entries()].sort((a,b)=>b[1]-a[1])[0]?.[0];
+    if(active)activate(active);
+  },{root:null,rootMargin:'-12% 0px -68% 0px',threshold:[0,.1,.25,.5]});
+  for(const link of links){const target=results.querySelector(link.hash);if(target)app.workspaceObserver.observe(target);}
+}
+function renderDecisionStatus(data,approved,groupApproved){
+  const audit=auditGroupEvidence(data);
+  const pulse=agreementPulse(data,app.ballots);
+  const evidenceReady=audit.complete>0;
+  const selected=approved.find(item=>item.id===app.agenda.choiceId)||approved[0];
+  const venue=data.domain==='places'&&selected?venueCheckProgress(app.venueChecks,selected.id):null;
+  const agreementReady=Boolean(groupApproved);
+  const logisticsReady=data.domain==='movies'||Boolean(venue&&venue.marked===venue.total);
+  const agreement=groupApproved?'Everyone said Yes in this browser':pulse.top?pulse.top.voted+' / '+pulse.top.total+' people responded':'No eligible option to vote on yet';
+  const logistics=data.domain==='movies'?'No venue checks needed for movie night':venue?venue.marked+' / '+venue.total+' venue details reviewed locally':'Choose a supported place first';
+  return `<section class="decision-status" aria-labelledby="decision-status-heading">
+    <div class="decision-status-head"><div><span class="overline">DECISION STATUS</span><h4 id="decision-status-heading">What still needs the group?</h4></div><small>UNISON does not auto-finalize plans.</small></div>
+    <div class="decision-status-grid">
+      <a href="#evidence-audit" class="${evidenceReady?'is-ready':''}"><span>01 · Evidence</span><strong>${evidenceReady?audit.complete+'/'+audit.total+' options comparable':'More signals needed'}</strong><small>Observed fit only · missing data stays unknown</small></a>
+      <a href="#group-agreement" class="${agreementReady?'is-ready':''}"><span>02 · Group agreement</span><strong>${escape(agreement)}</strong><small>Explicit votes, not inferred approval</small></a>
+      ${data.domain==='places'?`<a href="#venue-readiness" class="${logisticsReady?'is-ready':''}"><span>03 · Practical check</span><strong>${escape(logistics)}</strong><small>Self-reported · not venue verification</small></a>`:`<div class="${logisticsReady?'is-ready':''}"><span>03 · Practical check</span><strong>${escape(logistics)}</strong><small>Choose a time and confirm together</small></div>`}
+    </div>
   </section>`;
 }
 function render(data){
@@ -408,7 +485,9 @@ function render(data){
   const show=data.ranked.slice(0,app.showAll?data.ranked.length:6);
   const status=data.mode==='live'?'Qloo API · Live evidence':'Demo · Simulated evidence';
   results.innerHTML=`<div class="result-topline"><div><p class="overline">${escape(status)}</p><h3>${top?'Your best shared match':'We need a little more evidence'}</h3><p class="result-sub">${escape(data.domain==='places'?(data.city?'Planning for '+data.city:'No city selected'):'Movie night')} · ${data.people.length} people · ${count} fully covered option${count===1?'':'s'}</p></div><div class="result-actions"><button id="download-report" class="text-button" type="button">↓ Decision report</button><button id="save-plan" class="text-button" type="button">Save on this device</button><button id="copy-plan" class="text-button" type="button" ${top?'':'disabled'}>Copy plan ↗</button><button id="reset-veto" class="text-button" type="button">Clear vetoes</button></div></div>
-    <div class="source-banner ${data.mode==='live'?'live':''}"><strong>${escape(sourceName(data))}.</strong> ${escape(data.disclaimer)}</div>
+    <div class="source-banner ${data.mode==='live'?'live':''}" role="status"><strong>${escape(sourceName(data))}.</strong> ${escape(data.disclaimer)}</div>
+    ${renderDecisionWorkspaceNav(data,top)}
+    ${renderDecisionStatus(data,approved,groupApproved)}
     ${integrityReview(data)}
     ${placeConstraintDisclosure(data)}
     <p class="report-privacy"><span aria-hidden="true">◈</span> The Decision Report downloads to your device and includes group names, cultural favorites, and any votes recorded here. Share it thoughtfully.</p>
@@ -426,17 +505,24 @@ function render(data){
     <div class="voting-intro"><strong>New · Agree together</strong><span>Each person can vote Yes, Maybe or No on any candidate. Votes stay on this device, separate from Qloo predictions.</span></div>
     ${groupApproved?`<div class="approved-choice" role="status">✓ Group agreement recorded: <strong>${escape(groupApproved.name)}</strong>. Everyone voted Yes.</div>`:''}
     ${data.needsMoreEvidence?`<div class="notice" role="status">${escape(data.nextAction||'Evidence is incomplete. Add another preference.')}</div>`:''}
-    ${top?`<article class="winner"><div class="winner-inner"><p class="eyebrow">✳ THE BEST CURRENT COMPROMISE</p><h3>${escape(top.name)}</h3><div class="winner-meta"><span>${escape(data.domain==='movies'?'Movie recommendation':'Place recommendation')}</span><span>${escape(data.mode==='live'?'Qloo candidates':'Fictional demo candidates')}</span>${data.city&&data.domain==='places'?'<span>'+escape(data.city)+'</span>':''}</div><p>${escape(top.note||top.address||'Recommended based on the available cross-person taste signals.')}</p><div class="winner-stats"><div><strong>${escape(top.score)}</strong><small>UNISON relative score / 100</small></div><div><strong>${number(top.minimum)}</strong><small>Lowest relative fit</small></div><div><strong>${Math.round(top.coverage*100)}%</strong><small>Signal coverage</small></div></div></div></article>`:''}
+    ${top?`<article id="decision-summary" class="winner"><div class="winner-inner"><p class="eyebrow">✳ THE BEST CURRENT COMPROMISE</p><h3>${escape(top.name)}</h3><div class="winner-meta"><span>${escape(data.domain==='movies'?'Movie recommendation':'Place recommendation')}</span><span>${escape(data.mode==='live'?'Qloo candidates':'Fictional demo candidates')}</span>${data.city&&data.domain==='places'?'<span>'+escape(data.city)+'</span>':''}</div><p>${escape(top.note||top.address||'Recommended based on the available cross-person taste signals.')}</p><div class="winner-stats"><div><strong>${escape(top.score)}</strong><small>UNISON relative score / 100</small></div><div><strong>${number(top.minimum)}</strong><small>Lowest relative fit</small></div><div><strong>${Math.round(top.coverage*100)}%</strong><small>Signal coverage</small></div></div></div></article>`:''}
     ${top?`<div class="compromise-context"><span class="context-icon">◎</span><span><strong>What makes this a compromise?</strong><small>${escape(leastMatched?leastMatched.name+' has the lowest relative fit at '+number(top.minimum)+'/100. UNISON considers this alongside the group average when ranking options.':'UNISON compares each participant using relative-fit evidence.')}</small></span></div>`:''}
     ${planHandoff(data,approved,groupApproved)}
     ${renderVenueReadiness(data,approved)}
     <div class="cards-heading"><h4>Explore the shortlist</h4><small>${data.ranked.length} candidate${data.ranked.length===1?'':'s'}</small></div>
     <div class="cards">${show.map((item,i)=>card(item,i,data)).join('')}</div>
     ${data.ranked.length>6?`<button id="show-all" class="add-person" type="button">${app.showAll?'Show fewer options':'Show all '+data.ranked.length+' options'} <span aria-hidden="true">↓</span></button>`:''}
-    <details class="trace"><summary>How UNISON reached this decision · ${data.trace.length} steps</summary><ol>${data.trace.map(step=>{const label=step.kind==='qloo'?'Qloo request':step.kind==='demo'?'Simulated evidence':'Local computation';const tone=step.kind==='qloo'?'qloo':step.kind==='demo'?'demo':'local';return `<li class="trace-step trace-${tone}"><span class="trace-kind">${label}</span><strong>${escape(step.step)}</strong> — ${escape(step.detail)}${step.requests?.length?`<span class="trace-url">${step.requests.map(request=>escape(request.url+(request.cached?' (cached)':''))).join(' · ')}</span>`:''}</li>`;}).join('')}</ol></details>`;
+    <details id="decision-trace" class="trace"><summary>How UNISON reached this decision · ${data.trace.length} steps</summary><ol>${data.trace.map(step=>{const label=step.kind==='qloo'?'Qloo request':step.kind==='demo'?'Simulated evidence':'Local computation';const tone=step.kind==='qloo'?'qloo':step.kind==='demo'?'demo':'local';return `<li class="trace-step trace-${tone}"><span class="trace-kind">${label}</span><strong>${escape(step.step)}</strong> — ${escape(step.detail)}${step.requests?.length?`<span class="trace-url">${step.requests.map(request=>escape(request.url+(request.cached?' (cached)':''))).join(' · ')}</span>`:''}</li>`;}).join('')}</ol></details>`;
+  wireDecisionWorkspaceNav();
   const agendaFields={choiceId:'#agenda-choice',date:'#agenda-date',time:'#agenda-time',duration:'#agenda-duration',meeting:'#agenda-meeting',notes:'#agenda-notes'};
   for(const [key,selector] of Object.entries(agendaFields)){
-    results.querySelector(selector)?.addEventListener('change',event=>{app.agenda[key]=event.target.value;if(key==='choiceId'&&data.domain==='places')render(data);});
+    results.querySelector(selector)?.addEventListener('change',event=>{
+      app.agenda[key]=event.target.value;
+      if(key==='choiceId'&&data.domain==='places'){
+        render(data);
+        results.querySelector(selector)?.focus();
+      }
+    });
     if(key==='meeting'||key==='notes')results.querySelector(selector)?.addEventListener('input',event=>{app.agenda[key]=event.target.value;});
   }
   results.querySelectorAll('[data-readiness-key]').forEach(box=>box.addEventListener('change',event=>{
@@ -484,8 +570,13 @@ function render(data){
     if(!target)return;
     let panel=[...results.querySelectorAll('[data-ballot-panel]')].find(node=>node.dataset.ballotPanel===target.id);
     if(!panel&&!app.showAll){app.showAll=true;render(data);panel=[...results.querySelectorAll('[data-ballot-panel]')].find(node=>node.dataset.ballotPanel===target.id);}
-    if(panel){panel.open=true;panel.scrollIntoView({behavior:'smooth',block:'center'});}
+    if(panel){
+      panel.open=true;
+      panel.scrollIntoView({behavior:'smooth',block:'center'});
+      panel.querySelector('[data-vote-choice]')?.focus();
+    }
   });
+  results.querySelector('#clear-local-votes')?.addEventListener('click',()=>{app.ballots={};render(data);results.querySelector('#agreement-heading')?.focus();});
   for(const [selector,key] of [['#compare-left','left'],['#compare-right','right']]){
     results.querySelector(selector)?.addEventListener('change',event=>{
       app.compare[key]=event.target.value;
@@ -495,29 +586,36 @@ function render(data){
         app.compare[key==='left'?'right':'left']=other?.id||'';
       }
       render(data);
+      results.querySelector(selector)?.focus();
     });
   }
   // Human votes are distinct from preference predictions; no network request.
   results.querySelectorAll('[data-vote-choice]').forEach(button=>button.addEventListener('click',()=>{
     const id=button.dataset.voteCandidate;
-    app.ballots=updateBallot(app.ballots,id,button.dataset.votePerson,button.dataset.voteChoice);
+    const person=button.dataset.votePerson,choice=button.dataset.voteChoice;
+    app.ballots=updateBallot(app.ballots,id,person,choice);
     render(data);
     const ballot=[...results.querySelectorAll('[data-ballot-panel]')].find(panel=>panel.dataset.ballotPanel===id);
     if(ballot)ballot.open=true;
+    [...results.querySelectorAll('[data-vote-choice]')].find(next=>next.dataset.voteCandidate===id&&next.dataset.votePerson===person&&next.dataset.voteChoice===choice)?.focus();
   }));
   // Vetoes only re-rank existing evidence locally: no Qloo quota spent on each click.
   results.querySelectorAll('[data-veto]').forEach(button=>button.addEventListener('click',()=>{
+    const id=button.dataset.veto;
     const vetoes=new Set(app.lastInput.vetoes||[]);
-    vetoes.has(button.dataset.veto)?vetoes.delete(button.dataset.veto):vetoes.add(button.dataset.veto);
+    vetoes.has(id)?vetoes.delete(id):vetoes.add(id);
     app.lastInput.vetoes=[...vetoes];
     render(applyVetoLocally(app.baseResult,app.lastInput.vetoes,app.decisionStyle));
+    [...results.querySelectorAll('[data-veto]')].find(next=>next.dataset.veto===id)?.focus();
   }));
-  $('#reset-veto')?.addEventListener('click',()=>{app.lastInput.vetoes=[];render(applyVetoLocally(app.baseResult,[],app.decisionStyle));});
+  $('#reset-veto')?.addEventListener('click',()=>{app.lastInput.vetoes=[];render(applyVetoLocally(app.baseResult,[],app.decisionStyle));results.querySelector('#reset-veto')?.focus();});
   results.querySelectorAll('[data-style]').forEach(button=>button.addEventListener('click',()=>{
-    app.decisionStyle=button.dataset.style;
+    const style=button.dataset.style;
+    app.decisionStyle=style;
     render(applyVetoLocally(app.baseResult,app.lastInput?.vetoes||[],app.decisionStyle));
+    [...results.querySelectorAll('[data-style]')].find(next=>next.dataset.style===style)?.focus();
   }));
-  $('#show-all')?.addEventListener('click',()=>{app.showAll=!app.showAll;render(data);});
+  $('#show-all')?.addEventListener('click',()=>{app.showAll=!app.showAll;render(data);results.querySelector('#show-all')?.focus();});
   $('#download-report')?.addEventListener('click',()=>{
     const message=results.querySelector('#report-message');
     try{
@@ -578,7 +676,7 @@ try{paintDeviceLibrary();}catch{$('#device-plans').textContent='Browser storage 
 
 async function submitPlan(input,{preserveScroll=false}={}){
   if(app.requesting)return;
-  const problem=validate(input);if(problem){showError(problem);form.querySelector('#city')?.focus();return;}
+  const problem=validate(input);if(problem){showError(problem);focusBriefProblem(problem);return;}
   showError();app.requesting=true;app.lastInput=input;submitBtn.disabled=true;$('#submit-label').textContent='Finding the overlap…';
   results.setAttribute('aria-busy','true');results.innerHTML='<div class="loader" role="status"><span class="spinner" aria-hidden="true"></span><strong>Looking for common ground</strong><p>Checking preferences, comparing options and finding the fairest supported shortlist…</p></div>';
   try{
@@ -597,7 +695,7 @@ async function submitPlan(input,{preserveScroll=false}={}){
     const help=planningRecovery(e.status||0,e.message,{mode:input.mode,domain:input.domain});
     results.innerHTML=`<section class="plan-recovery" aria-labelledby="recovery-title">
       <span class="eyebrow">YOUR BRIEF IS SAFE · NO FALLBACK DATA USED</span>
-      <h3 id="recovery-title">${escape(help.title)}</h3>
+      <h3 id="recovery-title" tabindex="-1">${escape(help.title)}</h3>
       <p>${escape(help.detail)}</p>
       <details><summary>Technical error details</summary><p>${escape(e.message||'Request failed')} ${e.status?'(HTTP '+escape(e.status)+')':''}</p></details>
       <h4>Suggested next steps</h4>
@@ -619,6 +717,7 @@ async function submitPlan(input,{preserveScroll=false}={}){
       showError();
       results.querySelector('.recovery-explainer').textContent='Demo mode selected. Submit your group brief to generate clearly labeled fictional recommendations, with no Qloo requests.';
     });
+    results.querySelector('#recovery-title')?.focus();
   }finally{app.requesting=false;submitBtn.disabled=false;$('#submit-label').textContent=currentDomain()==='places'?'Find our common ground':'Find our movie night';results.setAttribute('aria-busy','false');}
 }
 form.addEventListener('submit',event=>{event.preventDefault();const input=brief();input.vetoes=[];app.showAll=false;submitPlan(input);});
@@ -636,12 +735,13 @@ function applyBrief(raw){
   input.people.forEach(p=>addPerson([p.name,p.favorites.join(', ')],p.selectedEntities||[]));
   app.lastInput=null;app.lastResult=null;app.baseResult=null;app.ballots={};app.compare={left:'',right:''};app.venueChecks={};app.agenda={choiceId:'',date:'',time:'19:00',duration:'120',meeting:'',notes:''};app.showAll=false;
   results.innerHTML='<div class="empty"><span class="eyebrow">READY FOR YOUR GROUP</span><h3>Different tastes, one plan.</h3><p>Review the group brief and select Find our common ground to create a new shortlist.</p></div>';
-  showError();updateFormPresentation();
+  showError();updateFormPresentation();updateBriefReadiness();
 }
 document.querySelectorAll('[data-preset]').forEach(button=>button.addEventListener('click',()=>{
   const preset=starterGroups.find(item=>item.id===button.dataset.preset);
   if(!preset)return;
   applyBrief({...preset,mode:currentMode()});
+  setActivePreset(preset.id);
   $('#share-message').textContent='Loaded '+preset.label+'. Edit the names and tastes to make it yours.';
   form.scrollIntoView({behavior:'smooth',block:'start'});
 }));
@@ -677,6 +777,7 @@ try{
 }
 
 updateFormPresentation();
+updateBriefReadiness();
 fetch('/api/status',{cache:'no-store'}).then(r=>r.json()).then(status=>{
   app.configured=Boolean(status.configured);
   // Shared links always open in demo mode. Only a direct click can opt into live Qloo.
@@ -687,4 +788,5 @@ fetch('/api/status',{cache:'no-store'}).then(r=>r.json()).then(status=>{
   // A key only makes live mode available. Keep demo selected until a person opts in.
   if(!app.configured&&live.checked){form.querySelector('input[name=mode][value=demo]').checked=true;$('#share-message').textContent='Qloo is not configured; this shared group is now in demo mode.';}
   updateFormPresentation();
-}).catch(()=>{statusBadge.classList.add('offline');statusBadge.innerHTML='<span class="status-dot"></span>Service unavailable · Demo only';$('#live-choice input').disabled=true;$('#live-choice').classList.add('disabled');updateFormPresentation();});
+  updateBriefReadiness();
+}).catch(()=>{statusBadge.classList.add('offline');statusBadge.innerHTML='<span class="status-dot"></span>Service unavailable · Demo only';$('#live-choice input').disabled=true;$('#live-choice').classList.add('disabled');updateFormPresentation();updateBriefReadiness();});
