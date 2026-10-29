@@ -38,6 +38,12 @@ test('frontend keeps demo mode opt-in and provides clipboard fallback',async()=>
   assert.doesNotMatch(r.body,/if\(app\.configured&&!app\.hasChangedMode\)\{live\.checked=true;/);
   assert.match(r.body,/Qloo request/);
 });
+test('shortlist updates announce concise provenance instead of the whole rerendered page',async()=>{
+  const [page,app]=await Promise.all([request('/'),request('/app.js')]);
+  assert.equal(page.response.status,200);
+  assert.doesNotMatch(page.body,/id="results" class="results" aria-live="polite"/);
+  assert.match(app.body,/class="source-banner \$\{data\.mode==='live'\?'live':''\}" role="status"/);
+});
 test('Taste Finder accurately distinguishes group names from the submitted Qloo search',async()=>{
   const r=await request('/');
   assert.equal(r.response.status,200);

@@ -365,7 +365,7 @@ function render(data){
   const show=data.ranked.slice(0,app.showAll?data.ranked.length:6);
   const status=data.mode==='live'?'Qloo API · Live evidence':'Demo · Simulated evidence';
   results.innerHTML=`<div class="result-topline"><div><p class="overline">${escape(status)}</p><h3>${top?'Your best shared match':'We need a little more evidence'}</h3><p class="result-sub">${escape(data.domain==='places'?(data.city?'Planning for '+data.city:'No city selected'):'Movie night')} · ${data.people.length} people · ${count} fully covered option${count===1?'':'s'}</p></div><div class="result-actions"><button id="download-report" class="text-button" type="button">↓ Decision report</button><button id="save-plan" class="text-button" type="button">Save on this device</button><button id="copy-plan" class="text-button" type="button" ${top?'':'disabled'}>Copy plan ↗</button><button id="reset-veto" class="text-button" type="button">Clear vetoes</button></div></div>
-    <div class="source-banner ${data.mode==='live'?'live':''}"><strong>${escape(sourceName(data))}.</strong> ${escape(data.disclaimer)}</div>
+    <div class="source-banner ${data.mode==='live'?'live':''}" role="status"><strong>${escape(sourceName(data))}.</strong> ${escape(data.disclaimer)}</div>
     ${integrityReview(data)}
     <p class="report-privacy"><span aria-hidden="true">◈</span> The Decision Report downloads to your device and includes group names, cultural favorites, and any votes recorded here. Share it thoughtfully.</p>
     <p id="report-message" class="report-message" role="status" aria-live="polite"></p>
