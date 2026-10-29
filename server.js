@@ -5,7 +5,7 @@ import {fileURLToPath} from 'node:url';
 import {runAgent} from './src/agent.js';
 import {isLiveConfigured,searchFavorite} from './src/qloo.js';
 const root=path.join(path.dirname(fileURLToPath(import.meta.url)),'public');
-const files=new Map([['/','index.html'],['/app.js','app.js'],['/planner-state.js','planner-state.js'],['/ballot.js','ballot.js'],['/saved-plans.js','saved-plans.js'],['/calendar.js','calendar.js'],['/evidence-audit.js','evidence-audit.js'],['/decision-report.js','decision-report.js'],['/consensus.js','consensus.js'],['/privacy','privacy.html'],['/privacy.html','privacy.html'],['/styles.css','styles.css']]);
+const files=new Map([['/','index.html'],['/app.js','app.js'],['/planner-state.js','planner-state.js'],['/ballot.js','ballot.js'],['/saved-plans.js','saved-plans.js'],['/calendar.js','calendar.js'],['/evidence-audit.js','evidence-audit.js'],['/decision-report.js','decision-report.js'],['/consensus.js','consensus.js'],['/head-to-head.js','head-to-head.js'],['/privacy','privacy.html'],['/privacy.html','privacy.html'],['/styles.css','styles.css']]);
 const MIME={'.html':'text/html; charset=utf-8','.js':'application/javascript; charset=utf-8','.css':'text/css; charset=utf-8'};
 const requestWindows=new Map();const lookupWindows=new Map(); let activePlans=0;
 function allowLookup(req){const ip=req.socket.remoteAddress||'unknown',now=Date.now();const recent=(lookupWindows.get(ip)||[]).filter(time=>now-time<60000);recent.push(now);lookupWindows.set(ip,recent);return recent.length<=10;}
