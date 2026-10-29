@@ -116,3 +116,9 @@ UNISON now also deduplicates concurrent identical Qloo requests and limits cross
 To validate more than a server configuration flag, we now run an integration test with mocked Qloo Search and Insights tools across the entire live-mode agent pipeline. It checks person-specific taste resolution, discovery, shared shortlist evaluation, stable provenance traces, missing-evidence handling, and refusal to substitute fictional results into live mode. Tests are deterministic and incur no Qloo quota; they do not establish real Insights availability.
 
 The new **Head-to-Head** comparator lets groups choose any two supported candidates and see which person-level ordinal-fit estimate favors each option. This is independent of the explicit human-voting flow. No extra API requests are made when changing the comparison.
+
+## Reliable and transparent live-mode recovery
+
+UNISON no longer treats Qloo downtime or ambiguous favorites as an opaque recommendation failure. A dedicated recovery UI explains possible causes without inventing new evidence, preserves the group brief for revision and requires an explicit action before switching to fictional demo mode. Shared links always reopen in demo mode, protecting API quota and user intent. A memory-bounded request limiter prevents unbounded growth in the per-client planning and Taste Finder throttles.
+
+The automated suite includes regression checks for these safeguards; comprehensive live Qloo Insights and interactive cross-browser verification remain separate work.
