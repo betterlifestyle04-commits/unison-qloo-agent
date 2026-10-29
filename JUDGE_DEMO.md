@@ -57,3 +57,9 @@ Do not claim a reservation, measured improvement in group satisfaction, authenti
 ## Optional 15-second extension — Group agreement
 
 After presenting the fair ranking, open the **Agreement Pulse**. Have one participant vote Yes and observe the remaining response count. Have another vote No to see how the pulse recommends discussion rather than silently changing the machine recommendation. Explain that this is **local, one-device group input**, not a networked voting product. The proposed winner is only marked unanimously approved after every participant explicitly selects Yes.
+
+## Optional extension — Compare any two recommendations
+
+Expand **Head-to-Head** in the results. Choose two fully supported options and show the relative-fit table. Highlight when one group member may prefer Option A even though another prefers Option B. The number of people with higher estimated fit is **not a human vote** and must not be described as measured preference or happiness. This comparison reuses the same Qloo-sourced shortlist, without an additional Qloo request.
+
+For engineering judges, `test/live-pipeline.test.js` verifies the full two-pass Qloo orchestration with controlled mocked tools, including no-candidate cases, missing person-level evidence, and tool provenance. These deterministic tests are **not** a substitute for a real authenticated Qloo Insights smoke test.
