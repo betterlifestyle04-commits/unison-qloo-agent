@@ -292,8 +292,10 @@ test('mocked live browser journey: explicit opt-in, precise Taste Finder and hon
     await page.locator('#submit-plan').click();
     assert.match(await page.locator('#form-error').innerText(),/Enter a city/i);
     assert.equal(await page.locator('#city').evaluate(node=>document.activeElement===node),true,'missing live city focuses the practical constraint that needs attention');
+    assert.equal(await page.locator('#city').getAttribute('aria-invalid'),'true');
     assert.equal(submissions.length,0,'client validation cannot call the planner');
     await page.locator('#city').fill('Oslo');
+    assert.equal(await page.locator('#city').getAttribute('aria-invalid'),null);
     assert.equal(await page.locator('#taste-finder').isVisible(),true);
     assert.equal(await page.locator('#qloo-diagnostics').isVisible(),true);
     assert.equal(diagnosticsRequests.length,0,'diagnostics cannot run on page load or mode change');
