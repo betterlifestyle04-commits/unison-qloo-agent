@@ -157,6 +157,19 @@ test('mobile: working demo and responsive navigation without document overflow',
   }finally{await context.close();}
 });
 
+test('skip link moves keyboard focus to the planner',async()=>{
+  const context=await browser.newContext({viewport:{width:1280,height:800}});
+  const page=await context.newPage();trackErrors(page);
+  try{
+    await page.goto(origin+'/',{waitUntil:'networkidle'});
+    await page.keyboard.press('Tab');
+    assert.equal(await page.locator('.skip').evaluate(node=>document.activeElement===node),true);
+    await page.keyboard.press('Enter');
+    assert.equal(await page.locator('#planner').evaluate(node=>document.activeElement===node),true);
+    assert.deepEqual(errors,[]);
+  }finally{await context.close();}
+});
+
 test('planner carries participant edits and practical constraints into demo requests',async()=>{
   const context=await browser.newContext({viewport:{width:1280,height:800}});
   const page=await context.newPage();trackErrors(page);
