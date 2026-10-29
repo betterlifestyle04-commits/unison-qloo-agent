@@ -83,3 +83,9 @@ For a three-person demo, expand **Decision Stability**: a leave-one-out hypothet
 The [one-time live production Oslo test](https://github.com/betterlifestyle04-commits/unison-qloo-agent/actions/runs/40883494386) returned 12 real Qloo places, with both fictional participants having candidate evidence for all 12. The test used a strict Oslo locality query and budget `any`. That verifies the integration's tested response path, not every individual venue fact.
 
 For the fictional outing demo, open **Make it happen** and **Venue Reality Check**. Check the address and opening hours boxes; the progress advances. Switch to another candidate and observe a separate, unchecked list; switch back to see the previous marks. These are manual group reminders—not provider checks, reservations, or automatic validation—and they do not spend Qloo quota.
+
+## Verified 3-person budgeted live place flow
+
+A separate production CI run on October 29, 2026 successfully generated **12 places and 12 fully covered recommendations for three fictional participants** in Oslo, with all six Qloo Insights requests carrying the `mid` restaurant price-level cap ([evidence](https://github.com/betterlifestyle04-commits/unison-qloo-agent/actions/runs/40885037384)). Be precise: these are Qloo place candidates, not independently address-verified venues or guaranteed restaurant prices.
+
+Expand **Location and budget · What was actually checked?** to demonstrate transparent constraints. Then open **Make it happen**, show that the calendar location stays blank until entered by a person, and use the manual Venue Reality Check without claiming to reserve or confirm anything.
