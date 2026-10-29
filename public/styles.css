@@ -318,3 +318,20 @@
 .integrity-metrics span{border:1px solid #e5eaf2;background:white;border-radius:8px;padding:9px;display:flex;flex-direction:column;gap:3px;color:#83909f;font-size:.65rem}
 .integrity-metrics strong{font-size:1.17rem;font-weight:850;color:#3f697f}
 @media(max-width:580px){.integrity-metrics span{padding:7px}.integrity-metrics strong{font-size:.96rem}}
+
+/* An explicit live connectivity diagnostic. Never runs during page initialization. */
+.qloo-diagnostics{border:1px solid #d7e3f5;background:linear-gradient(120deg,#f6faff,#f7f4ff);border-radius:13px;padding:14px;margin-top:16px}
+.qloo-diagnostics[hidden]{display:none}
+.diagnostics-heading{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.diagnostics-heading strong{font-size:.81rem;color:#455c87;line-height:1.4}
+.diagnostics-heading p{font-size:.68rem;color:#687e99;margin:4px 0 0;line-height:1.55}
+.diagnostics-heading button{border:1px solid #6a64cd;border-radius:9px;padding:10px 12px;background:white;color:#564fac;font-weight:790;font-size:.72rem;white-space:nowrap}
+.diagnostics-heading button:disabled{opacity:.58;cursor:wait}
+.qloo-diagnostics .diagnostics-caution{font-size:.65rem;color:#8591a4;line-height:1.6;margin:10px 0 0}
+.diagnostics-results{font-size:.69rem;color:#5e718b;line-height:1.6;margin-top:11px}
+.diagnostics-results:empty{display:none}
+.diagnostics-results strong{color:#3e6085}
+.diagnostics-results ol{padding-left:21px;display:grid;gap:4px;margin:8px 0}
+.diagnostics-results li{overflow-wrap:anywhere}
+.diagnostics-results p{margin:7px 0 0;color:#79889d}
+@media(max-width:580px){.diagnostics-heading{align-items:stretch;flex-direction:column}.diagnostics-heading button{white-space:normal;width:100%}}
