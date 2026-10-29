@@ -166,3 +166,15 @@ The dedicated [privacy and data information page](/privacy) explains server requ
 - **Single-flight Qloo GET requests:** concurrent, identical Search or Insights requests now share one upstream API request, while retaining the existing five-minute cache. Errors do not become successful cached results. This lowers redundant upstream traffic without reducing evidence coverage. See `src/qloo.js` and new concurrency regression tests.
 - **Cross-site request protection:** requests carrying a different `Origin` or browser `Sec-Fetch-Site: cross-site` are rejected from the Qloo lookup and planning endpoints before work begins. HTML and APIs also send `Referrer-Policy: no-referrer`; static pages limit camera, microphone and geolocation permissions. This is a defensive safeguard, not full account-based authentication or a solution to abusive direct clients.
 - **Expanded syntax checks:** `npm run check` now covers every production JavaScript module, including newer browser-only features.
+
+## End-to-end agent integration tests (no real API spend)
+
+A full **Qloo two-pass agent workflow integration test** lives in `test/live-pipeline.test.js`. Its controlled, realistic mock tools simulate each person's entity resolution, a separate discovery request, a common shortlisted Qloo Insights evaluation, and rank-derived fairness. Assertions verify that no missing participant evidence is ever invented, that zero candidates fail with clear wording instead of fictional fallback, and that result traces stay in participant order even when tools finish in different orders.
+
+`runAgent(input,{qlooTools})` accepts test-only tool injection; the public web service invokes the agent without overrides, so production still uses the real server-side Qloo credentials. The tests **do not prove real Qloo Insights availability, venue accuracy, or valid API entitlements**, which still need a separate authenticated live test.
+
+## Head-to-Head decision comparison
+
+Results now offer a **Head-to-Head** panel: choose any two fully supported, non-vetoed candidates to inspect each participant's relative fit, count which candidate scores higher for each person, and see the difference in the lowest group fit. Only actual observations are compared; missing evidence is never filled in, and there are no network requests when switching candidates. This is a comparison of UNISON's heuristic evidence, **not an actual human vote**. The independent Yes/Maybe/No voting flow remains the source of explicit group approval.
+
+Modules: `public/head-to-head.js` and `test/head-to-head.test.js`.
