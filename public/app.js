@@ -8,6 +8,7 @@ import {agreementPulse} from './consensus.js';
 import {eligibleComparisons,compareOptions} from './head-to-head.js';
 import {analyzeGroupStability} from './group-stability.js';
 import {venueCheckItems,updateVenueCheck,venueCheckProgress} from './venue-readiness.js';
+import {updateFeedback,summarizeFeedback,exportFeedbackCsv,venueCheckLinks,venueInquiry} from './field-validation.js';
 import {describePlaceConstraints,manuallyConfirmedMeetingLocation} from './place-constraints.js';
 import {planningRecovery} from './recovery.js';
 const $=selector=>document.querySelector(selector);
@@ -15,7 +16,7 @@ const people=$('#people'),template=$('#person-template'),form=$('#plan-form'),re
 const starters=[['Maya','Studio Ghibli'],['Jon','Anthony Bourdain'],['Priya','Knives Out']];
 const selectedByPerson=new WeakMap();
 function showPinned(node){const selections=[...(selectedByPerson.get(node)?.values()||[])];const hint=node.querySelector('[data-pinned]');if(hint)hint.textContent=selections.length?'Selected Qloo entity: '+selections.map(x=>x.name+' ('+String(x.type||'entity').replace(/^urn:entity:/,'')+')').join(', '):'';}
-const app={configured:false,requesting:false,lastInput:null,lastResult:null,showAll:false,hasChangedMode:false,baseResult:null,hashLoaded:false,decisionStyle:'balanced',ballots:{},compare:{left:'',right:''},venueChecks:{},workspaceObserver:null,lookupBusy:false,agenda:{choiceId:'',date:'',time:'19:00',duration:'120',meeting:'',notes:''}};
+const app={configured:false,requesting:false,lastInput:null,lastResult:null,showAll:false,hasChangedMode:false,baseResult:null,hashLoaded:false,decisionStyle:'balanced',ballots:{},compare:{left:'',right:''},venueChecks:{},feedback:{},workspaceObserver:null,lookupBusy:false,agenda:{choiceId:'',date:'',time:'19:00',duration:'120',meeting:'',notes:''}};
 const escape=value=>{const element=document.createElement('span');element.textContent=String(value??'');return element.innerHTML.replace(/\"/g,'&quot;').replace(/'/g,'&#39;');};
 const number=value=>Number.isFinite(value)?String(Math.round(value)):null;
 const initial=value=>String(value||'?').trim().slice(0,1).toUpperCase();
@@ -435,6 +436,30 @@ function renderVenueReadiness(data,choices){
     <small>Checklist marks stay in this page only. They are self-reported, do not change Qloo ranking, do not verify venue facts, and do not make or confirm bookings. Changing options displays that option's separate checklist.</small>
   </section>`;
 }
+function renderOutcomeFeedback(data,choices){
+  if(!choices.length)return '';
+  const selected=choices.find(item=>item.id===app.agenda.choiceId)||choices[0];
+  const report=summarizeFeedback(app.feedback,selected.id,data.people);
+  const scale=person=>stage=>{
+    const rating=report.ratings.find(row=>row.label==='Participant '+(data.people.indexOf(person)+1))?.[stage];
+    return `<select data-feedback-person="${escape(person.id)}" data-feedback-stage="${stage}" aria-label="${escape(person.name)} ${stage==='expected'?'expected enjoyment before outing':'actual enjoyment after outing'}">
+      <option value="">Not answered</option>
+      ${[1,2,3,4,5].map(value=>`<option value="${value}" ${rating===value?'selected':''}>${value} / 5</option>`).join('')}
+    </select>`;
+  };
+  return `<section class="outcome-study" id="outcome-study" aria-labelledby="outcome-study-title">
+    <div class="outcome-study-heading"><span class="overline">OPTIONAL · REAL GROUP FEEDBACK</span><h4 id="outcome-study-title">Did the plan meet expectations?</h4></div>
+    <p>For <strong>${escape(selected.name)}</strong>: Each person can record how much they <em>expected</em> to enjoy the choice before attending, then how much they <em>actually</em> enjoyed it afterward. Use the same 1–5 scale for both. ${data.mode==='demo'?'This is a fictional demo recommendation; feedback here is not real-user evidence.':''}</p>
+    <div class="outcome-table"><table>
+      <thead><tr><th>Participant</th><th>Expected · before</th><th>Experienced · after</th></tr></thead>
+      <tbody>${data.people.map(person=>`<tr><th scope="row">${escape(person.name)}</th><td>${scale(person)('expected')}</td><td>${scale(person)('experienced')}</td></tr>`).join('')}</tbody>
+    </table></div>
+    <p class="outcome-summary" id="outcome-summary" role="status" aria-live="polite">${escape(report.explanation)}</p>
+    <button type="button" id="export-outcomes" class="outcome-export">Download anonymous ratings CSV</button>
+    <p id="outcome-message" role="status" aria-live="polite"></p>
+    <small>Session-only data: nothing is sent to Qloo or UNISON servers, and it disappears after a refresh. Download before closing the page. CSV contains participant numbers, not names. An expectation gap is <strong>not a causal improvement over another planning method</strong>; reliable impact claims require real participants and a comparison group.</small>
+  </section>`;
+}
 function renderDecisionWorkspaceNav(data,top){
   const links=[];
   if(top)links.push(['#decision-summary','Recommendation']);
@@ -509,6 +534,7 @@ function render(data){
     ${top?`<div class="compromise-context"><span class="context-icon">◎</span><span><strong>What makes this a compromise?</strong><small>${escape(leastMatched?leastMatched.name+' has the lowest relative fit at '+number(top.minimum)+'/100. UNISON considers this alongside the group average when ranking options.':'UNISON compares each participant using relative-fit evidence.')}</small></span></div>`:''}
     ${planHandoff(data,approved,groupApproved)}
     ${renderVenueReadiness(data,approved)}
+    ${renderOutcomeFeedback(data,approved)}
     <div class="cards-heading"><h4>Explore the shortlist</h4><small>${data.ranked.length} candidate${data.ranked.length===1?'':'s'}</small></div>
     <div class="cards">${show.map((item,i)=>card(item,i,data)).join('')}</div>
     ${data.ranked.length>6?`<button id="show-all" class="add-person" type="button">${app.showAll?'Show fewer options':'Show all '+data.ranked.length+' options'} <span aria-hidden="true">↓</span></button>`:''}
@@ -518,7 +544,7 @@ function render(data){
   for(const [key,selector] of Object.entries(agendaFields)){
     results.querySelector(selector)?.addEventListener('change',event=>{
       app.agenda[key]=event.target.value;
-      if(key==='choiceId'&&data.domain==='places'){
+      if(key==='choiceId'){
         render(data);
         results.querySelector(selector)?.focus();
       }
@@ -536,6 +562,32 @@ function render(data){
     const status=results.querySelector('#decision-logistics-status');
     if(status){status.classList.toggle('is-ready',progress.complete);const summary=status.querySelector('strong');if(summary)summary.textContent=progress.marked+' / '+progress.total+' venue details reviewed locally';}
   }));
+  results.querySelectorAll('[data-feedback-person]').forEach(input=>input.addEventListener('change',()=>{
+    const candidate=app.agenda.choiceId,person=input.dataset.feedbackPerson,stage=input.dataset.feedbackStage;
+    const selected=input.value?Number(input.value):null;
+    app.feedback=updateFeedback(app.feedback,candidate,person,stage,selected);
+    const report=summarizeFeedback(app.feedback,candidate,data.people);
+    results.querySelector('#outcome-summary').textContent=report.explanation;
+  }));
+  results.querySelector('#export-outcomes')?.addEventListener('click',()=>{
+    const msg=results.querySelector('#outcome-message');
+    try{
+      const report=summarizeFeedback(app.feedback,app.agenda.choiceId,data.people);
+      const text=exportFeedbackCsv(report,{demo:data.mode==='demo'});
+      const url=URL.createObjectURL(new Blob([text],{type:'text/csv;charset=utf-8'}));
+      const link=document.createElement('a');
+      link.href=url;link.download='unison-anonymous-outcome-feedback.csv';document.body.append(link);link.click();link.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),1500);
+      msg.textContent='Ratings exported to this device. No group names were included. Keep the file private and interpret results cautiously.';
+    }catch(e){msg.textContent='Feedback export unavailable: '+String(e.message||'Unknown error');}
+  });
+  results.querySelector('#venue-copy-inquiry')?.addEventListener('click',async()=>{
+    const chosen=approved.find(item=>item.id===app.agenda.choiceId);
+    if(!chosen)return;
+    const text=venueInquiry({name:chosen.name,date:app.agenda.date,time:app.agenda.date?app.agenda.time:'',partySize:data.people.length});
+    const node=results.querySelector('#venue-inquiry-message');
+    node.textContent=await copyText(text)?'Question template copied; contact the venue yourself. Nothing was sent.':'Clipboard unavailable. Contact the venue directly.';
+  });
   const agendaDetails=()=>{
     const chosen=approved.find(item=>item.id===app.agenda.choiceId);
     if(!chosen)throw new Error('Choose an available option before scheduling.');
@@ -688,6 +740,7 @@ async function submitPlan(input,{preserveScroll=false}={}){
     app.ballots={};
     app.compare={left:'',right:''};
     app.venueChecks={};
+    app.feedback={};
     app.agenda={choiceId:'',date:'',time:'19:00',duration:'120',meeting:'',notes:''};
     app.baseResult=data;
     render(app.decisionStyle==='balanced'?data:applyVetoLocally(data,[],app.decisionStyle));
@@ -735,7 +788,7 @@ function applyBrief(raw){
   $('#budget').value=input.budget;
   people.replaceChildren();
   input.people.forEach(p=>addPerson([p.name,p.favorites.join(', ')],p.selectedEntities||[]));
-  app.lastInput=null;app.lastResult=null;app.baseResult=null;app.ballots={};app.compare={left:'',right:''};app.venueChecks={};app.agenda={choiceId:'',date:'',time:'19:00',duration:'120',meeting:'',notes:''};app.showAll=false;
+  app.lastInput=null;app.lastResult=null;app.baseResult=null;app.ballots={};app.compare={left:'',right:''};app.venueChecks={};app.feedback={};app.agenda={choiceId:'',date:'',time:'19:00',duration:'120',meeting:'',notes:''};app.showAll=false;
   results.innerHTML='<div class="empty"><span class="eyebrow">READY FOR YOUR GROUP</span><h3>Different tastes, one plan.</h3><p>Review the group brief and select Find our common ground to create a new shortlist.</p></div>';
   showError();updateFormPresentation();updateBriefReadiness();
 }
