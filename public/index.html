@@ -86,6 +86,12 @@
             <label class="source-tile" id="live-choice"><input type="radio" name="mode" value="live"><span class="source-copy"><b>Live Qloo intelligence</b><small>Real cultural taste recommendations via the Qloo API.</small></span><span class="source-tag">LIVE</span></label>
             <label class="source-tile"><input type="radio" name="mode" value="demo" checked><span class="source-copy"><b>Explore demo mode</b><small>Clearly labeled fictional data. No Qloo requests.</small></span><span class="source-tag neutral">DEMO</span></label>
           </div>
+          <div id="qloo-diagnostics" class="qloo-diagnostics" hidden>
+            <div class="diagnostics-heading"><div><strong>Is Live Qloo working?</strong><p>Check a real Qloo Search and two Insights stages before trying a group plan.</p></div>
+              <button type="button" id="qloo-check">Check Qloo connection ↗</button></div>
+            <p class="diagnostics-caution">Optional. Uses a fixed public movie sample, no group names or favorites. Up to three Qloo requests plus possible retries. Maximum two checks per ten minutes per connection.</p>
+            <div id="qloo-check-results" class="diagnostics-results" role="status" aria-live="polite"></div>
+          </div>
         </fieldset>
         <button class="primary" type="submit" id="submit-plan"><span id="submit-label">Find our common ground</span><span aria-hidden="true">↗</span></button>
         <div class="share-tools">
