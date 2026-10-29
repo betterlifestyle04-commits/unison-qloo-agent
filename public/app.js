@@ -541,7 +541,7 @@ try{
 updateFormPresentation();
 fetch('/api/status',{cache:'no-store'}).then(r=>r.json()).then(status=>{
   app.configured=Boolean(status.configured);
-  if(app.hashLoaded && app.pendingMode==='live' && app.configured){form.querySelector('input[name=mode][value=live]').checked=true;}
+  // Shared links always open in demo mode. Only a direct click can opt into live Qloo.
   statusBadge.classList.toggle('live',app.configured);statusBadge.classList.toggle('offline',!app.configured);
   statusBadge.innerHTML=`<span class="status-dot"></span>${app.configured?'Qloo key present · Live available':'Explore in demo mode'}`;
   const live=$('#live-choice input');
