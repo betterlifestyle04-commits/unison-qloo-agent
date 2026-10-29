@@ -6,6 +6,7 @@ import {auditGroupEvidence,recoverySuggestions} from './evidence-audit.js';
 import {buildDecisionReport,reportFilename} from './decision-report.js';
 import {agreementPulse} from './consensus.js';
 import {eligibleComparisons,compareOptions} from './head-to-head.js';
+import {analyzeGroupStability} from './group-stability.js';
 import {planningRecovery} from './recovery.js';
 const $=selector=>document.querySelector(selector);
 const people=$('#people'),template=$('#person-template'),form=$('#plan-form'),results=$('#results'),error=$('#form-error'),submitBtn=$('#submit-plan'),statusBadge=$('#mode-status');
@@ -305,6 +306,32 @@ function renderAgreementPulse(data){
     <p class="agreement-privacy">Only the people using this browser can record votes here. Voting doesn't change Qloo results or automatically make a booking.</p>
   </section>`;
 }
+function renderGroupStability(data){
+  const report=analyzeGroupStability(data,app.decisionStyle);
+  if(!report.comparable)return `<details class="group-stability">
+    <summary>Decision Stability · Does everyone affect the choice?</summary>
+    <p>${escape(report.reason)}</p>
+  </details>`;
+  const rows=report.trials.map(trial=>`<tr>
+    <th scope="row">${escape(trial.personName)}</th>
+    <td>${escape(trial.winnerName)}</td>
+    <td>${trial.changesWinner?'Different leader':'Same leader'}</td>
+  </tr>`).join('');
+  return `<details class="group-stability" aria-label="Hypothetical decision sensitivity">
+    <summary>Decision Stability · Is the shared match sensitive to one voice?</summary>
+    <p class="stability-intro">A transparent stress test using ${report.eligible} fully supported candidates and the current <strong>${escape(decisionStyles[report.style].label)}</strong> weighting. Everyone remains included in the real result.</p>
+    <div class="stability-overview">
+      <div><strong>${report.changes} / ${report.trials.length}</strong><span>Hypothetical comparisons that change the leading option</span></div>
+      <div><strong>${escape(report.winner.name)}</strong><span>Leader with all participants included</span></div>
+    </div>
+    <div class="stability-table"><table>
+      <thead><tr><th scope="col">Hypothetically omit</th><th scope="col">Alternative leader</th><th scope="col">Outcome</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>
+    <p class="stability-summary">${escape(report.explanation)}</p>
+    <small>This is not a vote, an instruction to remove people, a happiness prediction or another Qloo query. Every scenario reuses exactly the same observed candidate signals.</small>
+  </details>`;
+}
 function renderHeadToHead(data){
   const choices=eligibleComparisons(data);
   if(choices.length<2)return '<section class="head-to-head"><p class="overline">EXPLORE THE TRADE-OFFS</p><h4>Head-to-Head</h4><p>At least two fully supported, non-vetoed options are needed before you can compare them fairly.</p></section>';
@@ -364,6 +391,7 @@ function render(data){
       <p>${escape(decisionStyles[app.decisionStyle].description)} These weights are UNISON heuristics, not measurements of happiness.</p>
     </section>
     ${decisionLab(data)}
+    ${renderGroupStability(data)}
     ${renderHeadToHead(data)}
     ${renderEvidenceAudit(data)}
     ${renderAgreementPulse(data)}
