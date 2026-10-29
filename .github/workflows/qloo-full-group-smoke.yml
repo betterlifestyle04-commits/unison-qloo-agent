@@ -1,0 +1,50 @@
+name: One-time full live two-person Qloo plan
+
+on:
+  push:
+    paths:
+      - '.github/workflows/qloo-full-group-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live-group:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Run a single real two-person movie plan with public sample favorites
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE='https://unison-qloo.onrender.com'
+          echo '## Live UNISON two-person plan (public sample only)' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Synthetic names: Ada and Bea. Favorite titles: Interstellar and Inception. One real group plan, no retries.' >> "$GITHUB_STEP_SUMMARY"
+          for title in Interstellar Inception; do
+            curl --fail --silent --show-error --max-time 55 --get --data-urlencode "q=$title" "$BASE/api/taste-lookup" > "/tmp/qloo-$title.json"
+            match=$(jq -r --arg title "$title" '[.matches[] | select((.name | ascii_downcase)==($title | ascii_downcase)) | select(.type=="urn:entity:movie") | .id][0] // empty' "/tmp/qloo-$title.json")
+            if [[ ! "$match" =~ ^[0-9a-fA-F-]{36}$ ]]; then
+              echo "❌ Could not pin the exact Qloo movie entity: $title." >> "$GITHUB_STEP_SUMMARY"
+              exit 1
+            fi
+            if [ "$title" = Interstellar ]; then ID_A="$match"; else ID_B="$match"; fi
+          done
+          jq -n --arg a "$ID_A" --arg b "$ID_B" '{
+            mode:"live",domain:"movies",city:"",budget:"any",
+            people:[
+              {name:"Ada",favorites:["Interstellar"],selectedEntities:[{id:$a,name:"Interstellar",type:"urn:entity:movie"}]},
+              {name:"Bea",favorites:["Inception"],selectedEntities:[{id:$b,name:"Inception",type:"urn:entity:movie"}]}
+            ]
+          }' > /tmp/group-input.json
+          STATUS=$(curl --silent --show-error --max-time 170 --retry 0 --request POST --header 'Content-Type: application/json' --data-binary @/tmp/group-input.json --output /tmp/group-output.json --write-out '%{http_code}' "$BASE/api/plan")
+          if [ "$STATUS" != "200" ]; then
+            echo "❌ Group planning returned HTTP $STATUS" >> "$GITHUB_STEP_SUMMARY"
+            jq -r '.error // "Unsupported response"' /tmp/group-output.json >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          echo '### Real live planning response' >> "$GITHUB_STEP_SUMMARY"
+          jq -r '"Mode: "+.mode+" | Participants: "+(.people|length|tostring)+" | Candidates: "+(.ranked|length|tostring)+" | Fully covered: "+(.supported|length|tostring)' /tmp/group-output.json | tee -a "$GITHUB_STEP_SUMMARY"
+          jq -r '.trace[] | select(.kind=="qloo") | "- " + .step + ": " + .detail' /tmp/group-output.json | tee -a "$GITHUB_STEP_SUMMARY"
+          jq -e '(.mode=="live") and (.people|length==2) and (.ranked|length>0) and (.quality.evaluation.accepted>0) and ([.trace[]|select(.step=="Qloo discovery tool")]|length==2) and ([.trace[]|select(.step=="Qloo shortlist evaluation tool")]|length==2)' /tmp/group-output.json >/dev/null || { echo '❌ Incomplete live group planning evidence.' >> "$GITHUB_STEP_SUMMARY"; exit 1; }
+          echo '✅ Production /api/plan completed through real Qloo Search, Insights discovery and shortlist evaluation.' >> "$GITHUB_STEP_SUMMARY"
