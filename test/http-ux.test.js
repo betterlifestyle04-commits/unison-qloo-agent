@@ -129,3 +129,21 @@ test('Agreement Pulse is served and participant vote control remains client-side
   assert.match(app.body,/open-top-ballot/);
   assert.match(app.body,/Only the people using this browser/);
 });
+
+test('cross-site browser calls cannot spend Qloo quota',async()=>{
+  const payload={mode:'demo',domain:'movies',people:[{name:'Ada',favorites:['Jazz']},{name:'Bea',favorites:['Manga']}]};
+  const bad=await request('/api/plan',{method:'POST',headers:{'Content-Type':'application/json',Origin:'https://unrelated.example'},body:JSON.stringify(payload)});
+  assert.equal(bad.response.status,403);
+  assert.match(bad.body,/Cross-site planning requests/);
+  const forged=await request('/api/taste-lookup?q=Interstellar',{headers:{'Sec-Fetch-Site':'cross-site'}});
+  assert.equal(forged.response.status,403);
+  const normal=await request('/api/plan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+  assert.equal(normal.response.status,200);
+});
+test('public UNISON pages restrict referrer leakage and unnecessary sensitive permissions',async()=>{
+  const {response}=await request('/');
+  assert.equal(response.headers.get('referrer-policy'),'no-referrer');
+  assert.match(response.headers.get('permissions-policy'),/geolocation=\(\)/);
+  const health=await request('/api/status');
+  assert.equal(health.response.headers.get('referrer-policy'),'no-referrer');
+});
