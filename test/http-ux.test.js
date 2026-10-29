@@ -147,3 +147,14 @@ test('public UNISON pages restrict referrer leakage and unnecessary sensitive pe
   const health=await request('/api/status');
   assert.equal(health.response.headers.get('referrer-policy'),'no-referrer');
 });
+
+test('head-to-head comparison stays in the browser and uses complete evidence',async()=>{
+  const [helper,app]=await Promise.all([request('/head-to-head.js'),request('/app.js')]);
+  assert.equal(helper.response.status,200);
+  assert.match(helper.response.headers.get('content-type'),/application\/javascript/);
+  assert.match(helper.body,/eligibleComparisons/);
+  assert.match(helper.body,/compareOptions/);
+  assert.match(app.body,/renderHeadToHead/);
+  assert.match(app.body,/id="compare-left"/);
+  assert.match(app.body,/id="compare-right"/);
+});
