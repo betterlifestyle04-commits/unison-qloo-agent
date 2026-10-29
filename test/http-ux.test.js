@@ -183,3 +183,24 @@ test('live results disclose candidate integrity screening and its limits',async(
   assert.match(app.body,/It does not independently verify a venue/);
   assert.match(css.body,/\.integrity-review/);
 });
+
+test('live Qloo diagnostic requires POST, same-origin and configured server key',async()=>{
+  const csrf=await request('/api/qloo-diagnostics',{method:'POST',headers:{Origin:'https://unrelated.example'}});
+  assert.equal(csrf.response.status,403);
+  assert.match(csrf.body,/Cross-site Qloo diagnostic/);
+  const noKey=await request('/api/qloo-diagnostics',{method:'POST'});
+  assert.equal(noKey.response.status,503);
+  assert.match(noKey.body,/not currently configured/);
+  const get=await request('/api/qloo-diagnostics');
+  assert.equal(get.response.status,404);
+});
+test('Qloo diagnostics are visible only after explicit Live mode and require a click',async()=>{
+  const [app,page]=await Promise.all([request('/app.js'),request('/')]);
+  assert.match(page.body,/id="qloo-diagnostics"/);
+  assert.match(page.body,/id="qloo-check"/);
+  assert.match(page.body,/no group names or favorites/);
+  assert.match(app.body,/qloo-diagnostics'\)\.hidden=/);
+  assert.match(app.body,/diagnosticBtn\.addEventListener\('click'/);
+  assert.match(app.body,/method:'POST'/);
+  assert.doesNotMatch(app.body,/fetch\('\/api\/qloo-diagnostics'\)\.then/);
+});
