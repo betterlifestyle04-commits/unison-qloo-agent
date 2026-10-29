@@ -158,3 +158,9 @@ UNISON also now offers a **Venue Reality Check** under the tentative calendar ha
 On October 29, 2026, a one-shot real production test with three fictitious participants and exact public Qloo movie taste anchors successfully returned **12 live places in the requested Oslo locality, with full person-level evidence for all 12**. Every discovery and shortlist Insights request carried the restaurant-specific `filter.price_level.max=2` parameter. [Test evidence](https://github.com/betterlifestyle04-commits/unison-qloo-agent/actions/runs/40885037384).
 
 We've also improved practical transparency. The application explains the difference between a Qloo restaurant price-level cap and actual group costs, discloses the scope of the locality query, identifies venue metadata as unverified, and only inserts a meeting location into an exported calendar event after a participant types it. Neither Qloo price tiers nor user-marked readiness checklists constitute a venue booking or confirmed availability.
+
+## Verified maximum group size
+
+The production service has now also completed a one-shot **five-person live Qloo movie plan** using fictional people and two repeated public movie preferences. It returned **12 Qloo candidates, 11 with complete evidence for all five people**, and recorded each participant's discovery and evaluation in the provenance trace. [Production five-person test](https://github.com/betterlifestyle04-commits/unison-qloo-agent/actions/runs/40886047104). Repeating two taste anchors tests orchestration capacity rather than distinct personal profiles; live preferences and venue facts are not independently validated.
+
+Our external Qloo evidence therefore spans **two**, **three** and **five** participants, with a real mid-budget Oslo places test for three; it does not imply that every location, price tier, group combination or user environment has been tested.
