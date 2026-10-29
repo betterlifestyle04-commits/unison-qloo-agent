@@ -122,3 +122,9 @@ The new **Head-to-Head** comparator lets groups choose any two supported candida
 UNISON no longer treats Qloo downtime or ambiguous favorites as an opaque recommendation failure. A dedicated recovery UI explains possible causes without inventing new evidence, preserves the group brief for revision and requires an explicit action before switching to fictional demo mode. Shared links always reopen in demo mode, protecting API quota and user intent. A memory-bounded request limiter prevents unbounded growth in the per-client planning and Taste Finder throttles.
 
 The automated suite includes regression checks for these safeguards; comprehensive live Qloo Insights and interactive cross-browser verification remain separate work.
+
+## Guarding the quality of the group shortlist
+
+The latest release adds explicit candidate-integrity checks on every real Qloo Insights response. UNISON accepts only unique, correctly categorized Qloo candidates and screens the shared-shortlist evaluation against the exact requested entity IDs. This prevents unexpected, unrelated results from being promoted into the group comparison or changing rank-derived fit scores. The result interface and evidence trace disclose screening counts and limitations transparently. All screening is **local computation**, with no additional Qloo quota spent.
+
+Automated tests inject duplicate, wrong-domain, and outside-shortlist candidates into mocked Qloo responses and verify they are excluded. This validates our handling of imperfect responses; it is **not** proof that all live Qloo Insights requests or venue details are correct.
