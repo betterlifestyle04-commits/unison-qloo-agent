@@ -68,9 +68,36 @@ function updateFormPresentation(){
   $('#city').disabled=!places;
   $('#budget').disabled=!places;
   $('#taste-finder').hidden=!(app.configured&&currentMode()==='live');
+  $('#qloo-diagnostics').hidden=!(app.configured&&currentMode()==='live');
   $('#submit-label').textContent=places?'Find our common ground':'Find our movie night';
 }
 form.querySelectorAll('input[name=domain],input[name=mode]').forEach(input=>input.addEventListener('change',()=>{if(input.name==='mode')app.hasChangedMode=true;updateFormPresentation();}));
+const diagnosticBtn=$('#qloo-check');
+const diagnosticResults=$('#qloo-check-results');
+function showDiagnostic(text){diagnosticResults.replaceChildren(Object.assign(document.createElement('p'),{textContent:text}));}
+diagnosticBtn.addEventListener('click',async()=>{
+  if(diagnosticBtn.disabled||!app.configured||currentMode()!=='live')return;
+  diagnosticBtn.disabled=true;
+  showDiagnostic('Checking live Qloo Search, discovery and shortlisted Insights… This sends only a fixed sample title.');
+  try{
+    const response=await fetch('/api/qloo-diagnostics',{method:'POST',cache:'no-store'});
+    const report=await response.json();
+    if(!response.ok)throw new Error(report.error||'The diagnostic could not run.');
+    const heading=document.createElement('strong');
+    heading.textContent=report.ok?'All three live Qloo stages passed for this sample.':'Sample Qloo validation incomplete.';
+    const list=document.createElement('ol');
+    for(const stage of Array.isArray(report.stages)?report.stages:[]){
+      const item=document.createElement('li');
+      item.textContent=(stage.status==='passed'?'✓ ':'× ')+stage.step+': '+stage.detail;
+      list.append(item);
+    }
+    const note=document.createElement('p');
+    note.textContent=report.note||'This is a sample connection check, not a guarantee that every recommendation works.';
+    diagnosticResults.replaceChildren(heading,list,note);
+  }catch(error){
+    showDiagnostic('Diagnostic unavailable: '+String(error.message||'Unexpected response')+'. Your existing group brief has not changed.');
+  }finally{diagnosticBtn.disabled=false;}
+});
 const lookupBtn=$('#taste-find');
 const lookupResults=$('#taste-find-results');
 function lookupMessage(message){lookupResults.replaceChildren(Object.assign(document.createElement('p'),{textContent:message}));}
