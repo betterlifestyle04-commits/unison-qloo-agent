@@ -5,12 +5,13 @@ import {buildCalendarEvent,agendaText} from './calendar.js';
 import {auditGroupEvidence,recoverySuggestions} from './evidence-audit.js';
 import {buildDecisionReport,reportFilename} from './decision-report.js';
 import {agreementPulse} from './consensus.js';
+import {eligibleComparisons,compareOptions} from './head-to-head.js';
 const $=selector=>document.querySelector(selector);
 const people=$('#people'),template=$('#person-template'),form=$('#plan-form'),results=$('#results'),error=$('#form-error'),submitBtn=$('#submit-plan'),statusBadge=$('#mode-status');
 const starters=[['Maya','Studio Ghibli'],['Jon','Anthony Bourdain'],['Priya','Knives Out']];
 const selectedByPerson=new WeakMap();
 function showPinned(node){const selections=[...(selectedByPerson.get(node)?.values()||[])];const hint=node.querySelector('[data-pinned]');if(hint)hint.textContent=selections.length?'Verified Qloo selection: '+selections.map(x=>x.name+' ('+String(x.type||'entity').replace(/^urn:entity:/,'')+')').join(', '):'';}
-const app={configured:false,requesting:false,lastInput:null,lastResult:null,showAll:false,hasChangedMode:false,baseResult:null,hashLoaded:false,decisionStyle:'balanced',ballots:{},lookupBusy:false,agenda:{choiceId:'',date:'',time:'19:00',duration:'120',meeting:'',notes:''}};
+const app={configured:false,requesting:false,lastInput:null,lastResult:null,showAll:false,hasChangedMode:false,baseResult:null,hashLoaded:false,decisionStyle:'balanced',ballots:{},compare:{left:'',right:''},lookupBusy:false,agenda:{choiceId:'',date:'',time:'19:00',duration:'120',meeting:'',notes:''}};
 const escape=value=>{const element=document.createElement('span');element.textContent=String(value??'');return element.innerHTML.replace(/\"/g,'&quot;').replace(/'/g,'&#39;');};
 const number=value=>Number.isFinite(value)?String(Math.round(value)):null;
 const initial=value=>String(value||'?').trim().slice(0,1).toUpperCase();
@@ -275,6 +276,29 @@ function renderAgreementPulse(data){
     <p class="agreement-privacy">Only the people using this browser can record votes here. Voting doesn't change Qloo results or automatically make a booking.</p>
   </section>`;
 }
+function renderHeadToHead(data){
+  const choices=eligibleComparisons(data);
+  if(choices.length<2)return '<section class="head-to-head"><p class="overline">EXPLORE THE TRADE-OFFS</p><h4>Head-to-Head</h4><p>At least two fully supported, non-vetoed options are needed before you can compare them fairly.</p></section>';
+  const validIds=new Set(choices.map(item=>item.id));
+  if(!validIds.has(app.compare.left))app.compare.left=choices[0].id;
+  if(!validIds.has(app.compare.right)||app.compare.right===app.compare.left)app.compare.right=choices.find(item=>item.id!==app.compare.left).id;
+  const analysis=compareOptions(data,app.compare.left,app.compare.right);
+  const optionList=selected=>choices.map(choice=>`<option value="${escape(choice.id)}" ${selected===choice.id?'selected':''}>${escape(choice.name)}</option>`).join('');
+  const people=analysis.people.map(person=>`<tr><th scope="row">${escape(person.name)}</th><td>${person.left}/100</td><td>${person.right}/100</td><td>${person.preference==='tie'?'Equal':person.preference==='left'?'Prefers A':'Prefers B'}</td></tr>`).join('');
+  return `<section class="head-to-head" aria-labelledby="comparison-heading">
+    <p class="overline">A BETTER GROUP DECISION</p><h4 id="comparison-heading">Head-to-Head</h4>
+    <p>Compare any two fully supported options against the same group's available relative-fit evidence.</p>
+    <div class="head-to-head-picker">
+      <label class="input-label">Option A<select id="compare-left">${optionList(app.compare.left)}</select></label>
+      <span aria-hidden="true">vs</span>
+      <label class="input-label">Option B<select id="compare-right">${optionList(app.compare.right)}</select></label>
+    </div>
+    <div class="comparison-scoreboard"><div><strong>${analysis.leftWins}</strong><small>People favor A</small></div><div><strong>${analysis.ties}</strong><small>Same fit</small></div><div><strong>${analysis.rightWins}</strong><small>People favor B</small></div></div>
+    <div class="head-to-head-table"><table><thead><tr><th scope="col">Participant</th><th scope="col">${escape(analysis.left.name)}</th><th scope="col">${escape(analysis.right.name)}</th><th scope="col">Comparison</th></tr></thead><tbody>${people}</tbody></table></div>
+    <p class="comparison-comment">${escape(analysis.explanation)}</p>
+    <small>${escape(analysis.source)}. These are heuristic relative-fit estimates, not actual human votes. Changing the comparison never calls Qloo.</small>
+  </section>`;
+}
 function render(data){
   app.lastResult=data;
   const approved=data.ranked.filter(item=>item.sufficient&&!item.vetoed);
@@ -293,6 +317,7 @@ function render(data){
       <p>${escape(decisionStyles[app.decisionStyle].description)} These weights are UNISON heuristics, not measurements of happiness.</p>
     </section>
     ${decisionLab(data)}
+    ${renderHeadToHead(data)}
     ${renderEvidenceAudit(data)}
     ${renderAgreementPulse(data)}
     <div class="voting-intro"><strong>New · Agree together</strong><span>Each person can vote Yes, Maybe or No on any candidate. Votes stay on this device, separate from Qloo predictions.</span></div>
@@ -348,6 +373,17 @@ function render(data){
     if(!panel&&!app.showAll){app.showAll=true;render(data);panel=[...results.querySelectorAll('[data-ballot-panel]')].find(node=>node.dataset.ballotPanel===target.id);}
     if(panel){panel.open=true;panel.scrollIntoView({behavior:'smooth',block:'center'});}
   });
+  for(const [selector,key] of [['#compare-left','left'],['#compare-right','right']]){
+    results.querySelector(selector)?.addEventListener('change',event=>{
+      app.compare[key]=event.target.value;
+      if(app.compare.left===app.compare.right){
+        const options=eligibleComparisons(data);
+        const other=options.find(item=>item.id!==event.target.value);
+        app.compare[key==='left'?'right':'left']=other?.id||'';
+      }
+      render(data);
+    });
+  }
   // Human votes are distinct from preference predictions; no network request.
   results.querySelectorAll('[data-vote-choice]').forEach(button=>button.addEventListener('click',()=>{
     const id=button.dataset.voteCandidate;
@@ -437,6 +473,7 @@ async function submitPlan(input,{preserveScroll=false}={}){
     let data;try{data=await response.json();}catch{throw new Error('The planner returned an unexpected response. Please try again.');}
     if(!response.ok)throw new Error(data.error||'We could not create this plan.');
     app.ballots={};
+    app.compare={left:'',right:''};
     app.agenda={choiceId:'',date:'',time:'19:00',duration:'120',meeting:'',notes:''};
     app.baseResult=data;
     render(app.decisionStyle==='balanced'?data:applyVetoLocally(data,[],app.decisionStyle));
@@ -459,7 +496,7 @@ function applyBrief(raw){
   $('#budget').value=input.budget;
   people.replaceChildren();
   input.people.forEach(p=>addPerson([p.name,p.favorites.join(', ')],p.selectedEntities||[]));
-  app.lastInput=null;app.lastResult=null;app.baseResult=null;app.ballots={};app.agenda={choiceId:'',date:'',time:'19:00',duration:'120',meeting:'',notes:''};app.showAll=false;
+  app.lastInput=null;app.lastResult=null;app.baseResult=null;app.ballots={};app.compare={left:'',right:''};app.agenda={choiceId:'',date:'',time:'19:00',duration:'120',meeting:'',notes:''};app.showAll=false;
   results.innerHTML='<div class="empty"><span class="eyebrow">READY FOR YOUR GROUP</span><h3>Different tastes, one plan.</h3><p>Review the group brief and select Find our common ground to create a new shortlist.</p></div>';
   showError();updateFormPresentation();
 }
