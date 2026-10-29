@@ -222,6 +222,6 @@ test('Venue Reality Check is a browser-only planning aid that never claims Qloo 
   assert.match(helper.body,/venueCheckItems/);
   assert.match(app.body,/renderVenueReadiness/);
   assert.match(app.body,/data-readiness-key/);
-  assert.match(app.body,/not independently verified/);
+  assert.match(app.body,/venue details have not been independently verified/);
   assert.match(css.body,/\.venue-readiness/);
 });
