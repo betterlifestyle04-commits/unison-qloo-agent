@@ -134,3 +134,15 @@ Automated tests inject duplicate, wrong-domain, and outside-shortlist candidates
 UNISON now offers a manual **Qloo connection diagnostic** visible only in live mode. A visitor can explicitly test a fixed public sample through real Search, Insights discovery and Insights shortlist evaluation. The results report each stage separately so a configured API key is never confused with verified Insights responses. No private group names or favorites are sent during this diagnostic. We limit frequency to protect API quota; passing a one-title movie diagnostic is not a guarantee that other filters or places will return good recommendations.
 
 Its logic has isolated tests with fake Qloo tools, and browser tests verify the control doesn't call the API without a click. We have **not** claimed an actual verified production Insights result until a user runs the live diagnostic successfully.
+
+## Verified real-Qloo production evidence — October 29, 2026
+
+We have now verified more than a configured key or mock tests. A one-time GitHub Actions smoke test against UNISON's actual Render production server successfully resolved the movie *Interstellar*, obtained three Qloo Insights discovery candidates, and re-evaluated all three through a filtered shortlist (see [workflow evidence](https://github.com/betterlifestyle04-commits/unison-qloo-agent/actions/runs/40877477130)).
+
+We then ran a second, independent full **live two-person group** workflow with fictional participants and the movies *Interstellar* and *Inception*. UNISON's real `/api/plan` completed entity selection, both Qloo discovery calls, both shared-shortlist evaluation calls, and returned **12 real movie candidates, including 11 supported by evidence for both people** ([production workflow evidence](https://github.com/betterlifestyle04-commits/unison-qloo-agent/actions/runs/40878074739)). No Qloo API key or personal information was committed.
+
+This is specifically live movie-planning evidence; we do not claim every places/city filter, three-to-five-person group or real-world venue fact was verified.
+
+## Decision stability under hypothetical group changes
+
+We added a **Decision Stability** stress test for groups of three to five. It re-ranks the same fully supported shortlist, hypothetically omitting each participant's taste evidence in turn, and discloses whether the top option changes. This highlights potential dependence on one voice without changing the actual group, consulting Qloo again, or confusing predicted preferences with human votes.
