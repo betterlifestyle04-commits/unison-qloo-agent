@@ -398,3 +398,23 @@
 
 /* A truthful handoff dashboard: evidence, consent and logistics stay separate. */
 .decision-status{padding:14px;margin:0 0 16px;border:1px solid #e1e6ee;border-radius:14px;background:linear-gradient(135deg,#fbfcff,#f7fbf8)}.decision-status-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:11px}.decision-status-head .overline{font-size:.55rem;margin:0 0 3px}.decision-status h4{font-size:.8rem;color:#46536c;margin:0}.decision-status-head>small{font-size:.6rem;color:#858d9d;max-width:24ch;text-align:right;line-height:1.45}.decision-status-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.decision-status-grid>a,.decision-status-grid>div{display:flex;flex-direction:column;gap:4px;min-width:0;padding:10px;border:1px solid #e5e8ee;border-radius:10px;background:#fff;color:#687388}.decision-status-grid>a:hover{border-color:#b8b1e9;background:#faf9ff}.decision-status-grid span{font-size:.58rem;text-transform:uppercase;letter-spacing:.06em;font-weight:850;color:#8376bc}.decision-status-grid strong{font-size:.7rem;line-height:1.35;color:#566174;overflow-wrap:anywhere}.decision-status-grid small{font-size:.59rem;line-height:1.45;color:#9199a8}.decision-status-grid .is-ready{border-color:#ccebd8;background:#f5fcf7}.decision-status-grid .is-ready span{color:#4a9870}.decision-status-grid .is-ready strong{color:#397758}@media(max-width:580px){.decision-status-grid{grid-template-columns:1fr}.decision-status-head>small{text-align:left}.decision-status{padding:13px}}
+
+/* External venue research is an honest handoff, never a live booking confirmation. */
+.venue-external{margin:13px 0;border-top:1px solid #dce7e4;padding-top:11px;display:flex;align-items:start;flex-wrap:wrap;gap:8px}
+.venue-external>a,.venue-external>button{font:inherit;font-size:.68rem;line-height:1.45;border:1px solid #c5dbd0;border-radius:8px;color:#306c62;background:white;padding:9px 11px;cursor:pointer;text-decoration:none}
+.venue-external>a:hover,.venue-external>button:hover{background:#effaf5}
+.venue-external>p{width:100%;font-size:.65rem;line-height:1.6;color:#788987;margin:4px 0 0}
+.venue-external>p[role="status"]{color:#436d60}
+.outcome-study{border:1px solid #deddf5;background:linear-gradient(135deg,#f9f8ff,#f7fcfc);border-radius:14px;padding:16px;margin:0 0 18px}
+.outcome-study-heading h4{font-size:1.04rem;color:#4f5384;margin:3px 0 9px}
+.outcome-study>p{color:#6b7190;font-size:.71rem;line-height:1.6;margin:0 0 12px}
+.outcome-study>p strong{color:#484a8a}
+.outcome-table{max-width:100%;overflow-x:auto}
+.outcome-table table{width:100%;border-collapse:collapse;min-width:360px}
+.outcome-table th,.outcome-table td{text-align:left;border-bottom:1px solid #e6e6f0;padding:8px 7px;font-size:.72rem;color:#515c7d}
+.outcome-table select{width:100%;min-width:115px;background:white;border:1px solid #d9d8ee;border-radius:7px;padding:8px;font:inherit;color:#4b4b82}
+.outcome-study>.outcome-summary{background:white;border:1px solid #e2e2f2;padding:10px;border-radius:8px;margin:12px 0;font-size:.7rem;color:#4a6083}
+.outcome-export{background:#5f57be;border:1px solid #5f57be;border-radius:8px;color:white;padding:10px 14px;font-size:.72rem;font-weight:750;cursor:pointer}
+.outcome-study #outcome-message{font-size:.67rem;line-height:1.5;color:#3d8175;margin:8px 0}
+.outcome-study>small{display:block;color:#8188a2;font-size:.64rem;line-height:1.65;margin-top:10px}
+@media(max-width:580px){.outcome-study{padding:12px}.venue-external>a,.venue-external>button{width:100%;text-align:center}}
