@@ -246,3 +246,15 @@ The run returned **12 Qloo-derived places, all 12 with fully covered two-person 
 For a group outing, **Make it happen** now includes a *Venue Reality Check* for the currently selected option. The group can mark four practical questions reviewed: exact location, opening hours, total budget, and reservation or walk-in arrangements. Each candidate has a separate checklist on the current page; switching between candidates does not copy confirmations across venues. Every box starts unchecked, changing it requires explicit user input, and toggling or changing a choice makes **no Qloo API requests**.
 
 This is a **manual, unverified** checklist, not a venue availability check, booking or guarantee. It is not sent to Qloo, not saved to a server, and does not influence fit scores or group votes. A new plan starts with empty checklists. See `public/venue-readiness.js`, `test/venue-readiness.test.js`, and the browser-level test.
+
+## Verified real three-person Oslo plan with a restaurant price-tier cap
+
+A one-time authenticated production run on October 29, 2026 tested **three fictional people**, each with a pinned Qloo movie ID, requesting **places in Oslo** with `budget:"mid"`. It returned **12 real Qloo candidate places, all 12 with complete relative-fit evidence across the three participants**. The test separately checked that all **six live Insights calls** (three discovery and three shared-shortlist evaluation requests) included Qloo's documented `filter.price_level.max=2` constraint.
+
+Evidence: [one-time three-person budgeted Oslo workflow](https://github.com/betterlifestyle04-commits/unison-qloo-agent/actions/runs/40885037384).
+
+Per [Qloo's parameter reference](https://github.com/qloo/docs-public/blob/main/reference/insights-api-deep-dive.md), `filter.price_level.max` is a restaurant-oriented 1–4 price-tier filter, **not a verified currency amount, actual checkout cost, or guaranteed price limit for all place types**. `filter.location.query` is a fuzzy locality match, and radius `0` instructs Qloo to use its locality boundary, not an independent validation of every venue address.
+
+The interface now includes an expandable **Location and budget: What was actually checked?** explanation and describes Qloo-supplied venue information as **unverified**. To prevent a fictional or mistaken reservation implication, **tentative calendar exports leave the meeting location blank until a group member explicitly enters it**; no Qloo-supplied address is silently copied into the calendar.
+
+The scope of the production test is **Oslo, Norway**, with three people and the `mid` tier only. Other cities, price limits, and real-world venue conditions have not been checked. Tests: `test/place-constraints.test.js`, `test/http-ux.test.js`, and the Chromium browser export workflow.
