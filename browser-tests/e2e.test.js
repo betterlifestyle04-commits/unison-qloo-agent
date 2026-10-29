@@ -49,6 +49,11 @@ test('desktop: full demo workflow, votes, weighting, archive, report and calenda
     assert.ok(await page.locator('.decision-lab').count()>0);
     assert.ok(await page.locator('.evidence-audit').count()>0);
     assert.ok(await page.locator('.head-to-head').count()>0);
+    assert.equal(await page.locator('.decision-status-grid>*').count(),3);
+    assert.match(await page.locator('.decision-status').innerText(),/EVIDENCE|GROUP AGREEMENT|PRACTICAL CHECK/);
+    await page.locator('.decision-status a[href="#venue-readiness"]').click();
+    assert.match(page.url(),/#venue-readiness$/);
+    assert.ok(await page.locator('#venue-readiness').isVisible());
     assert.ok(await page.locator('.decision-workspace-nav a').count()>=4);
     await page.locator('.decision-workspace-nav a[href="#evidence-audit"]').click();
     assert.match(page.url(),/#evidence-audit$/);

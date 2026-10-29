@@ -425,7 +425,7 @@ function renderVenueReadiness(data,choices){
   const selected=choices.find(item=>item.id===app.agenda.choiceId)||choices[0];
   const progress=venueCheckProgress(app.venueChecks,selected.id);
   const example=data.mode==='demo';
-  return `<section class="venue-readiness" aria-labelledby="venue-readiness-heading">
+  return `<section id="venue-readiness" class="venue-readiness" aria-labelledby="venue-readiness-heading">
     <div class="venue-readiness-head"><div><span class="overline">BEFORE YOUR GROUP GOES</span><h4 id="venue-readiness-heading">Venue Reality Check</h4></div><span class="venue-readiness-count" id="venue-readiness-count">${progress.marked} / ${progress.total} reviewed</span></div>
     <p class="venue-readiness-intro">For <strong>${escape(selected.name)}</strong>: ${example?'This is a fictional demo venue.':'This is a real Qloo candidate, but venue details have not been independently verified.'} Mark what <em>your group</em> has checked before sharing a final plan.</p>
     <div class="venue-readiness-items">
@@ -457,6 +457,25 @@ function wireDecisionWorkspaceNav(){
   },{root:null,rootMargin:'-12% 0px -68% 0px',threshold:[0,.1,.25,.5]});
   for(const link of links){const target=results.querySelector(link.hash);if(target)app.workspaceObserver.observe(target);}
 }
+function renderDecisionStatus(data,approved,groupApproved){
+  const audit=auditGroupEvidence(data);
+  const pulse=agreementPulse(data,app.ballots);
+  const evidenceReady=audit.complete>0;
+  const selected=approved.find(item=>item.id===app.agenda.choiceId)||approved[0];
+  const venue=data.domain==='places'&&selected?venueCheckProgress(app.venueChecks,selected.id):null;
+  const agreementReady=Boolean(groupApproved);
+  const logisticsReady=data.domain==='movies'||Boolean(venue&&venue.marked===venue.total);
+  const agreement=groupApproved?'Everyone said Yes in this browser':pulse.top?pulse.top.voted+' / '+pulse.top.total+' people responded':'No eligible option to vote on yet';
+  const logistics=data.domain==='movies'?'No venue checks needed for movie night':venue?venue.marked+' / '+venue.total+' venue details reviewed locally':'Choose a supported place first';
+  return `<section class="decision-status" aria-labelledby="decision-status-heading">
+    <div class="decision-status-head"><div><span class="overline">DECISION STATUS</span><h4 id="decision-status-heading">What still needs the group?</h4></div><small>UNISON does not auto-finalize plans.</small></div>
+    <div class="decision-status-grid">
+      <a href="#evidence-audit" class="${evidenceReady?'is-ready':''}"><span>01 · Evidence</span><strong>${evidenceReady?audit.complete+'/'+audit.total+' options comparable':'More signals needed'}</strong><small>Observed fit only · missing data stays unknown</small></a>
+      <a href="#group-agreement" class="${agreementReady?'is-ready':''}"><span>02 · Group agreement</span><strong>${escape(agreement)}</strong><small>Explicit votes, not inferred approval</small></a>
+      ${data.domain==='places'?`<a href="#venue-readiness" class="${logisticsReady?'is-ready':''}"><span>03 · Practical check</span><strong>${escape(logistics)}</strong><small>Self-reported · not venue verification</small></a>`:`<div class="${logisticsReady?'is-ready':''}"><span>03 · Practical check</span><strong>${escape(logistics)}</strong><small>Choose a time and confirm together</small></div>`}
+    </div>
+  </section>`;
+}
 function render(data){
   app.lastResult=data;
   const approved=data.ranked.filter(item=>item.sufficient&&!item.vetoed);
@@ -468,6 +487,7 @@ function render(data){
   results.innerHTML=`<div class="result-topline"><div><p class="overline">${escape(status)}</p><h3>${top?'Your best shared match':'We need a little more evidence'}</h3><p class="result-sub">${escape(data.domain==='places'?(data.city?'Planning for '+data.city:'No city selected'):'Movie night')} · ${data.people.length} people · ${count} fully covered option${count===1?'':'s'}</p></div><div class="result-actions"><button id="download-report" class="text-button" type="button">↓ Decision report</button><button id="save-plan" class="text-button" type="button">Save on this device</button><button id="copy-plan" class="text-button" type="button" ${top?'':'disabled'}>Copy plan ↗</button><button id="reset-veto" class="text-button" type="button">Clear vetoes</button></div></div>
     <div class="source-banner ${data.mode==='live'?'live':''}" role="status"><strong>${escape(sourceName(data))}.</strong> ${escape(data.disclaimer)}</div>
     ${renderDecisionWorkspaceNav(data,top)}
+    ${renderDecisionStatus(data,approved,groupApproved)}
     ${integrityReview(data)}
     ${placeConstraintDisclosure(data)}
     <p class="report-privacy"><span aria-hidden="true">◈</span> The Decision Report downloads to your device and includes group names, cultural favorites, and any votes recorded here. Share it thoughtfully.</p>
