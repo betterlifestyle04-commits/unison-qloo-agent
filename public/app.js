@@ -549,7 +549,7 @@ async function submitPlan(input,{preserveScroll=false}={}){
     const help=planningRecovery(e.status||0,e.message,{mode:input.mode,domain:input.domain});
     results.innerHTML=`<section class="plan-recovery" aria-labelledby="recovery-title">
       <span class="eyebrow">YOUR BRIEF IS SAFE · NO FALLBACK DATA USED</span>
-      <h3 id="recovery-title">${escape(help.title)}</h3>
+      <h3 id="recovery-title" tabindex="-1">${escape(help.title)}</h3>
       <p>${escape(help.detail)}</p>
       <details><summary>Technical error details</summary><p>${escape(e.message||'Request failed')} ${e.status?'(HTTP '+escape(e.status)+')':''}</p></details>
       <h4>Suggested next steps</h4>
@@ -571,6 +571,7 @@ async function submitPlan(input,{preserveScroll=false}={}){
       showError();
       results.querySelector('.recovery-explainer').textContent='Demo mode selected. Submit your group brief to generate clearly labeled fictional recommendations, with no Qloo requests.';
     });
+    results.querySelector('#recovery-title')?.focus();
   }finally{app.requesting=false;submitBtn.disabled=false;$('#submit-label').textContent=currentDomain()==='places'?'Find our common ground':'Find our movie night';results.setAttribute('aria-busy','false');}
 }
 form.addEventListener('submit',event=>{event.preventDefault();const input=brief();input.vetoes=[];app.showAll=false;submitPlan(input);});

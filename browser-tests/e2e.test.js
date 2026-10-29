@@ -193,6 +193,7 @@ test('mocked live browser journey: explicit opt-in, precise Taste Finder and hon
     await page.locator('#submit-plan').click();
     await page.locator('.plan-recovery').waitFor({timeout:10000});
     assert.match(await page.locator('#recovery-title').innerText(),/clarification/i);
+    assert.equal(await page.locator('#recovery-title').evaluate(node=>document.activeElement===node),true,'failed planning moves keyboard focus to the recovery explanation');
     assert.equal(submissions.length,1);
     assert.equal(submissions[0].mode,'live');
     assert.ok(submissions[0].people[0].selectedEntities.some(item=>item.id==='057DA9D9-399B-437E-8BCA-A80E499125EF'));
