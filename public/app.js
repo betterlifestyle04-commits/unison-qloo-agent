@@ -15,7 +15,7 @@ const people=$('#people'),template=$('#person-template'),form=$('#plan-form'),re
 const starters=[['Maya','Studio Ghibli'],['Jon','Anthony Bourdain'],['Priya','Knives Out']];
 const selectedByPerson=new WeakMap();
 function showPinned(node){const selections=[...(selectedByPerson.get(node)?.values()||[])];const hint=node.querySelector('[data-pinned]');if(hint)hint.textContent=selections.length?'Selected Qloo entity: '+selections.map(x=>x.name+' ('+String(x.type||'entity').replace(/^urn:entity:/,'')+')').join(', '):'';}
-const app={configured:false,requesting:false,lastInput:null,lastResult:null,showAll:false,hasChangedMode:false,baseResult:null,hashLoaded:false,decisionStyle:'balanced',ballots:{},compare:{left:'',right:''},venueChecks:{},lookupBusy:false,agenda:{choiceId:'',date:'',time:'19:00',duration:'120',meeting:'',notes:''}};
+const app={configured:false,requesting:false,lastInput:null,lastResult:null,showAll:false,hasChangedMode:false,baseResult:null,hashLoaded:false,decisionStyle:'balanced',ballots:{},compare:{left:'',right:''},venueChecks:{},workspaceObserver:null,lookupBusy:false,agenda:{choiceId:'',date:'',time:'19:00',duration:'120',meeting:'',notes:''}};
 const escape=value=>{const element=document.createElement('span');element.textContent=String(value??'');return element.innerHTML.replace(/\"/g,'&quot;').replace(/'/g,'&#39;');};
 const number=value=>Number.isFinite(value)?String(Math.round(value)):null;
 const initial=value=>String(value||'?').trim().slice(0,1).toUpperCase();
@@ -442,6 +442,21 @@ function renderDecisionWorkspaceNav(data,top){
   links.push(['#evidence-audit','Evidence'],['#group-agreement','Group vote'],['#decision-trace','Agent trace']);
   return `<nav class="decision-workspace-nav" aria-label="Decision workspace">${links.map(([href,label])=>`<a href="${href}">${label}</a>`).join('')}</nav>`;
 }
+function wireDecisionWorkspaceNav(){
+  app.workspaceObserver?.disconnect();
+  const nav=results.querySelector('.decision-workspace-nav');if(!nav)return;
+  const links=[...nav.querySelectorAll('a')];
+  const activate=id=>links.forEach(link=>{if(link.hash===id)link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');});
+  links.forEach(link=>link.addEventListener('click',()=>activate(link.hash)));
+  if(!('IntersectionObserver'in window))return;
+  const visible=new Map();
+  app.workspaceObserver=new IntersectionObserver(entries=>{
+    for(const entry of entries){const id='#'+entry.target.id;if(entry.isIntersecting)visible.set(id,entry.intersectionRatio);else visible.delete(id);}
+    const active=[...visible.entries()].sort((a,b)=>b[1]-a[1])[0]?.[0];
+    if(active)activate(active);
+  },{root:null,rootMargin:'-12% 0px -68% 0px',threshold:[0,.1,.25,.5]});
+  for(const link of links){const target=results.querySelector(link.hash);if(target)app.workspaceObserver.observe(target);}
+}
 function render(data){
   app.lastResult=data;
   const approved=data.ranked.filter(item=>item.sufficient&&!item.vetoed);
@@ -478,6 +493,7 @@ function render(data){
     <div class="cards">${show.map((item,i)=>card(item,i,data)).join('')}</div>
     ${data.ranked.length>6?`<button id="show-all" class="add-person" type="button">${app.showAll?'Show fewer options':'Show all '+data.ranked.length+' options'} <span aria-hidden="true">↓</span></button>`:''}
     <details id="decision-trace" class="trace"><summary>How UNISON reached this decision · ${data.trace.length} steps</summary><ol>${data.trace.map(step=>{const label=step.kind==='qloo'?'Qloo request':step.kind==='demo'?'Simulated evidence':'Local computation';const tone=step.kind==='qloo'?'qloo':step.kind==='demo'?'demo':'local';return `<li class="trace-step trace-${tone}"><span class="trace-kind">${label}</span><strong>${escape(step.step)}</strong> — ${escape(step.detail)}${step.requests?.length?`<span class="trace-url">${step.requests.map(request=>escape(request.url+(request.cached?' (cached)':''))).join(' · ')}</span>`:''}</li>`;}).join('')}</ol></details>`;
+  wireDecisionWorkspaceNav();
   const agendaFields={choiceId:'#agenda-choice',date:'#agenda-date',time:'#agenda-time',duration:'#agenda-duration',meeting:'#agenda-meeting',notes:'#agenda-notes'};
   for(const [key,selector] of Object.entries(agendaFields)){
     results.querySelector(selector)?.addEventListener('change',event=>{
