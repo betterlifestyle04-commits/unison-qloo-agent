@@ -304,3 +304,17 @@
 .recovery-actions button:hover{filter:brightness(.96)}
 .plan-recovery .recovery-explainer{font-size:.63rem;color:#9c8c98}
 @media(max-width:580px){.plan-recovery{padding:15px}.recovery-actions,.recovery-actions button{width:100%}}
+
+/* Screens the exact returned Qloo candidate set before assigning ordinal-fit evidence. */
+.integrity-review{border:1px solid #dfe8ee;background:#f8fbfe;border-radius:11px;padding:10px 13px;margin:0 0 14px}
+.integrity-review>summary{list-style:none;cursor:pointer;color:#586e83;font-size:.71rem;font-weight:780;line-height:1.5}
+.integrity-review>summary::-webkit-details-marker{display:none}
+.integrity-review>summary:after{content:'+';float:right;font-size:.82rem}
+.integrity-review[open]>summary:after{content:'−'}
+.integrity-review>summary strong{color:#375973}
+.integrity-review p{color:#708293;font-size:.68rem;line-height:1.65;margin:12px 0}
+.integrity-review small{display:block;font-size:.63rem;color:#8493a2;line-height:1.55;margin-top:10px}
+.integrity-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.integrity-metrics span{border:1px solid #e5eaf2;background:white;border-radius:8px;padding:9px;display:flex;flex-direction:column;gap:3px;color:#83909f;font-size:.65rem}
+.integrity-metrics strong{font-size:1.17rem;font-weight:850;color:#3f697f}
+@media(max-width:580px){.integrity-metrics span{padding:7px}.integrity-metrics strong{font-size:.96rem}}
