@@ -265,7 +265,7 @@ function renderAgreementPulse(data){
   const fill=top.total?Math.round(top.voted/top.total*100):0;
   const approved=pulse.unanimous.length>0;
   return `<section class="agreement-pulse" aria-label="Current human vote progress">
-    <div class="agreement-head"><div><p class="overline">HUMAN AGREEMENT / NEXT STEP</p><h4>${approved?'A group-approved choice!':'Let's see what everyone thinks.'}</h4></div><span class="agreement-count">${top.voted} / ${top.total} responses</span></div>
+    <div class="agreement-head"><div><p class="overline">HUMAN AGREEMENT / NEXT STEP</p><h4>${approved?'A group-approved choice!':'See what everyone thinks.'}</h4></div><span class="agreement-count">${top.voted} / ${top.total} responses</span></div>
     <p class="agreement-message">${escape(pulse.message)}</p>
     <div class="agreement-meter-row"><meter class="fit-meter" min="0" max="100" value="${fill}" aria-label="${fill} percent of participants have voted on the leading option">${fill}%</meter><strong>${fill}%</strong></div>
     <div class="agreement-totals"><span>✓ Yes: ${top.yes}</span><span>~ Maybe: ${top.maybe}</span><span>× No: ${top.no}</span></div>
