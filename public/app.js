@@ -304,6 +304,7 @@ function renderAgreementPulse(data){
   const top=pulse.top;
   const fill=top.total?Math.round(top.voted/top.total*100):0;
   const approved=pulse.unanimous.length>0;
+  const hasVotes=Object.values(app.ballots).some(ballot=>Object.keys(ballot||{}).length>0);
   return `<section class="agreement-pulse" aria-label="Current human vote progress">
     <div class="agreement-head"><div><p class="overline">HUMAN AGREEMENT / NEXT STEP</p><h4>${approved?'A group-approved choice!':'See what everyone thinks.'}</h4></div><span class="agreement-count">${top.voted} / ${top.total} responses</span></div>
     <p class="agreement-message">${escape(pulse.message)}</p>
@@ -311,7 +312,7 @@ function renderAgreementPulse(data){
     <div class="agreement-totals"><span>✓ Yes: ${top.yes}</span><span>~ Maybe: ${top.maybe}</span><span>× No: ${top.no}</span></div>
     <p class="agreement-next">${escape(pulse.nextAction)}</p>
     ${pulse.unanimous.length?`<p class="agreement-winner">Unanimous approval recorded for: <strong>${escape(pulse.unanimous.map(item=>item.name).join(', '))}</strong></p>`:''}
-    <button type="button" id="open-top-ballot">Open participant voting ↓</button>
+    <div class="agreement-actions"><button type="button" id="open-top-ballot">Open participant voting ↓</button><button type="button" id="clear-local-votes" ${hasVotes?'':'disabled'}>Clear local votes</button></div>
     <p class="agreement-privacy">Only the people using this browser can record votes here. Voting doesn't change Qloo results or automatically make a booking.</p>
   </section>`;
 }
@@ -430,6 +431,7 @@ function render(data){
     if(!panel&&!app.showAll){app.showAll=true;render(data);panel=[...results.querySelectorAll('[data-ballot-panel]')].find(node=>node.dataset.ballotPanel===target.id);}
     if(panel){panel.open=true;panel.scrollIntoView({behavior:'smooth',block:'center'});}
   });
+  results.querySelector('#clear-local-votes')?.addEventListener('click',()=>{app.ballots={};render(data);});
   for(const [selector,key] of [['#compare-left','left'],['#compare-right','right']]){
     results.querySelector(selector)?.addEventListener('change',event=>{
       app.compare[key]=event.target.value;

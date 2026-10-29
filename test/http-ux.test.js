@@ -147,6 +147,8 @@ test('Agreement Pulse is served and participant vote control remains client-side
   assert.match(app.body,/renderAgreementPulse/);
   assert.match(app.body,/open-top-ballot/);
   assert.match(app.body,/Only the people using this browser/);
+  assert.match(app.body,/id="clear-local-votes"/);
+  assert.match(app.body,/app\.ballots=\{\};render\(data\)/);
 });
 
 test('cross-site browser calls cannot spend Qloo quota',async()=>{

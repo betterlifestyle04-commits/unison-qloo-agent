@@ -336,3 +336,4 @@
 .diagnostics-results p{margin:7px 0 0;color:#79889d}
 @media(max-width:580px){.diagnostics-heading{align-items:stretch;flex-direction:column}.diagnostics-heading button{white-space:normal;width:100%}}
 .quick-start-options button[aria-pressed="true"]{background:#6556d7;border-color:#6556d7;color:#fff;box-shadow:0 5px 14px #5e4ecb2e}.quick-start-options button[aria-pressed="true"] span{color:#fff}
+.agreement-actions{display:flex;flex-wrap:wrap;gap:8px}.agreement-actions button:disabled{opacity:.55;cursor:not-allowed}
