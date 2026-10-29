@@ -3,7 +3,7 @@
  * Report can contain chosen participant names, preferences and votes. Users opt in by download.
  * All data is descriptive, not a scientific satisfaction forecast or a reservation.
  */
-const safe=(value,max=300)=>String(value??'').replace(/[\r\n\t]+/g,' ').trim().slice(0,max);
+const safe=(value,max=300)=>String(value??'').replace(/[\r\n\t]+/g,' ').trim().slice(0,max).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 const numeric=value=>typeof value==='number'&&Number.isFinite(value)?value.toFixed(1):'Unknown';
 const verdict=(data,person)=>typeof data.signals?.[person.id]==='number'&&Number.isFinite(data.signals[person.id])?numeric(data.signals[person.id])+'/100':'No observed signal';
 const namedType=kind=>kind==='qloo'?'Real Qloo tool request':kind==='demo'?'Fictional demonstration step':'Local computation';
