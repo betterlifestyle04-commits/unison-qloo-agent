@@ -188,3 +188,13 @@ Shareable briefs are now explicitly demo-only when opened, even after asynchrono
 The API uses a bounded, in-memory, per-client request limiter. Entries expire after their rate-limit window and the total number of tracked client identifiers is capped to prevent unbounded memory growth. Rate limiting is a best-effort infrastructure protection, not an account-based access-control system.
 
 Modules: `public/recovery.js`, `src/request-limiter.js`, `test/recovery.test.js`, `test/request-limiter.test.js`, and `test/http-ux.test.js`. `npm run check` covers the added JavaScript modules.
+
+## Qloo candidate integrity screening
+
+To keep fairness calculations grounded in the **same requested pool of candidates**, the backend now screens every live Qloo Insights response in `src/candidate-integrity.js`. Discovery records must have a usable ID and name and must not explicitly belong to the wrong requested domain (places versus movies). Duplicate IDs are removed. The subsequent per-person evaluation is additionally restricted to **exact IDs in the shared shortlist**. Any returned extra or wrong-type entity is excluded **before** its ordinal position can influence a fit estimate. This is independent of the Qloo API's `filter.results.entities` query parameter and makes unexpected upstream responses safe to interpret.
+
+The response includes an aggregate `quality` object with counts of accepted and excluded items. The UI exposes an expandable **Qloo response integrity** inspector; the agent trace records screening stages as **local computation**, not extra Qloo requests. A missing entity-type label is reported, not silently claimed verified. A filtered-out result is **not** evidence of dislike.
+
+This protects candidate *membership*, not geographic truth or factual metadata: UNISON does **not** independently certify venue addresses, city boundaries, opening hours, prices, or bookability. Scores remain ordinal UNISON heuristics, not measured satisfaction.
+
+Qloo's published [Insights parameter reference](https://github.com/qloo/docs-public/blob/main/reference/insights-api-deep-dive.md) documents `filter.results.entities` for the shared-candidate evaluation. The extra local screening is UNISON's own safeguard. See `test/candidate-integrity.test.js` and the contamination scenarios in `test/live-pipeline.test.js`.
