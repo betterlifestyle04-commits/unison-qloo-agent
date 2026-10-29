@@ -158,3 +158,19 @@ test('head-to-head comparison stays in the browser and uses complete evidence',a
   assert.match(app.body,/id="compare-left"/);
   assert.match(app.body,/id="compare-right"/);
 });
+
+test('shared group setup cannot quietly restore Live Qloo after status check',async()=>{
+  const {response,body}=await request('/app.js');
+  assert.equal(response.status,200);
+  assert.match(body,/applyBrief\(\{\.\.\.decodeShareBrief\(location\.hash\),mode:'demo'\}\)/);
+  assert.doesNotMatch(body,/app\.hashLoaded\s*&&\s*app\.pendingMode\s*===\s*'live'/);
+});
+test('error recovery does not fabricate live evidence or auto-submit demo',async()=>{
+  const [module,app]=await Promise.all([request('/recovery.js'),request('/app.js')]);
+  assert.equal(module.response.status,200);
+  assert.match(module.response.headers.get('content-type'),/application\/javascript/);
+  assert.match(app.body,/planningRecovery\(e\.status\|\|0/);
+  assert.match(app.body,/id="recovery-demo"/);
+  assert.match(app.body,/mode\]\[value=demo/);
+  assert.match(module.body,/never|not pretend|without inventing/i);
+});
