@@ -447,7 +447,13 @@ function render(data){
     <details class="trace"><summary>How UNISON reached this decision · ${data.trace.length} steps</summary><ol>${data.trace.map(step=>{const label=step.kind==='qloo'?'Qloo request':step.kind==='demo'?'Simulated evidence':'Local computation';const tone=step.kind==='qloo'?'qloo':step.kind==='demo'?'demo':'local';return `<li class="trace-step trace-${tone}"><span class="trace-kind">${label}</span><strong>${escape(step.step)}</strong> — ${escape(step.detail)}${step.requests?.length?`<span class="trace-url">${step.requests.map(request=>escape(request.url+(request.cached?' (cached)':''))).join(' · ')}</span>`:''}</li>`;}).join('')}</ol></details>`;
   const agendaFields={choiceId:'#agenda-choice',date:'#agenda-date',time:'#agenda-time',duration:'#agenda-duration',meeting:'#agenda-meeting',notes:'#agenda-notes'};
   for(const [key,selector] of Object.entries(agendaFields)){
-    results.querySelector(selector)?.addEventListener('change',event=>{app.agenda[key]=event.target.value;if(key==='choiceId'&&data.domain==='places')render(data);});
+    results.querySelector(selector)?.addEventListener('change',event=>{
+      app.agenda[key]=event.target.value;
+      if(key==='choiceId'&&data.domain==='places'){
+        render(data);
+        results.querySelector(selector)?.focus();
+      }
+    });
     if(key==='meeting'||key==='notes')results.querySelector(selector)?.addEventListener('input',event=>{app.agenda[key]=event.target.value;});
   }
   results.querySelectorAll('[data-readiness-key]').forEach(box=>box.addEventListener('change',event=>{

@@ -61,6 +61,7 @@ test('desktop: full demo workflow, votes, weighting, archive, report and calenda
     await venue.locator('[data-readiness-key="hours"]').check();
     assert.match(await page.locator('#venue-readiness-count').innerText(),/2 \/ 4 reviewed/);
     await page.locator('#agenda-choice').selectOption({index:1});
+    assert.equal(await page.locator('#agenda-choice').evaluate(node=>document.activeElement===node),true,'switching a venue keeps focus on the choice control');
     assert.match(await page.locator('#venue-readiness-count').innerText(),/0 \/ 4 reviewed/);
     await page.locator('#agenda-choice').selectOption({index:0});
     assert.match(await page.locator('#venue-readiness-count').innerText(),/2 \/ 4 reviewed/);
