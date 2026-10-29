@@ -1,0 +1,50 @@
+name: One-time live Oslo place recommendation smoke test
+
+on:
+  push:
+    paths:
+      - '.github/workflows/qloo-place-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  place-live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Run one real Oslo places plan with fictional group members
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE='https://unison-qloo.onrender.com'
+          echo '## Real UNISON Oslo place-planning smoke test' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Two fictional people, public movie taste anchors. City: Oslo. Budget: any. Exactly one live plan; no retries.' >> "$GITHUB_STEP_SUMMARY"
+          for title in Interstellar Inception; do
+            curl --silent --show-error --fail --get --max-time 50 --data-urlencode "q=$title" "$BASE/api/taste-lookup" > "/tmp/$title.json"
+            id=$(jq -r --arg title "$title" '[.matches[] | select((.name | ascii_downcase)==($title | ascii_downcase)) | select(.type=="urn:entity:movie") | .id][0] // empty' "/tmp/$title.json")
+            if [[ ! "$id" =~ ^[0-9a-fA-F-]{36}$ ]]; then
+              echo "❌ Could not resolve an exact movie Qloo entity for $title." >> "$GITHUB_STEP_SUMMARY"
+              exit 1
+            fi
+            if [ "$title" = "Interstellar" ]; then FIRST="$id"; else SECOND="$id"; fi
+          done
+          jq -n --arg first "$FIRST" --arg second "$SECOND" '{
+            mode:"live",domain:"places",city:"Oslo",budget:"any",
+            people:[
+              {name:"Ada",favorites:["Interstellar"],selectedEntities:[{name:"Interstellar",id:$first,type:"urn:entity:movie"}]},
+              {name:"Bea",favorites:["Inception"],selectedEntities:[{name:"Inception",id:$second,type:"urn:entity:movie"}]}
+            ]
+          }' > /tmp/input.json
+          STATUS=$(curl --silent --show-error --max-time 170 --retry 0 --request POST --header 'Content-Type: application/json' --data-binary @/tmp/input.json --output /tmp/output.json --write-out '%{http_code}' "$BASE/api/plan")
+          if [ "$STATUS" != "200" ]; then
+            echo "❌ Live Oslo planning returned HTTP $STATUS" >> "$GITHUB_STEP_SUMMARY"
+            jq -r '.error // "Unexpected response"' /tmp/output.json >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          jq -r '"Mode: "+.mode+" | City: "+.city+" | People: "+(.people|length|tostring)+" | Candidates: "+(.ranked|length|tostring)+" | Full group coverage: "+(.supported|length|tostring)' /tmp/output.json | tee -a "$GITHUB_STEP_SUMMARY"
+          jq -r '.trace[]|select(.kind=="qloo")|"- "+.step+": "+.detail' /tmp/output.json >> "$GITHUB_STEP_SUMMARY"
+          jq -r '.ranked[:5][]|"- "+.name+" | address: "+(.address//"not supplied")' /tmp/output.json >> "$GITHUB_STEP_SUMMARY"
+          jq -e '(.mode=="live") and (.domain=="places") and (.city=="Oslo") and (.people|length==2) and (.ranked|length>0) and (.quality.evaluation.accepted>0) and ([.trace[]|select(.step=="Qloo discovery tool")]|length==2) and ([.trace[]|select(.step=="Qloo shortlist evaluation tool")]|length==2)' /tmp/output.json > /dev/null || { echo '❌ Live place results have incomplete provenance or no supported candidate signals.' >> "$GITHUB_STEP_SUMMARY"; exit 1; }
+          echo '✅ Live Qloo places pipeline completed for the requested Oslo locality. Physical venue addresses remain unverified.' >> "$GITHUB_STEP_SUMMARY"
