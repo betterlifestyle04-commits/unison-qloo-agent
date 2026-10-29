@@ -108,6 +108,13 @@ test('desktop: full demo workflow, votes, weighting, archive, report and calenda
     const calendarText=await readFile(await calendar.path(),'utf8');
     assert.match(calendarText,/STATUS:TENTATIVE/);
     assert.match(calendarText,/No reservation or booking/);
+    assert.match(calendarText,/LOCATION:\r?\n/,'unverified venues must not be silently used as confirmed meeting points');
+    await page.locator('#agenda-meeting').fill('Main entrance, Oslo');
+    const secondCalendarEvent=page.waitForEvent('download');
+    await page.locator('#download-calendar').click();
+    const secondCalendar=await secondCalendarEvent;
+    assert.match(await readFile(await secondCalendar.path(),'utf8'),/LOCATION:Main entrance\\, Oslo/);
+    assert.ok(await page.locator('.place-filter-disclosure').count()>0);
     assert.deepEqual(errors,[], 'no uncaught browser JavaScript errors');
   }finally{await context.close();}
 });
