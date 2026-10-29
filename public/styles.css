@@ -335,3 +335,23 @@
 .diagnostics-results li{overflow-wrap:anywhere}
 .diagnostics-results p{margin:7px 0 0;color:#79889d}
 @media(max-width:580px){.diagnostics-heading{align-items:stretch;flex-direction:column}.diagnostics-heading button{white-space:normal;width:100%}}
+
+/* Group decision stability: clearly hypothetical, no API calls or participant exclusion. */
+.group-stability{padding:15px;background:linear-gradient(130deg,#f6fcfa,#f6f9ff);border:1px solid #dce8e7;border-radius:14px;margin:0 0 17px}
+.group-stability>summary{cursor:pointer;color:#44786f;font-size:.77rem;font-weight:840;line-height:1.5;list-style:none}
+.group-stability>summary::-webkit-details-marker{display:none}
+.group-stability>summary:after{content:'+';float:right;margin-left:10px}
+.group-stability[open]>summary:after{content:'−'}
+.group-stability p{font-size:.71rem;color:#76878a;line-height:1.6;margin:11px 0}
+.group-stability strong{color:#396e63}
+.stability-overview{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:14px 0}
+.stability-overview>div{border:1px solid #e2e9e8;border-radius:10px;background:#fff;padding:12px;display:flex;flex-direction:column;gap:4px}
+.stability-overview>div strong{font-size:1.07rem;letter-spacing:-.02em;overflow-wrap:anywhere}
+.stability-overview>div span{font-size:.65rem;line-height:1.45;color:#859296}
+.stability-table{overflow-x:auto}
+.stability-table table{width:100%;min-width:330px;border-collapse:collapse}
+.stability-table th,.stability-table td{padding:9px 7px;border-bottom:1px solid #e0e8e6;text-align:left;font-size:.67rem;line-height:1.4;color:#667d80}
+.stability-table th{font-weight:790}
+.group-stability .stability-summary{color:#446b64;font-weight:720}
+.group-stability>small{display:block;font-size:.62rem;color:#87959a;line-height:1.6;margin-top:8px}
+@media(max-width:580px){.group-stability{padding:12px}.stability-overview{grid-template-columns:1fr}}
