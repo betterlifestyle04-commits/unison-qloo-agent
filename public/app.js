@@ -501,7 +501,11 @@ function render(data){
     if(!target)return;
     let panel=[...results.querySelectorAll('[data-ballot-panel]')].find(node=>node.dataset.ballotPanel===target.id);
     if(!panel&&!app.showAll){app.showAll=true;render(data);panel=[...results.querySelectorAll('[data-ballot-panel]')].find(node=>node.dataset.ballotPanel===target.id);}
-    if(panel){panel.open=true;panel.scrollIntoView({behavior:'smooth',block:'center'});}
+    if(panel){
+      panel.open=true;
+      panel.scrollIntoView({behavior:'smooth',block:'center'});
+      panel.querySelector('[data-vote-choice]')?.focus();
+    }
   });
   results.querySelector('#clear-local-votes')?.addEventListener('click',()=>{app.ballots={};render(data);results.querySelector('#agreement-heading')?.focus();});
   for(const [selector,key] of [['#compare-left','left'],['#compare-right','right']]){

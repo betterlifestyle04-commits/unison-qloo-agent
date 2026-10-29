@@ -94,6 +94,7 @@ test('desktop: full demo workflow, votes, weighting, archive, report and calenda
 
     await page.locator('#open-top-ballot').click();
     const chosen=page.locator('.group-ballot[open]').first();
+    assert.equal(await chosen.locator('[data-vote-choice]').first().evaluate(node=>document.activeElement===node),true,'opening participant voting moves focus into the vote controls');
     await chosen.locator('[data-vote-choice="yes"]').first().focus();
     await page.keyboard.press('Space');
     assert.match(await page.locator('.agreement-count').innerText(),/1\s*\/\s*3/);
