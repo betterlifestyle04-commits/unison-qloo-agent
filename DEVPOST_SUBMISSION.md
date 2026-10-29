@@ -128,3 +128,9 @@ The automated suite includes regression checks for these safeguards; comprehensi
 The latest release adds explicit candidate-integrity checks on every real Qloo Insights response. UNISON accepts only unique, correctly categorized Qloo candidates and screens the shared-shortlist evaluation against the exact requested entity IDs. This prevents unexpected, unrelated results from being promoted into the group comparison or changing rank-derived fit scores. The result interface and evidence trace disclose screening counts and limitations transparently. All screening is **local computation**, with no additional Qloo quota spent.
 
 Automated tests inject duplicate, wrong-domain, and outside-shortlist candidates into mocked Qloo responses and verify they are excluded. This validates our handling of imperfect responses; it is **not** proof that all live Qloo Insights requests or venue details are correct.
+
+## Self-service evidence of a working Qloo integration
+
+UNISON now offers a manual **Qloo connection diagnostic** visible only in live mode. A visitor can explicitly test a fixed public sample through real Search, Insights discovery and Insights shortlist evaluation. The results report each stage separately so a configured API key is never confused with verified Insights responses. No private group names or favorites are sent during this diagnostic. We limit frequency to protect API quota; passing a one-title movie diagnostic is not a guarantee that other filters or places will return good recommendations.
+
+Its logic has isolated tests with fake Qloo tools, and browser tests verify the control doesn't call the API without a click. We have **not** claimed an actual verified production Insights result until a user runs the live diagnostic successfully.
