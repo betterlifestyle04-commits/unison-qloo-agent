@@ -472,7 +472,7 @@ function renderDecisionStatus(data,approved,groupApproved){
     <div class="decision-status-grid">
       <a href="#evidence-audit" class="${evidenceReady?'is-ready':''}"><span>01 · Evidence</span><strong>${evidenceReady?audit.complete+'/'+audit.total+' options comparable':'More signals needed'}</strong><small>Observed fit only · missing data stays unknown</small></a>
       <a href="#group-agreement" class="${agreementReady?'is-ready':''}"><span>02 · Group agreement</span><strong>${escape(agreement)}</strong><small>Explicit votes, not inferred approval</small></a>
-      ${data.domain==='places'?`<a href="#venue-readiness" class="${logisticsReady?'is-ready':''}"><span>03 · Practical check</span><strong>${escape(logistics)}</strong><small>Self-reported · not venue verification</small></a>`:`<div class="${logisticsReady?'is-ready':''}"><span>03 · Practical check</span><strong>${escape(logistics)}</strong><small>Choose a time and confirm together</small></div>`}
+      ${data.domain==='places'?`<a id="decision-logistics-status" href="#venue-readiness" class="${logisticsReady?'is-ready':''}"><span>03 · Practical check</span><strong>${escape(logistics)}</strong><small>Self-reported · not venue verification</small></a>`:`<div class="${logisticsReady?'is-ready':''}"><span>03 · Practical check</span><strong>${escape(logistics)}</strong><small>Choose a time and confirm together</small></div>`}
     </div>
   </section>`;
 }
@@ -533,6 +533,8 @@ function render(data){
     if(count)count.textContent=progress.marked+' / '+progress.total+' reviewed';
     if(meter){meter.value=progress.percent;meter.setAttribute('aria-label','Venue reality checklist '+progress.percent+' percent marked reviewed');}
     if(message)message.textContent=progress.label;
+    const status=results.querySelector('#decision-logistics-status');
+    if(status){status.classList.toggle('is-ready',progress.complete);const summary=status.querySelector('strong');if(summary)summary.textContent=progress.marked+' / '+progress.total+' venue details reviewed locally';}
   }));
   const agendaDetails=()=>{
     const chosen=approved.find(item=>item.id===app.agenda.choiceId);
