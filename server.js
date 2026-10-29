@@ -4,12 +4,15 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {runAgent} from './src/agent.js';
 import {isLiveConfigured,searchFavorite} from './src/qloo.js';
+import {createRequestLimiter} from './src/request-limiter.js';
 const root=path.join(path.dirname(fileURLToPath(import.meta.url)),'public');
 const files=new Map([['/','index.html'],['/app.js','app.js'],['/planner-state.js','planner-state.js'],['/ballot.js','ballot.js'],['/saved-plans.js','saved-plans.js'],['/calendar.js','calendar.js'],['/evidence-audit.js','evidence-audit.js'],['/decision-report.js','decision-report.js'],['/consensus.js','consensus.js'],['/head-to-head.js','head-to-head.js'],['/recovery.js','recovery.js'],['/privacy','privacy.html'],['/privacy.html','privacy.html'],['/styles.css','styles.css']]);
 const MIME={'.html':'text/html; charset=utf-8','.js':'application/javascript; charset=utf-8','.css':'text/css; charset=utf-8'};
-const requestWindows=new Map();const lookupWindows=new Map(); let activePlans=0;
-function allowLookup(req){const ip=req.socket.remoteAddress||'unknown',now=Date.now();const recent=(lookupWindows.get(ip)||[]).filter(time=>now-time<60000);recent.push(now);lookupWindows.set(ip,recent);return recent.length<=10;}
-function allowPlan(req){const ip=req.socket.remoteAddress||'unknown',now=Date.now(),window=requestWindows.get(ip)||{started:now,count:0};if(now-window.started>60_000){window.started=now;window.count=0;}window.count++;requestWindows.set(ip,window);return window.count<=20;}
+const planLimiter=createRequestLimiter({limit:20,windowMs:60_000,maxClients:2048});
+const lookupLimiter=createRequestLimiter({limit:10,windowMs:60_000,maxClients:2048});
+let activePlans=0;
+function allowLookup(req){return lookupLimiter.allow(req.socket.remoteAddress||'unknown');}
+function allowPlan(req){return planLimiter.allow(req.socket.remoteAddress||'unknown');}
 function isCrossSite(req){
   if(req.headers['sec-fetch-site']==='cross-site')return true;
   const origin=req.headers.origin;
