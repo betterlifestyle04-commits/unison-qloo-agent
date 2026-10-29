@@ -57,31 +57,31 @@ export async function resolvePersonFavorites(person,search=searchFavorite){
     return search(favorite);
   });
 }
-async function liveEvidence(people,domain,city,budget,trace){
+async function liveEvidence(people,domain,city,budget,trace,tools){
   // Limit concurrent participant resolution. Each participant resolves at most two favorites at once.
   const resolved=await mapLimited(people,2,async person=>{
-    const matches=await resolvePersonFavorites(person);
+    const matches=await resolvePersonFavorites(person,tools.searchFavorite);
     const unresolved=matches.filter(match=>match.status!=='resolved');
     if(unresolved.length){const names=unresolved.flatMap(match=>match.matches.map(item=>item.name+(item.type?' ('+item.type.replace(/^urn:entity:/,'')+')':''))).slice(0,5);fail(`Please clarify ${person.name}'s favorite using Taste Finder. Qloo found ${names.length?names.join(', '):'no exact match'}; titles shared by movies, albums, artists, or books must be selected explicitly.`,422);}
     const picked=matches.filter(match=>match.picked).length;
-    trace.push({step:'Qloo entity resolution',kind:'qloo',detail:`Resolved ${person.favorites.length} favorite(s) for ${person.name}, including ${picked} explicitly selected Qloo entity ID(s).`,requests:matches.filter(match=>match.url).map(match=>({url:match.url,cached:match.cached}))});
-    return {...person,entities:matches.map(match=>match.exact)};
+    return {...person,entities:matches.map(match=>match.exact),resolution:{picked,requests:matches.filter(match=>match.url).map(match=>({url:match.url,cached:match.cached}))}};
   });
+  for(const person of resolved)trace.push({step:'Qloo entity resolution',kind:'qloo',detail:`Resolved ${person.favorites.length} favorite(s) for ${person.name}, including ${person.resolution.picked} explicitly selected Qloo entity ID(s).`,requests:person.resolution.requests});
   const discoveries=await mapLimited(resolved,2,async person=>{
-    const response=await insights(person.entities.map(entity=>entity.id),domain,{city,budget});
-    trace.push({step:'Qloo discovery tool',kind:'qloo',detail:`Requested ${domain} candidates for ${person.name}${city&&domain==='places'?` within ${city}`:''}.`,requests:[{url:response.url,cached:response.cached}]});
-    return {person,results:response.results};
+    const response=await tools.insights(person.entities.map(entity=>entity.id),domain,{city,budget});
+    return {person,results:response.results,url:response.url,cached:response.cached};
   });
+  for(const item of discoveries)trace.push({step:'Qloo discovery tool',kind:'qloo',detail:`Requested ${domain} candidates for ${item.person.name}${city&&domain==='places'?` within ${city}`:''}.`,requests:[{url:item.url,cached:item.cached}]});
   const shortlist=[...new Set(discoveries.flatMap(entry=>entry.results.map(item=>item.id)))].slice(0,12);
   if(!shortlist.length){
     trace.push({step:'No candidates',kind:'local',detail:'Qloo returned no place or movie candidates matching this group and its current constraints.'});
     return [];
   }
   const perPerson=await mapLimited(resolved,2,async person=>{
-    const response=await insights(person.entities.map(entity=>entity.id),domain,{city,budget,shortlist});
-    trace.push({step:'Qloo shortlist evaluation tool',kind:'qloo',detail:`Evaluated the shared ${shortlist.length}-option shortlist for ${person.name}.`,requests:[{url:response.url,cached:response.cached}]});
-    return {person,results:response.results};
+    const response=await tools.insights(person.entities.map(entity=>entity.id),domain,{city,budget,shortlist});
+    return {person,results:response.results,url:response.url,cached:response.cached};
   });
+  for(const item of perPerson)trace.push({step:'Qloo shortlist evaluation tool',kind:'qloo',detail:`Evaluated the shared ${shortlist.length}-option shortlist for ${item.person.name}.`,requests:[{url:item.url,cached:item.cached}]});
   const candidates=new Map();
   perPerson.forEach(({person,results})=>results.forEach((item,index)=>{
     if(!candidates.has(item.id))candidates.set(item.id,{...item,signals:{},signalKinds:{},observedAffinityByPerson:{},evidence:'Observed Qloo candidate. All UNISON fit estimates use the same relative ordinal scale; native Qloo affinity is kept separate.'});
@@ -91,12 +91,14 @@ async function liveEvidence(people,domain,city,budget,trace){
   }));
   return [...candidates.values()];
 }
-export async function runAgent(input){
+export async function runAgent(input,{qlooTools}={}){
+  // Optional controlled test seam. Production never passes a replacement.
+  const tools=qlooTools||{isLiveConfigured,searchFavorite,insights};
   const {people,domain,mode,city,budget,vetoes}=validate(input);
-  if(mode==='live'&&!isLiveConfigured())fail('Live Qloo mode is not configured. Add QLOO_API_KEY securely or choose clearly labeled demo mode.',503);
+  if(mode==='live'&&!tools.isLiveConfigured())fail('Live Qloo mode is not configured. Add QLOO_API_KEY securely or choose clearly labeled demo mode.',503);
   if(mode==='live'&&domain==='places'&&!city)fail('Choose a city before requesting live place recommendations.',422);
   const trace=[{step:'Plan',kind:'local',detail:`Collect up to three favorites per person, then seek a ${budget==='any'?'practical':budget}-budget ${domain==='places'?'place':'movie'} compromise.`}];
-  const candidates=mode==='live'?await liveEvidence(people,domain,city,budget,trace):demoEvidence(people,domain,{city,budget});
+  const candidates=mode==='live'?await liveEvidence(people,domain,city,budget,trace,tools):demoEvidence(people,domain,{city,budget});
   if(!candidates.length)fail(mode==='live'
     ?'Qloo returned no candidates for this combination of tastes and constraints. Try another city, loosen the price level, or select other cultural references. No fictional results were substituted.'
     :'No simulated options match that budget. Try a different practical constraint.',422);
