@@ -210,3 +210,11 @@ The first browser run uncovered a production startup crash: `starters.forEach(ad
 In CI, screenshots of the working desktop and mobile demo are uploaded as a **unison-browser-screenshots** artifact retained for seven days. Browser automation runs only in CI with an ephemeral Playwright installation, so **production still has no extra runtime dependencies**. Local developers can run `npm install --no-save playwright@1.64.1`, `npx playwright install chromium`, then `npm run test:e2e`.
 
 A successful mocked-live browser test **does not establish real authenticated Qloo Insights availability**; live API verification remains a separate acceptance criterion.
+
+## Explicit live-Qloo connection check
+
+The Live Qloo selection now contains an **optional "Check Qloo connection"** button that calls `POST /api/qloo-diagnostics`. Unlike the configuration-only `GET /api/status` badge, it attempts a real, fixed-example sequence on the server: `/search` for a known public film, `/v2/insights` movie discovery, then a second `/v2/insights` evaluation restricted to the discovered shortlist. The UI discloses whether each stage passed or failed; errors never get replaced with demo evidence. It uses **zero names or favorites from the user's group brief**.
+
+The check runs **only on an explicit click in Live mode**, not when loading the page, opening a group link or switching modes. It is throttled to **two attempts per ten minutes per connection** and may use up to **three Qloo GET operations, plus Qloo-adapter retries on transient failures**. It is a limited integration diagnostic, not proof that every other movie, geographic place, budget filter or recommendation will work. A check with valid Search but no matching Insights returns `ok:false`, not a made-up success.
+
+The pure diagnostic is `src/qloo-diagnostics.js` (mock tests: `test/qloo-diagnostics.test.js`). Browser testing intercepts the health request with a labeled mock response to verify explicit consent and zero transfer of group data; those mocks must never be described as authenticated Qloo availability. To validate actual credentials, use the opt-in control on the deployed website and inspect its live result.
