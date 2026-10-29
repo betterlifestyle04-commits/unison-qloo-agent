@@ -5,11 +5,13 @@ import {fileURLToPath} from 'node:url';
 import {runAgent} from './src/agent.js';
 import {isLiveConfigured,searchFavorite} from './src/qloo.js';
 import {createRequestLimiter} from './src/request-limiter.js';
+import {diagnoseQloo} from './src/qloo-diagnostics.js';
 const root=path.join(path.dirname(fileURLToPath(import.meta.url)),'public');
 const files=new Map([['/','index.html'],['/app.js','app.js'],['/planner-state.js','planner-state.js'],['/ballot.js','ballot.js'],['/saved-plans.js','saved-plans.js'],['/calendar.js','calendar.js'],['/evidence-audit.js','evidence-audit.js'],['/decision-report.js','decision-report.js'],['/consensus.js','consensus.js'],['/head-to-head.js','head-to-head.js'],['/recovery.js','recovery.js'],['/privacy','privacy.html'],['/privacy.html','privacy.html'],['/styles.css','styles.css']]);
 const MIME={'.html':'text/html; charset=utf-8','.js':'application/javascript; charset=utf-8','.css':'text/css; charset=utf-8'};
 const planLimiter=createRequestLimiter({limit:20,windowMs:60_000,maxClients:2048});
 const lookupLimiter=createRequestLimiter({limit:10,windowMs:60_000,maxClients:2048});
+const diagnosticsLimiter=createRequestLimiter({limit:2,windowMs:10*60_000,maxClients:512});
 let activePlans=0;
 function allowLookup(req){return lookupLimiter.allow(req.socket.remoteAddress||'unknown');}
 function allowPlan(req){return planLimiter.allow(req.socket.remoteAddress||'unknown');}
@@ -36,6 +38,14 @@ export const server=http.createServer(async(req,res)=>{
       if(query.length<2||query.length>80)return send(res,400,{error:'Search for a cultural reference using 2–80 characters.'});
       const match=await searchFavorite(query);
       return send(res,200,{query,matches:match.matches.map(({id,name,type})=>({id,name,type})),exact:Boolean(match.exact),cached:match.cached});
+    }
+    if(req.method==='POST'&&url.pathname==='/api/qloo-diagnostics'){
+      if(isCrossSite(req))return send(res,403,{error:'Cross-site Qloo diagnostic requests are not allowed.'});
+      if(!isLiveConfigured())return send(res,503,{error:'Qloo is not currently configured on the server.'});
+      if(!diagnosticsLimiter.allow(req.socket.remoteAddress||'unknown'))return send(res,429,{error:'Qloo diagnostics are limited to two checks per ten minutes. You can still use the demo.'});
+      if(req.headers['content-length']&&Number(req.headers['content-length'])>0)return send(res,400,{error:'The diagnostic does not accept participant data or a request body.'});
+      const diagnostics=await diagnoseQloo();
+      return send(res,200,diagnostics);
     }
     if(req.method==='POST'&&url.pathname==='/api/plan'){
       if(isCrossSite(req))return send(res,403,{error:'Cross-site planning requests are not allowed.'});
