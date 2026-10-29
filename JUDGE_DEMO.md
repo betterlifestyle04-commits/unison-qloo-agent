@@ -77,3 +77,9 @@ After explicitly selecting **Live Qloo**, expand the evidence choices and click 
 The app's **live Qloo Search + Insights** path passed one production smoke test on October 29, 2026 ([evidence](https://github.com/betterlifestyle04-commits/unison-qloo-agent/actions/runs/40877477130)). A separate **live two-person movie plan** with fictitious Ada/Bea identities and *Interstellar*/*Inception* anchors returned 12 Qloo movie candidates, including 11 with full group coverage ([evidence](https://github.com/betterlifestyle04-commits/unison-qloo-agent/actions/runs/40878074739)). These are real production Qloo requests, distinct from the Chromium mocked-live and fictional demo test suites. They do not demonstrate verified locations, hours, or other group sizes.
 
 For a three-person demo, expand **Decision Stability**: a leave-one-out hypothetical view shows whether the current fair winner would change if any one person's taste evidence were omitted. This uses only the existing results, does not change the actual decision or remove anyone, and requires no Qloo calls.
+
+## New: live Oslo places evidence and practical handoff
+
+The [one-time live production Oslo test](https://github.com/betterlifestyle04-commits/unison-qloo-agent/actions/runs/40883494386) returned 12 real Qloo places, with both fictional participants having candidate evidence for all 12. The test used a strict Oslo locality query and budget `any`. That verifies the integration's tested response path, not every individual venue fact.
+
+For the fictional outing demo, open **Make it happen** and **Venue Reality Check**. Check the address and opening hours boxes; the progress advances. Switch to another candidate and observe a separate, unchecked list; switch back to see the previous marks. These are manual group reminders—not provider checks, reservations, or automatic validation—and they do not spend Qloo quota.
