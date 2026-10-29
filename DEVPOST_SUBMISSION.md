@@ -96,3 +96,11 @@ For returning visitors, UNISON can save up to eight group briefs and recommendat
 UNISON now includes a zero-integration calendar handoff. Once the shortlist is generated, the group can pick a supported option, agree on a proposed date and meeting location, and export a tentative standard calendar event. The app explicitly does not make bookings, check availability or send invitations. This is a local completion step rather than another AI or Qloo API request.
 
 We also corrected an accessibility and security-policy conflict: recommendation fit visualizations use native meters and remain visible under a restrictive Content Security Policy without relying on blocked inline CSS.
+
+## Export the agent's reasoning
+
+To make the result genuinely portable, UNISON can now download a **Decision Report** in Markdown. It records individual relative-fit estimates, group fairness weighting, evidence coverage, vetoes, voluntary Yes/Maybe/No votes and labeled agent steps, distinguishing real Qloo requests from fictional demonstration and local computation. The export is intentionally opt-in because it may contain participant names and cultural references. Creating the report does not trigger further Qloo API calls.
+
+## Public privacy disclosure
+
+A dedicated privacy page explains what enters our backend, which cultural signals are sent to Qloo, what stays on the visitor's device, why share-link fragments are not encrypted, and why human votes are only session-local. The website also avoids CSP-blocked inline styling for its clipboard fallback. These changes improve product trust without introducing accounts, tracking, or another dependency.
