@@ -286,3 +286,21 @@
 .head-to-head .comparison-comment{color:#59567f;font-weight:700;margin:12px 0 8px}
 .head-to-head>small{display:block;font-size:.62rem;color:#89869d;line-height:1.5}
 @media(max-width:580px){.head-to-head-picker{grid-template-columns:1fr;gap:6px}.head-to-head-picker>span{padding:0;text-align:center}.head-to-head{padding:13px}}
+
+/* Never silently turn an upstream Qloo failure into fictional recommendations. */
+.plan-recovery{padding:22px;background:linear-gradient(130deg,#fffbf6,#fcf9ff);border:1px solid #eedfce;border-radius:15px;display:flex;flex-direction:column;align-items:flex-start;gap:11px}
+.plan-recovery .eyebrow{color:#966c54;font-size:.6rem}
+.plan-recovery h3{font-size:1.36rem;color:#5b4b52;letter-spacing:-.04em;margin:0}
+.plan-recovery h4{font-size:.77rem;color:#7b5d5d;margin:6px 0 0}
+.plan-recovery p{font-size:.73rem;line-height:1.65;color:#7a7383;margin:0}
+.plan-recovery details{width:100%;border:1px solid #eee5e1;border-radius:8px;background:white;padding:9px 11px}
+.plan-recovery details summary{cursor:pointer;font-size:.68rem;color:#82727b;font-weight:700}
+.plan-recovery details p{font-size:.65rem;overflow-wrap:anywhere;margin-top:9px}
+.plan-recovery ul{padding-left:20px;margin:0;display:grid;gap:7px}
+.plan-recovery li{color:#716e81;font-size:.7rem;line-height:1.6}
+.recovery-actions{display:flex;gap:9px;flex-wrap:wrap}
+.recovery-actions button{border-radius:9px;border:1px solid #b8a6db;color:#5b4e95;background:white;padding:10px 13px;font-weight:800;font-size:.72rem}
+.recovery-actions button:first-child{background:#6253c7;color:white;border-color:#6253c7}
+.recovery-actions button:hover{filter:brightness(.96)}
+.plan-recovery .recovery-explainer{font-size:.63rem;color:#9c8c98}
+@media(max-width:580px){.plan-recovery{padding:15px}.recovery-actions,.recovery-actions button{width:100%}}
