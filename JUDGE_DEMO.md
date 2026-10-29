@@ -71,3 +71,9 @@ After a **live** recommendation appears, expand **Qloo response integrity** belo
 ## Optional live Qloo self-check (uses hackathon quota)
 
 After explicitly selecting **Live Qloo**, expand the evidence choices and click **Check Qloo connection**. This is an opt-in, limited live API check using a fixed public film: Search, discovery Insights, and shortlist Insights. Show the three labeled results. It never sends participant names/favorites and is limited to two checks per ten minutes per connection. **Only say the real Qloo Insights integration was verified if the button actually reports successful live steps**. A configured key or simulated browser mock does not count.
+
+## Verified production evidence for judges
+
+The app's **live Qloo Search + Insights** path passed one production smoke test on October 29, 2026 ([evidence](https://github.com/betterlifestyle04-commits/unison-qloo-agent/actions/runs/40877477130)). A separate **live two-person movie plan** with fictitious Ada/Bea identities and *Interstellar*/*Inception* anchors returned 12 Qloo movie candidates, including 11 with full group coverage ([evidence](https://github.com/betterlifestyle04-commits/unison-qloo-agent/actions/runs/40878074739)). These are real production Qloo requests, distinct from the Chromium mocked-live and fictional demo test suites. They do not demonstrate verified locations, hours, or other group sizes.
+
+For a three-person demo, expand **Decision Stability**: a leave-one-out hypothetical view shows whether the current fair winner would change if any one person's taste evidence were omitted. This uses only the existing results, does not change the actual decision or remove anyone, and requires no Qloo calls.
