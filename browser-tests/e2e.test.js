@@ -168,6 +168,9 @@ test('mocked live browser journey: explicit opt-in, precise Taste Finder and hon
     await page.locator('#recovery-demo').click();
     assert.equal(await page.locator('input[name="mode"][value="demo"]').isChecked(),true);
     assert.equal(submissions.length,1,'switching to demo must not trigger automatic plan submissions');
-    assert.deepEqual(errors,[]);
+    // Chromium logs an expected 422 response as a console network warning; this is
+    // the deliberately mocked API validation failure, not a JavaScript exception.
+    const unexpected=errors.filter(error=>!/Browser console: Failed to load resource: .*422 \(Unprocessable Entity\)/.test(error));
+    assert.deepEqual(unexpected,[]);
   }finally{await context.close();}
 });
