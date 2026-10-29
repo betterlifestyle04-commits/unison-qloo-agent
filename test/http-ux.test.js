@@ -204,3 +204,13 @@ test('Qloo diagnostics are visible only after explicit Live mode and require a c
   assert.match(app.body,/method:'POST'/);
   assert.doesNotMatch(app.body,/fetch\('\/api\/qloo-diagnostics'\)\.then/);
 });
+
+test('group stability review is served locally and does not require another Qloo call',async()=>{
+ const [module,app,style]=await Promise.all([request('/group-stability.js'),request('/app.js'),request('/styles.css')]);
+ assert.equal(module.response.status,200);
+ assert.match(module.response.headers.get('content-type'),/javascript/);
+ assert.match(module.body,/analyzeGroupStability/);
+ assert.match(app.body,/renderGroupStability/);
+ assert.match(app.body,/hypothetical decision sensitivity/i);
+ assert.match(style.body,/\.group-stability/);
+});
