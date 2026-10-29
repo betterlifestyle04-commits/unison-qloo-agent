@@ -70,7 +70,7 @@ The public `/api/plan` endpoint limits each client to 20 requests per minute and
 
 ## Render deployment
 
-1. Create a Render **Web Service** from this repository. Render's existing configuration uses `npm install`, `npm start`, and `/api/status` as its health check.
+1. Create a Render **Web Service** from this repository. Render's existing configuration uses `npm ci --omit=dev`, `npm start`, and `/api/status` as its health check. Browser-test tooling remains a development dependency and is not installed in the production service.
 2. Set Node 22 (already declared in `render.yaml`). Do not add `QLOO_API_KEY` for a demo-only deployment; `/api/status` will report `demo` and the app remains functional.
 3. For live mode, add `QLOO_API_KEY` as a Render secret, optionally set `QLOO_BASE_URL` to `https://hackathon.api.qloo.com`, deploy, and make one authenticated smoke request. Do not describe live mode as verified until that succeeds.
 4. Confirm the public homepage and `/api/status` return 200 after deployment; add the verified URL to the Devpost material only then.
