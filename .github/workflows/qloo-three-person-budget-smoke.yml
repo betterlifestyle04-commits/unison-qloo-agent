@@ -1,0 +1,59 @@
+name: One-time live three-person budgeted Oslo place plan
+
+on:
+  push:
+    paths:
+      - '.github/workflows/qloo-three-person-budget-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  budgeted-group:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Test real three-person Oslo place recommendation with mid price tier
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE='https://unison-qloo.onrender.com'
+          echo '## Real UNISON Oslo 3-person, mid-budget API test' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Fictional group (Ada, Bea, Cam), public movie anchors, strict Oslo locality, restaurant price-level cap 2. One plan request, no retries.' >> "$GITHUB_STEP_SUMMARY"
+          for title in 'Interstellar' 'Inception' 'The Dark Knight'; do
+            file="/tmp/$(echo "$title" | tr -cd 'A-Za-z').json"
+            curl --fail --silent --show-error --max-time 60 --get --data-urlencode "q=$title" "$BASE/api/taste-lookup" > "$file"
+            id=$(jq -r --arg title "$title" '[.matches[] | select((.name | ascii_downcase)==($title | ascii_downcase)) | select(.type=="urn:entity:movie") | .id][0] // empty' "$file")
+            if [[ ! "$id" =~ ^[0-9a-fA-F-]{36}$ ]]; then
+              echo "❌ Exact Qloo movie entity unavailable for $title; no plan submitted." >> "$GITHUB_STEP_SUMMARY"
+              exit 1
+            fi
+            case "$title" in Interstellar) A="$id";; Inception) B="$id";; *) C="$id";; esac
+          done
+          jq -n --arg a "$A" --arg b "$B" --arg c "$C" '{
+            mode:"live",domain:"places",city:"Oslo",budget:"mid",
+            people:[
+              {name:"Ada",favorites:["Interstellar"],selectedEntities:[{name:"Interstellar",id:$a,type:"urn:entity:movie"}]},
+              {name:"Bea",favorites:["Inception"],selectedEntities:[{name:"Inception",id:$b,type:"urn:entity:movie"}]},
+              {name:"Cam",favorites:["The Dark Knight"],selectedEntities:[{name:"The Dark Knight",id:$c,type:"urn:entity:movie"}]}
+            ]
+          }' > /tmp/group.json
+          STATUS=$(curl --silent --show-error --max-time 170 --retry 0 --request POST --header 'Content-Type: application/json' --data-binary @/tmp/group.json --output /tmp/result.json --write-out '%{http_code}' "$BASE/api/plan")
+          if [ "$STATUS" != "200" ]; then
+            echo "❌ Live three-person plan returned HTTP $STATUS" >> "$GITHUB_STEP_SUMMARY"
+            jq -r '.error // "Unexpected response"' /tmp/result.json >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          jq -r '"Mode: "+.mode+" | City: "+.city+" | Budget: "+.budget+" | Participants: "+(.people|length|tostring)+" | Qloo candidates: "+(.ranked|length|tostring)+" | Fully covered: "+(.supported|length|tostring)' /tmp/result.json | tee -a "$GITHUB_STEP_SUMMARY"
+          jq -r '.trace[] | select(.kind=="qloo") | "- "+.step+": "+.detail' /tmp/result.json >> "$GITHUB_STEP_SUMMARY"
+          jq -e '(.mode=="live") and (.domain=="places") and (.city=="Oslo") and (.budget=="mid") and (.people|length==3) and (.ranked|length>0) and (.quality.evaluation.accepted>0) and ([.trace[]|select(.step=="Qloo discovery tool")]|length==3) and ([.trace[]|select(.step=="Qloo shortlist evaluation tool")]|length==3)' /tmp/result.json >/dev/null || {
+            echo '❌ Incomplete provenance or group evidence in real response.' >> "$GITHUB_STEP_SUMMARY"; exit 1;
+          }
+          # The Qloo API documents filter.price_level.max as a restaurant-specific
+          # 1-4 price band: a cap, not a validated price for every listed venue.
+          jq -e '[.trace[]|.requests[]?|.url? // "" | select(test("filter.price_level.max=2"))]|length>=6' /tmp/result.json >/dev/null || {
+            echo '❌ Price-tier cap missing from some discovery/evaluation requests.' >> "$GITHUB_STEP_SUMMARY"; exit 1;
+          }
+          echo '✅ Real three-person Qloo workflow completed with documented price cap in all six Insights calls.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Budget constraint is a restaurant price-tier filter, NOT verified actual prices for all venues.' >> "$GITHUB_STEP_SUMMARY"
