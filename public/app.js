@@ -4,6 +4,7 @@ import {createPlanArchive,loadDevicePlans,saveDevicePlan,removeDevicePlan} from 
 import {buildCalendarEvent,agendaText} from './calendar.js';
 import {auditGroupEvidence,recoverySuggestions} from './evidence-audit.js';
 import {buildDecisionReport,reportFilename} from './decision-report.js';
+import {agreementPulse} from './consensus.js';
 const $=selector=>document.querySelector(selector);
 const people=$('#people'),template=$('#person-template'),form=$('#plan-form'),results=$('#results'),error=$('#form-error'),submitBtn=$('#submit-plan'),statusBadge=$('#mode-status');
 const starters=[['Maya','Studio Ghibli'],['Jon','Anthony Bourdain'],['Priya','Knives Out']];
@@ -255,6 +256,25 @@ function renderEvidenceAudit(data){
     ${suggestions.length?`<div class="audit-recovery"><strong>How to get a clearer answer</strong><ul>${suggestions.map(suggestion=>`<li>${escape(suggestion)}</li>`).join('')}</ul><button type="button" id="edit-after-audit">Review your group brief ↑</button></div>`:''}
   </section>`;
 }
+function renderAgreementPulse(data){
+  const pulse=agreementPulse(data,app.ballots);
+  if(!pulse.top){
+    return '<section class="agreement-pulse"><p class="overline">HUMAN AGREEMENT / NEXT STEP</p><h4>We need an eligible choice first.</h4><p>'+escape(pulse.nextAction)+'</p></section>';
+  }
+  const top=pulse.top;
+  const fill=top.total?Math.round(top.voted/top.total*100):0;
+  const approved=pulse.unanimous.length>0;
+  return `<section class="agreement-pulse" aria-label="Current human vote progress">
+    <div class="agreement-head"><div><p class="overline">HUMAN AGREEMENT / NEXT STEP</p><h4>${approved?'A group-approved choice!':'Let's see what everyone thinks.'}</h4></div><span class="agreement-count">${top.voted} / ${top.total} responses</span></div>
+    <p class="agreement-message">${escape(pulse.message)}</p>
+    <div class="agreement-meter-row"><meter class="fit-meter" min="0" max="100" value="${fill}" aria-label="${fill} percent of participants have voted on the leading option">${fill}%</meter><strong>${fill}%</strong></div>
+    <div class="agreement-totals"><span>✓ Yes: ${top.yes}</span><span>~ Maybe: ${top.maybe}</span><span>× No: ${top.no}</span></div>
+    <p class="agreement-next">${escape(pulse.nextAction)}</p>
+    ${pulse.unanimous.length?`<p class="agreement-winner">Unanimous approval recorded for: <strong>${escape(pulse.unanimous.map(item=>item.name).join(', '))}</strong></p>`:''}
+    <button type="button" id="open-top-ballot">Open participant voting ↓</button>
+    <p class="agreement-privacy">Only the people using this browser can record votes here. Voting doesn't change Qloo results or automatically make a booking.</p>
+  </section>`;
+}
 function render(data){
   app.lastResult=data;
   const approved=data.ranked.filter(item=>item.sufficient&&!item.vetoed);
@@ -274,6 +294,7 @@ function render(data){
     </section>
     ${decisionLab(data)}
     ${renderEvidenceAudit(data)}
+    ${renderAgreementPulse(data)}
     <div class="voting-intro"><strong>New · Agree together</strong><span>Each person can vote Yes, Maybe or No on any candidate. Votes stay on this device, separate from Qloo predictions.</span></div>
     ${groupApproved?`<div class="approved-choice" role="status">✓ Group agreement recorded: <strong>${escape(groupApproved.name)}</strong>. Everyone voted Yes.</div>`:''}
     ${data.needsMoreEvidence?`<div class="notice" role="status">${escape(data.nextAction||'Evidence is incomplete. Add another preference.')}</div>`:''}
@@ -319,6 +340,13 @@ function render(data){
   results.querySelector('#edit-after-audit')?.addEventListener('click',()=>{
     form.scrollIntoView({behavior:'smooth',block:'start'});
     const first=people.querySelector('[data-field=favorite]');if(first)first.focus({preventScroll:true});
+  });
+  results.querySelector('#open-top-ballot')?.addEventListener('click',()=>{
+    const target=agreementPulse(data,app.ballots).top;
+    if(!target)return;
+    let panel=[...results.querySelectorAll('[data-ballot-panel]')].find(node=>node.dataset.ballotPanel===target.id);
+    if(!panel&&!app.showAll){app.showAll=true;render(data);panel=[...results.querySelectorAll('[data-ballot-panel]')].find(node=>node.dataset.ballotPanel===target.id);}
+    if(panel){panel.open=true;panel.scrollIntoView({behavior:'smooth',block:'center'});}
   });
   // Human votes are distinct from preference predictions; no network request.
   results.querySelectorAll('[data-vote-choice]').forEach(button=>button.addEventListener('click',()=>{
