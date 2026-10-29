@@ -7,7 +7,19 @@ import {encodeShareBrief} from '../public/planner-state.js';
 
 let browser,origin;
 const errors=[];
-const trackErrors=page=>page.on('pageerror',error=>errors.push(error.message));
+const trackErrors=page=>{
+  page.on('pageerror',error=>errors.push(error.message+(error.stack?' — '+error.stack:'')));
+  page.on('console',message=>{if(message.type()==='error')errors.push('Browser console: '+message.text());});
+  page.on('requestfailed',request=>errors.push('Failed request '+request.url()+': '+request.failure()?.errorText));
+};
+async function waitForResults(page){
+  try{await page.locator('#results .result-topline').waitFor({timeout:5000});}
+  catch(error){
+    const debug={errors,results:await page.locator('#results').innerText(),formError:await page.locator('#form-error').innerText(),people:await page.locator('#people .person').count(),url:page.url()};
+    throw new Error('Browser could not reach results: '+JSON.stringify(debug),{cause:error});
+  }
+}
+
 
 test.before(async()=>{
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
@@ -30,7 +42,7 @@ test('desktop: full demo workflow, votes, weighting, archive, report and calenda
     await page.goto(origin+'/',{waitUntil:'networkidle'});
     assert.equal(await page.locator('input[name="mode"][value="demo"]').isChecked(),true,'initial mode must be demo');
     await page.locator('#instant-demo').click();
-    await page.locator('#results .result-topline').waitFor({timeout:15000});
+    await waitForResults(page);
     assert.match(await page.locator('#results .source-banner').innerText(),/Fictional demonstration/i);
     assert.ok(await page.locator('#results .card').count()>=2);
     assert.ok(await page.locator('.decision-lab').count()>0);
@@ -89,7 +101,7 @@ test('mobile: working demo and responsive navigation without document overflow',
   try{
     await page.goto(origin+'/',{waitUntil:'networkidle'});
     await page.locator('#instant-demo').click();
-    await page.locator('#results .result-topline').waitFor({timeout:15000});
+    await waitForResults(page);
     assert.equal(await page.locator('input[name="mode"][value="demo"]').isChecked(),true);
     const width=await page.evaluate(()=>({page:document.documentElement.scrollWidth,viewport:window.innerWidth}));
     assert.ok(width.page<=width.viewport+2,'mobile page must not have horizontal overflow: '+JSON.stringify(width));
@@ -114,7 +126,7 @@ test('shared link remains demo-only even when status indicates Qloo is configure
     assert.equal(await page.locator('input[name="mode"][value="live"]').isChecked(),false);
     assert.equal(await page.locator('input[name="mode"][value="live"]').isEnabled(),true);
     assert.equal(planRequests.length,0);
-    assert.match(await page.locator('#share-message').innerText(),/demo mode/);
+    assert.match(await page.locator('#share-message').innerText(),/demo mode/,'Shared link status: '+JSON.stringify(errors));
     assert.deepEqual(errors,[]);
   }finally{await context.close();}
 });
