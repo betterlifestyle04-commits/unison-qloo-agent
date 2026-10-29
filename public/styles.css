@@ -355,3 +355,24 @@
 .group-stability .stability-summary{color:#446b64;font-weight:720}
 .group-stability>small{display:block;font-size:.62rem;color:#87959a;line-height:1.6;margin-top:8px}
 @media(max-width:580px){.group-stability{padding:12px}.stability-overview{grid-template-columns:1fr}}
+
+/* Browser-only human venue reality check. Boxes are never a Qloo verification claim. */
+.venue-readiness{background:linear-gradient(135deg,#fbfcf6,#f5fbff);border:1px solid #dae8d9;border-radius:15px;padding:17px;margin:0 0 19px}
+.venue-readiness-head{display:flex;align-items:start;justify-content:space-between;gap:12px}
+.venue-readiness-head .overline{font-size:.61rem;color:#538471;margin:0 0 5px}
+.venue-readiness-head h4{font-size:1.11rem;letter-spacing:-.038em;color:#385b55;margin:0}
+.venue-readiness-count{background:#e9f5e8;border:1px solid #d8e9d7;border-radius:8px;color:#547b58;padding:7px 10px;font-size:.66rem;font-weight:830;white-space:nowrap}
+.venue-readiness-intro{color:#667b75;font-size:.72rem;line-height:1.65;margin:12px 0 15px}
+.venue-readiness-intro strong{color:#426f5b}
+.venue-readiness-items{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.venue-readiness-item{border:1px solid #dfe9e3;border-radius:11px;background:white;padding:12px;display:flex;gap:9px;align-items:start;cursor:pointer;min-width:0}
+.venue-readiness-item input{accent-color:#438268;flex:none;width:16px;height:16px;margin-top:2px}
+.venue-readiness-item span{display:flex;flex-direction:column;gap:4px}
+.venue-readiness-item strong{font-size:.72rem;line-height:1.4;color:#4e6962}
+.venue-readiness-item small{font-size:.64rem;line-height:1.5;color:#86948b}
+.venue-readiness-item:has(input:checked){background:#f0faf3;border-color:#b5d8bb}
+.venue-readiness-progress{display:flex;align-items:center;gap:12px;margin:13px 0 10px}
+.venue-readiness-progress .fit-meter{min-width:30px}
+.venue-readiness-progress p{flex:0 1 60%;font-size:.65rem;color:#658171;margin:0;line-height:1.45}
+.venue-readiness>small{display:block;color:#83958b;line-height:1.55;font-size:.63rem}
+@media(max-width:580px){.venue-readiness{padding:13px}.venue-readiness-head{flex-wrap:wrap}.venue-readiness-items{grid-template-columns:1fr}.venue-readiness-progress{display:block}.venue-readiness-progress .fit-meter{width:100%}.venue-readiness-progress p{margin-top:9px}}
