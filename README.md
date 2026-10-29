@@ -151,3 +151,11 @@ The **Run a one-click fictional demonstration** action loads a sample brief in d
 See [JUDGE_DEMO.md](JUDGE_DEMO.md) for a reproducible two-minute walkthrough that differentiates live Qloo evidence from fictional demonstrations and includes transparency caveats.
 
 Regression tests: `test/evidence-audit.test.js` and `test/http-ux.test.js`. Browser-driven visual acceptance checks remain outstanding.
+
+## Exportable decision report and privacy disclosure
+
+The shortlist now offers **Download Decision Report**. The browser generates a Markdown file from the current candidate rankings, evidence coverage, participant-level fit, selected fairness style, optional on-device group votes, and classified agent trace steps. Live Qloo candidates and fictional demo results are marked unambiguously. Report generation is opt-in and entirely local; it does not send data to another website or use additional Qloo requests. **Reports can contain participant names, cultural preferences and votes**, so recipients can read those details. The download states that UNISON has not verified reservations, opening hours or satisfaction outcomes. See `public/decision-report.js` and `test/decision-report.test.js`.
+
+The dedicated [privacy and data information page](/privacy) explains server request handling, live Qloo parameters, optional browser storage, one-device voting, share URL fragments, exports, and third-party map searches. It avoids promising that infrastructure providers retain no request metadata. The page is linked from the homepage footer.
+
+**Reliability fixes:** clipboard fallback now uses a first-party CSS class rather than inline styling blocked by Content Security Policy. Favorite resolution is bounded to two concurrent participants with up to two favorite lookups per participant, limiting pressure on Qloo. These changes do not introduce new third-party dependencies.
