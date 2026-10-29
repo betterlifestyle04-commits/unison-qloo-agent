@@ -207,7 +207,7 @@ The browser suite in `browser-tests/e2e.test.js` covers desktop and mobile ficti
 
 The first browser run uncovered a production startup crash: `starters.forEach(addPerson)` passed each loop index as the helper's `chosenEntities` argument, causing `chosenEntities.map is not a function`. This is fixed by passing the group row explicitly with `starters.forEach(values=>addPerson(values))`, plus defensive optional-argument validation.
 
-In CI, screenshots of the working desktop and mobile demo are uploaded as a **unison-browser-screenshots** artifact retained for seven days. Browser automation runs only in CI with an ephemeral Playwright installation, so **production still has no extra runtime dependencies**. Local developers can run `npm install --no-save playwright@1.64.1`, `npx playwright install chromium`, then `npm run test:e2e`.
+In CI, screenshots of the working desktop and mobile demo are uploaded as a **unison-browser-screenshots** artifact retained for seven days. Playwright is a development-only dependency, so **production still has no extra runtime dependencies**. Local developers can run `npm install`, `npx playwright install chromium`, then `npm run test:e2e`.
 
 A successful mocked-live browser test **does not establish real authenticated Qloo Insights availability**; live API verification remains a separate acceptance criterion.
 
