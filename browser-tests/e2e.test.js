@@ -180,9 +180,14 @@ test('planner carries participant edits and practical constraints into demo requ
   try{
     await page.goto(origin+'/',{waitUntil:'networkidle'});
     assert.equal(await page.locator('#people .person').count(),3);
+    assert.equal(await page.locator('#brief-ready-score').innerText(),'3 / 3 ready');
     await page.locator('#add-person').click();
     assert.equal(await page.locator('#people .person').count(),4);
     assert.equal(await page.locator('#people .person').last().locator('[data-field=name]').evaluate(node=>document.activeElement===node),true);
+    assert.equal(await page.locator('#brief-ready-score').innerText(),'2 / 3 ready');
+    await page.locator('#people .person').last().locator('[data-field=name]').fill('Lina');
+    await page.locator('#people .person').last().locator('[data-field=favorite]').fill('jazz');
+    assert.equal(await page.locator('#brief-ready-score').innerText(),'3 / 3 ready');
     await page.locator('#people .person').last().locator('.remove').click();
     assert.equal(await page.locator('#people .person').count(),3);
     assert.equal(await page.locator('#people .person').last().locator('[data-field=name]').evaluate(node=>document.activeElement===node),true,'removing a participant returns keyboard focus to a remaining participant');
@@ -291,6 +296,7 @@ test('mocked live browser journey: explicit opt-in, precise Taste Finder and hon
     assert.equal(await page.locator('input[name="mode"][value="demo"]').isChecked(),true);
     assert.equal(await page.locator('input[name="mode"][value="live"]').isEnabled(),true);
     await page.locator('input[name="mode"][value="live"]').check({force:true});
+    assert.equal(await page.locator('#brief-ready-score').innerText(),'2 / 3 ready');
     await page.locator('#submit-plan').click();
     assert.match(await page.locator('#form-error').innerText(),/Enter a city/i);
     assert.equal(await page.locator('#city').evaluate(node=>document.activeElement===node),true,'missing live city focuses the practical constraint that needs attention');
@@ -298,6 +304,7 @@ test('mocked live browser journey: explicit opt-in, precise Taste Finder and hon
     assert.equal(submissions.length,0,'client validation cannot call the planner');
     await page.locator('#city').fill('Oslo');
     assert.equal(await page.locator('#city').getAttribute('aria-invalid'),null);
+    assert.equal(await page.locator('#brief-ready-score').innerText(),'3 / 3 ready');
     assert.equal(await page.locator('#taste-finder').isVisible(),true);
     assert.equal(await page.locator('#qloo-diagnostics').isVisible(),true);
     assert.equal(diagnosticsRequests.length,0,'diagnostics cannot run on page load or mode change');

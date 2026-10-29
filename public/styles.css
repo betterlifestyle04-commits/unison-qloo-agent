@@ -385,3 +385,10 @@
 .place-filter-disclosure summary:focus-visible{outline:2px solid #7161d8;outline-offset:4px}
 .place-filter-disclosure p{font-size:.69rem;color:#737b93;line-height:1.65;margin:10px 0 0}
 .place-filter-disclosure strong{color:#4f5886}
+
+/* A concise, live view of whether the group brief is actionable. */
+.brief-readiness{margin:0 0 17px;padding:14px;border:1px solid #dde5f2;border-radius:13px;background:linear-gradient(135deg,#f7f9ff,#f8fcfa)}
+.brief-readiness-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.brief-readiness-head .overline{font-size:.56rem;margin:0 0 3px}.brief-readiness h4{font-size:.78rem;color:#4d5873;margin:0}.brief-readiness-head>strong{font-size:.74rem;color:#5f52b3;background:#edeaff;border-radius:999px;padding:5px 8px;white-space:nowrap}
+.brief-readiness meter{display:block;width:100%;height:8px;margin:12px 0 10px}.brief-readiness meter::-webkit-meter-bar{background:#e5e8f1;border-radius:999px}.brief-readiness meter::-webkit-meter-optimum-value{background:linear-gradient(90deg,#7b6ae5,#42a778);border-radius:999px}
+.brief-readiness-items{display:grid;gap:5px}.brief-readiness-items p{display:flex;align-items:baseline;gap:7px;margin:0;color:#778298;font-size:.66rem;line-height:1.45}.brief-readiness-items p span{color:#8e82d9;font-weight:900}.brief-readiness-items p.is-ready{color:#477f65}.brief-readiness-items p.is-ready span{color:#369969}.brief-readiness-note{font-size:.62rem;color:#8b93a3;line-height:1.5;margin:10px 0 0}
+@media(max-width:580px){.brief-readiness{padding:13px}.brief-readiness-head{align-items:center}.brief-readiness h4{font-size:.75rem}}

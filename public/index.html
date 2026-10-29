@@ -94,6 +94,16 @@
             <div id="qloo-check-results" class="diagnostics-results" role="status" aria-live="polite"></div>
           </div>
         </fieldset>
+        <section id="brief-readiness" class="brief-readiness" aria-labelledby="brief-readiness-heading">
+          <div class="brief-readiness-head"><div><span class="overline">BRIEF READINESS</span><h4 id="brief-readiness-heading">A plan starts with a clear brief.</h4></div><strong id="brief-ready-score">—</strong></div>
+          <meter id="brief-ready-meter" min="0" max="3" value="0" aria-label="Group brief readiness">0 of 3</meter>
+          <div class="brief-readiness-items">
+            <p id="brief-ready-people"><span aria-hidden="true">○</span> Checking participant tastes</p>
+            <p id="brief-ready-context"><span aria-hidden="true">○</span> Checking planning context</p>
+            <p id="brief-ready-evidence"><span aria-hidden="true">○</span> Checking evidence mode</p>
+          </div>
+          <p id="brief-ready-note" class="brief-readiness-note">UNISON only sends a request when you choose to generate a plan.</p>
+        </section>
         <button class="primary" type="submit" id="submit-plan"><span id="submit-label">Find our common ground</span><span aria-hidden="true">↗</span></button>
         <div class="share-tools">
           <button class="share-brief" id="share-brief" type="button"><span aria-hidden="true">↗</span> Copy a group setup link</button>

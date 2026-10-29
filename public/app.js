@@ -49,8 +49,9 @@ function addPerson(values=['',''],chosenEntities=[]){
     const saved=selectedByPerson.get(node);
     for(const key of saved.keys())if(!stillListed.has(key))saved.delete(key);
     showPinned(node);
+    updateBriefReadiness();
   });
-  name.addEventListener('input',updateGroup);
+  name.addEventListener('input',()=>{updateGroup();updateBriefReadiness();});
   node.querySelector('.remove').addEventListener('click',()=>{
     if(people.children.length<=2){showError('A group needs at least two people.');return;}
     const next=node.nextElementSibling?.querySelector('[data-field=name]');
@@ -58,12 +59,13 @@ function addPerson(values=['',''],chosenEntities=[]){
     node.remove();
     updateGroup();
     (next||previous)?.focus();
+    updateBriefReadiness();
   });
   people.append(node);showPinned(node);updateGroup();
 }
 // forEach also passes an index; addPerson's second parameter is an entity array, not the index.
 starters.forEach(values=>addPerson(values));
-$('#add-person').addEventListener('click',()=>{if(people.children.length>=5)return;addPerson();people.lastElementChild.querySelector('[data-field=name]').focus();});
+$('#add-person').addEventListener('click',()=>{if(people.children.length>=5)return;addPerson();updateBriefReadiness();people.lastElementChild.querySelector('[data-field=name]').focus();});
 function showError(message=''){error.textContent=message;}
 function markInvalid(input){if(!input)return;input.setAttribute('aria-invalid','true');input.setAttribute('aria-describedby','form-error');const clear=()=>{input.removeAttribute('aria-invalid');input.removeAttribute('aria-describedby');};input.addEventListener('input',clear,{once:true});input.addEventListener('change',clear,{once:true});}
 async function copyText(text){
@@ -73,6 +75,22 @@ async function copyText(text){
 }
 function currentMode(){return form.querySelector('input[name=mode]:checked')?.value||'demo';}
 function currentDomain(){return form.querySelector('input[name=domain]:checked')?.value||'places';}
+function updateBriefReadiness(){
+  const panel=$('#brief-readiness');if(!panel)return;
+  const rows=[...people.querySelectorAll('.person')];
+  const completed=rows.filter(row=>row.querySelector('[data-field=name]').value.trim()&&row.querySelector('[data-field=favorite]').value.split(',').some(value=>value.trim())).length;
+  const peopleReady=rows.length>=2&&completed===rows.length;
+  const needsCity=currentDomain()==='places'&&currentMode()==='live';
+  const contextReady=!needsCity||Boolean($('#city').value.trim());
+  const score=Number(peopleReady)+Number(contextReady)+1;
+  const item=(id,ready,text)=>{const node=$(id);if(!node)return;node.classList.toggle('is-ready',ready);node.firstElementChild.textContent=ready?'✓':'○';node.lastChild.textContent=' '+text;};
+  $('#brief-ready-score').textContent=score+' / 3 ready';
+  const meter=$('#brief-ready-meter');meter.value=score;meter.textContent=score+' of 3';meter.setAttribute('aria-label','Group brief readiness: '+score+' of 3 checks complete');
+  item('#brief-ready-people',peopleReady,peopleReady?completed+' participant'+(completed===1?'':'s')+' have a taste signal':completed+' of '+rows.length+' participants have a name and favorite');
+  item('#brief-ready-context',contextReady,currentDomain()==='movies'?'Movie night has no city requirement':needsCity?(contextReady?'City selected for live place discovery':'Choose a city for live place discovery'):$('#city').value.trim()?'City noted for this demo':'City is optional in demo mode');
+  item('#brief-ready-evidence',true,currentMode()==='live'?'Live Qloo evidence selected':'Fictional demo evidence selected');
+  $('#brief-ready-note').textContent=score===3?'Ready when you are. Generating a plan is the only step that sends a planning request.':'Complete the highlighted brief details before asking UNISON to compare the group.';
+}
 function updateFormPresentation(){
   const places=currentDomain()==='places';
   $('#place-constraints').hidden=!places;
@@ -83,9 +101,9 @@ function updateFormPresentation(){
   $('#qloo-diagnostics').hidden=!(app.configured&&currentMode()==='live');
   $('#submit-label').textContent=places?'Find our common ground':'Find our movie night';
 }
-form.querySelectorAll('input[name=domain],input[name=mode]').forEach(input=>input.addEventListener('change',()=>{if(input.name==='mode')app.hasChangedMode=true;setActivePreset();updateFormPresentation();}));
-form.addEventListener('input',()=>setActivePreset());
-form.addEventListener('change',()=>setActivePreset());
+form.querySelectorAll('input[name=domain],input[name=mode]').forEach(input=>input.addEventListener('change',()=>{if(input.name==='mode')app.hasChangedMode=true;setActivePreset();updateFormPresentation();updateBriefReadiness();}));
+form.addEventListener('input',()=>{setActivePreset();updateBriefReadiness();});
+form.addEventListener('change',()=>{setActivePreset();updateBriefReadiness();});
 const diagnosticBtn=$('#qloo-check');
 const diagnosticResults=$('#qloo-check-results');
 function showDiagnostic(text){diagnosticResults.replaceChildren(Object.assign(document.createElement('p'),{textContent:text}));}
@@ -148,7 +166,7 @@ async function lookupTaste(){
 lookupBtn.addEventListener('click',lookupTaste);
 $('#taste-query').addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();lookupTaste();}});
 
-document.querySelectorAll('.city-quick').forEach(button=>button.addEventListener('click',()=>{$('#city').value=button.dataset.city;showError();}));
+document.querySelectorAll('.city-quick').forEach(button=>button.addEventListener('click',()=>{$('#city').value=button.dataset.city;showError();updateBriefReadiness();}));
 function brief(){
   const data=new FormData(form);
   return {domain:data.get('domain'),mode:data.get('mode'),city:String(data.get('city')||'').trim(),budget:data.get('budget')||'any',
@@ -673,7 +691,7 @@ function applyBrief(raw){
   input.people.forEach(p=>addPerson([p.name,p.favorites.join(', ')],p.selectedEntities||[]));
   app.lastInput=null;app.lastResult=null;app.baseResult=null;app.ballots={};app.compare={left:'',right:''};app.venueChecks={};app.agenda={choiceId:'',date:'',time:'19:00',duration:'120',meeting:'',notes:''};app.showAll=false;
   results.innerHTML='<div class="empty"><span class="eyebrow">READY FOR YOUR GROUP</span><h3>Different tastes, one plan.</h3><p>Review the group brief and select Find our common ground to create a new shortlist.</p></div>';
-  showError();updateFormPresentation();
+  showError();updateFormPresentation();updateBriefReadiness();
 }
 document.querySelectorAll('[data-preset]').forEach(button=>button.addEventListener('click',()=>{
   const preset=starterGroups.find(item=>item.id===button.dataset.preset);
@@ -715,6 +733,7 @@ try{
 }
 
 updateFormPresentation();
+updateBriefReadiness();
 fetch('/api/status',{cache:'no-store'}).then(r=>r.json()).then(status=>{
   app.configured=Boolean(status.configured);
   // Shared links always open in demo mode. Only a direct click can opt into live Qloo.
@@ -725,4 +744,5 @@ fetch('/api/status',{cache:'no-store'}).then(r=>r.json()).then(status=>{
   // A key only makes live mode available. Keep demo selected until a person opts in.
   if(!app.configured&&live.checked){form.querySelector('input[name=mode][value=demo]').checked=true;$('#share-message').textContent='Qloo is not configured; this shared group is now in demo mode.';}
   updateFormPresentation();
-}).catch(()=>{statusBadge.classList.add('offline');statusBadge.innerHTML='<span class="status-dot"></span>Service unavailable · Demo only';$('#live-choice input').disabled=true;$('#live-choice').classList.add('disabled');updateFormPresentation();});
+  updateBriefReadiness();
+}).catch(()=>{statusBadge.classList.add('offline');statusBadge.innerHTML='<span class="status-dot"></span>Service unavailable · Demo only';$('#live-choice input').disabled=true;$('#live-choice').classList.add('disabled');updateFormPresentation();updateBriefReadiness();});
