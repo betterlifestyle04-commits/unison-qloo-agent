@@ -94,3 +94,28 @@ test('one-click judge demo explicitly submits fictional data without Qloo access
   assert.match(app.body,/request\.mode='demo'/);
   assert.match(app.body,/app\.hasChangedMode=true/);
 });
+
+test('privacy disclosure is accessible as first-party HTML from footer',async()=>{
+  const [privacy,home]=await Promise.all([request('/privacy'),request('/')]);
+  assert.equal(privacy.response.status,200);
+  assert.match(privacy.response.headers.get('content-type'),/text\/html/);
+  assert.match(privacy.body,/Browser|browser/);
+  assert.match(privacy.body,/not encrypted/);
+  assert.match(privacy.body,/live Qloo|Live Qloo/);
+  assert.match(home.body,/href="\/privacy"/);
+});
+test('downloadable decision report is a same-origin module and clearly opt in',async()=>{
+  const [module,app]=await Promise.all([request('/decision-report.js'),request('/app.js')]);
+  assert.equal(module.response.status,200);
+  assert.match(module.response.headers.get('content-type'),/application\/javascript/);
+  assert.match(module.body,/buildDecisionReport/);
+  assert.match(app.body,/id="download-report"/);
+  assert.match(app.body,/reportFilename/);
+  assert.match(app.body,/report-privacy/);
+});
+test('clipboard fallback avoids blocked inline styling under strict Content Security Policy',async()=>{
+  const [app,css]=await Promise.all([request('/app.js'),request('/styles.css')]);
+  assert.match(app.body,/className='clipboard-proxy'/);
+  assert.doesNotMatch(app.body,/area\.style\.cssText/);
+  assert.match(css.body,/\.clipboard-proxy/);
+});
