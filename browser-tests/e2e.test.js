@@ -58,6 +58,17 @@ test('desktop: full demo workflow, votes, weighting, archive, report and calenda
     await page.keyboard.press('Enter');
     assert.equal(await page.locator('[data-style="protective"]').getAttribute('aria-pressed'),'true');
     assert.equal(await page.locator('[data-style="protective"]').evaluate(node=>document.activeElement===node),true,'fairness control keeps keyboard focus after local re-ranking');
+    const veto=page.locator('[data-veto="demo:olive-table"]');
+    await veto.focus();
+    await page.keyboard.press('Enter');
+    assert.equal(await page.locator('[data-veto="demo:olive-table"]').innerText(),'↶ Restore option');
+    assert.equal(await page.locator('[data-veto="demo:olive-table"]').evaluate(node=>node.closest('.card')?.classList.contains('vetoed')),true);
+    assert.equal(await page.locator('[data-veto="demo:olive-table"]').evaluate(node=>document.activeElement===node),true,'veto keeps keyboard focus after local replanning');
+    assert.equal(calls.length,before,'vetoing cannot call Qloo');
+    await page.keyboard.press('Space');
+    assert.equal(await page.locator('[data-veto="demo:olive-table"]').innerText(),'× Not for our group');
+    assert.equal(await page.locator('[data-veto="demo:olive-table"]').evaluate(node=>node.closest('.card')?.classList.contains('vetoed')),false);
+    assert.equal(calls.length,before,'restoring a veto cannot call Qloo');
     const left=page.locator('#compare-left'),right=page.locator('#compare-right');
     assert.ok(await left.locator('option').count()>=2);
     await right.selectOption({index:1});
