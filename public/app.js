@@ -11,7 +11,7 @@ const $=selector=>document.querySelector(selector);
 const people=$('#people'),template=$('#person-template'),form=$('#plan-form'),results=$('#results'),error=$('#form-error'),submitBtn=$('#submit-plan'),statusBadge=$('#mode-status');
 const starters=[['Maya','Studio Ghibli'],['Jon','Anthony Bourdain'],['Priya','Knives Out']];
 const selectedByPerson=new WeakMap();
-function showPinned(node){const selections=[...(selectedByPerson.get(node)?.values()||[])];const hint=node.querySelector('[data-pinned]');if(hint)hint.textContent=selections.length?'Verified Qloo selection: '+selections.map(x=>x.name+' ('+String(x.type||'entity').replace(/^urn:entity:/,'')+')').join(', '):'';}
+function showPinned(node){const selections=[...(selectedByPerson.get(node)?.values()||[])];const hint=node.querySelector('[data-pinned]');if(hint)hint.textContent=selections.length?'Selected Qloo entity: '+selections.map(x=>x.name+' ('+String(x.type||'entity').replace(/^urn:entity:/,'')+')').join(', '):'';}
 const app={configured:false,requesting:false,lastInput:null,lastResult:null,showAll:false,hasChangedMode:false,baseResult:null,hashLoaded:false,decisionStyle:'balanced',ballots:{},compare:{left:'',right:''},lookupBusy:false,agenda:{choiceId:'',date:'',time:'19:00',duration:'120',meeting:'',notes:''}};
 const escape=value=>{const element=document.createElement('span');element.textContent=String(value??'');return element.innerHTML.replace(/\"/g,'&quot;').replace(/'/g,'&#39;');};
 const number=value=>Number.isFinite(value)?String(Math.round(value)):null;
@@ -300,6 +300,23 @@ function renderHeadToHead(data){
     <small>${escape(analysis.source)}. These are heuristic relative-fit estimates, not actual human votes. Changing the comparison never calls Qloo.</small>
   </section>`;
 }
+function integrityReview(data){
+  if(data.mode!=='live'||!data.quality?.evaluation)return '';
+  const discovery=data.quality.discovery||{};
+  const evaluation=data.quality.evaluation;
+  const ignored=(evaluation.outsideShortlist||0)+(evaluation.wrongType||0)+(evaluation.duplicates||0)+(evaluation.invalid||0);
+  return `<details class="integrity-review">
+    <summary><span aria-hidden="true">◇</span> Qloo response integrity · <strong>${evaluation.accepted} accepted person-option signals</strong></summary>
+    <p>UNISON checked returned candidate IDs against the shortlist requested from Qloo. Results outside that set, with an explicitly incorrect category, or repeated IDs are excluded before ranking.</p>
+    <div class="integrity-metrics">
+      <span><strong>${data.quality.shortlistSize}</strong> shortlist options</span>
+      <span><strong>${evaluation.accepted}</strong> accepted signals</span>
+      <span><strong>${ignored}</strong> excluded entries</span>
+    </div>
+    <p>Discovery screening: ${discovery.accepted||0} accepted candidates. Evaluation exclusions: ${evaluation.outsideShortlist||0} outside shortlist, ${evaluation.wrongType||0} wrong category, ${evaluation.duplicates||0} duplicates, ${evaluation.invalid||0} invalid records. ${evaluation.missingType||0} signals lacked explicit entity-type metadata.</p>
+    <small>This validates response membership only. It does not independently verify a venue's address, opening hours, price or bookability, and the per-person fit remains a relative UNISON heuristic.</small>
+  </details>`;
+}
 function render(data){
   app.lastResult=data;
   const approved=data.ranked.filter(item=>item.sufficient&&!item.vetoed);
@@ -310,6 +327,7 @@ function render(data){
   const status=data.mode==='live'?'Qloo API · Live evidence':'Demo · Simulated evidence';
   results.innerHTML=`<div class="result-topline"><div><p class="overline">${escape(status)}</p><h3>${top?'Your best shared match':'We need a little more evidence'}</h3><p class="result-sub">${escape(data.domain==='places'?(data.city?'Planning for '+data.city:'No city selected'):'Movie night')} · ${data.people.length} people · ${count} fully covered option${count===1?'':'s'}</p></div><div class="result-actions"><button id="download-report" class="text-button" type="button">↓ Decision report</button><button id="save-plan" class="text-button" type="button">Save on this device</button><button id="copy-plan" class="text-button" type="button" ${top?'':'disabled'}>Copy plan ↗</button><button id="reset-veto" class="text-button" type="button">Clear vetoes</button></div></div>
     <div class="source-banner ${data.mode==='live'?'live':''}"><strong>${escape(sourceName(data))}.</strong> ${escape(data.disclaimer)}</div>
+    ${integrityReview(data)}
     <p class="report-privacy"><span aria-hidden="true">◈</span> The Decision Report downloads to your device and includes group names, cultural favorites, and any votes recorded here. Share it thoughtfully.</p>
     <p id="report-message" class="report-message" role="status" aria-live="polite"></p>
     <section class="decision-tuning" aria-label="How should we balance the group's preferences?">
