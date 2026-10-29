@@ -53,3 +53,7 @@ The server orchestrates a bounded workflow: normalize group requirements, resolv
 
 ## Submission integrity
 Do not claim a reservation, measured improvement in group satisfaction, authenticated multi-device voting, or a complete end-to-end Qloo Insights validation without evidence. The project is open-source under MIT, uses a server-only key, and exposes fictional demonstration mode transparently.
+
+## Optional 15-second extension — Group agreement
+
+After presenting the fair ranking, open the **Agreement Pulse**. Have one participant vote Yes and observe the remaining response count. Have another vote No to see how the pulse recommends discussion rather than silently changing the machine recommendation. Explain that this is **local, one-device group input**, not a networked voting product. The proposed winner is only marked unanimously approved after every participant explicitly selects Yes.
