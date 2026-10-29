@@ -110,3 +110,9 @@ A dedicated privacy page explains what enters our backend, which cultural signal
 The new **Agreement Pulse** makes the human-in-the-loop component more visible. It shows actual Yes/Maybe/No votes, who still needs to answer, and where the leading recommendation has been rejected. It may suggest discussing a different supported choice but never replaces the Qloo-derived shortlist or fabricates consent.
 
 UNISON now also deduplicates concurrent identical Qloo requests and limits cross-site browser requests to its API endpoints. These changes protect limited API quota and keep the hackathon experience more reliable without introducing accounts, a new database, or paid dependencies.
+
+## Auditable Qloo pipeline and head-to-head comparison
+
+To validate more than a server configuration flag, we now run an integration test with mocked Qloo Search and Insights tools across the entire live-mode agent pipeline. It checks person-specific taste resolution, discovery, shared shortlist evaluation, stable provenance traces, missing-evidence handling, and refusal to substitute fictional results into live mode. Tests are deterministic and incur no Qloo quota; they do not establish real Insights availability.
+
+The new **Head-to-Head** comparator lets groups choose any two supported candidates and see which person-level ordinal-fit estimate favors each option. This is independent of the explicit human-voting flow. No extra API requests are made when changing the comparison.
