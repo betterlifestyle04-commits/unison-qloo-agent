@@ -38,6 +38,12 @@ test('frontend keeps demo mode opt-in and provides clipboard fallback',async()=>
   assert.doesNotMatch(r.body,/if\(app\.configured&&!app\.hasChangedMode\)\{live\.checked=true;/);
   assert.match(r.body,/Qloo request/);
 });
+test('Taste Finder accurately distinguishes group names from the submitted Qloo search',async()=>{
+  const r=await request('/');
+  assert.equal(r.response.status,200);
+  assert.match(r.body,/Your group members' names are not sent to Qloo\./);
+  assert.doesNotMatch(r.body,/Search manually to avoid unnecessary API requests\. Names are not sent to Qloo\./);
+});
 test('planner exposes an accessible preset state and shortlist navigation',async()=>{
   const r=await request('/');
   assert.equal(r.response.status,200);
