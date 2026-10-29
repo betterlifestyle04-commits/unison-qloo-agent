@@ -214,3 +214,14 @@ test('group stability review is served locally and does not require another Qloo
  assert.match(app.body,/hypothetical decision sensitivity/i);
  assert.match(style.body,/\.group-stability/);
 });
+
+test('Venue Reality Check is a browser-only planning aid that never claims Qloo verified availability',async()=>{
+  const [helper,app,css]=await Promise.all([request('/venue-readiness.js'),request('/app.js'),request('/styles.css')]);
+  assert.equal(helper.response.status,200);
+  assert.match(helper.response.headers.get('content-type'),/application\/javascript/);
+  assert.match(helper.body,/venueCheckItems/);
+  assert.match(app.body,/renderVenueReadiness/);
+  assert.match(app.body,/data-readiness-key/);
+  assert.match(app.body,/not independently verified/);
+  assert.match(css.body,/\.venue-readiness/);
+});
