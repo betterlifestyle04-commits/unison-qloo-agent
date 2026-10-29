@@ -6,6 +6,7 @@ import {auditGroupEvidence,recoverySuggestions} from './evidence-audit.js';
 import {buildDecisionReport,reportFilename} from './decision-report.js';
 import {agreementPulse} from './consensus.js';
 import {eligibleComparisons,compareOptions} from './head-to-head.js';
+import {planningRecovery} from './recovery.js';
 const $=selector=>document.querySelector(selector);
 const people=$('#people'),template=$('#person-template'),form=$('#plan-form'),results=$('#results'),error=$('#form-error'),submitBtn=$('#submit-plan'),statusBadge=$('#mode-status');
 const starters=[['Maya','Studio Ghibli'],['Jon','Anthony Bourdain'],['Priya','Knives Out']];
@@ -471,7 +472,7 @@ async function submitPlan(input,{preserveScroll=false}={}){
   try{
     const response=await fetch('/api/plan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(input)});
     let data;try{data=await response.json();}catch{throw new Error('The planner returned an unexpected response. Please try again.');}
-    if(!response.ok)throw new Error(data.error||'We could not create this plan.');
+    if(!response.ok){const failure=new Error(data.error||'We could not create this plan.');failure.status=response.status;throw failure;}
     app.ballots={};
     app.compare={left:'',right:''};
     app.agenda={choiceId:'',date:'',time:'19:00',duration:'120',meeting:'',notes:''};
@@ -480,7 +481,31 @@ async function submitPlan(input,{preserveScroll=false}={}){
     if(!preserveScroll&&window.innerWidth<821)$('#results-heading').scrollIntoView({behavior:'smooth',block:'start'});
   }catch(e){
     showError(e.message);
-    results.innerHTML=`<div class="empty"><span class="eyebrow">SOMETHING TO ADJUST</span><h3>Let's try another route.</h3><p>${escape(e.message)}</p><p>Check the city and cultural references, or switch to demo mode to explore how UNISON works.</p></div>`;
+    const help=planningRecovery(e.status||0,e.message,{mode:input.mode,domain:input.domain});
+    results.innerHTML=`<section class="plan-recovery" aria-labelledby="recovery-title">
+      <span class="eyebrow">YOUR BRIEF IS SAFE · NO FALLBACK DATA USED</span>
+      <h3 id="recovery-title">${escape(help.title)}</h3>
+      <p>${escape(help.detail)}</p>
+      <details><summary>Technical error details</summary><p>${escape(e.message||'Request failed')} ${e.status?'(HTTP '+escape(e.status)+')':''}</p></details>
+      <h4>Suggested next steps</h4>
+      <ul>${help.suggestions.map(item=>`<li>${escape(item)}</li>`).join('')}</ul>
+      <div class="recovery-actions">
+        <button type="button" id="recovery-edit">Review group brief</button>
+        ${help.showDemo?'<button type="button" id="recovery-demo">Switch to fictional demo mode</button>':''}
+      </div><p class="recovery-explainer">Changing modes does not automatically submit any Qloo request. Live and demo results are never mixed.</p>
+    </section>`;
+    results.querySelector('#recovery-edit')?.addEventListener('click',()=>{
+      form.scrollIntoView({behavior:'smooth',block:'start'});
+      const field=e.status===422&&/city/i.test(e.message)?$('#city'):people.querySelector('[data-field=favorite]');
+      field?.focus({preventScroll:true});
+    });
+    results.querySelector('#recovery-demo')?.addEventListener('click',()=>{
+      form.querySelector('input[name=mode][value=demo]').checked=true;
+      app.hasChangedMode=true;
+      updateFormPresentation();
+      showError();
+      results.querySelector('.recovery-explainer').textContent='Demo mode selected. Submit your group brief to generate clearly labeled fictional recommendations, with no Qloo requests.';
+    });
   }finally{app.requesting=false;submitBtn.disabled=false;$('#submit-label').textContent=currentDomain()==='places'?'Find our common ground':'Find our movie night';results.setAttribute('aria-busy','false');}
 }
 form.addEventListener('submit',event=>{event.preventDefault();const input=brief();input.vetoes=[];app.showAll=false;submitPlan(input);});
