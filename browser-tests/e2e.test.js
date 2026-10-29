@@ -53,6 +53,17 @@ test('desktop: full demo workflow, votes, weighting, archive, report and calenda
     await stability.locator('summary').click();
     assert.ok(await stability.locator('.stability-table tbody tr').count()>=3);
     assert.match(await stability.innerText(),/hypothetical|Hypothetically/i);
+    const venue=page.locator('.venue-readiness');
+    assert.equal(await venue.count(),1);
+    assert.match(await venue.innerText(),/fictional demo venue/i);
+    await venue.locator('[data-readiness-key="location"]').check();
+    await venue.locator('[data-readiness-key="hours"]').check();
+    assert.match(await page.locator('#venue-readiness-count').innerText(),/2 \/ 4 reviewed/);
+    await page.locator('#agenda-choice').selectOption({index:1});
+    assert.match(await page.locator('#venue-readiness-count').innerText(),/0 \/ 4 reviewed/);
+    await page.locator('#agenda-choice').selectOption({index:0});
+    assert.match(await page.locator('#venue-readiness-count').innerText(),/2 \/ 4 reviewed/);
+
 
     assert.equal(calls.length,1,'one-click demo must make exactly one planning request');
     assert.equal(JSON.parse(calls[0].body).mode,'demo');
