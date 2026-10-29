@@ -1,6 +1,8 @@
 const allowedBases=new Set(['https://hackathon.api.qloo.com','https://api.qloo.com']);
 const CACHE_TTL_MS=5*60*1000, CACHE_LIMIT=100;
 const cache=new Map();
+// Identical simultaneous Qloo GET requests share a single upstream call.
+const inFlight=new Map();
 const base=()=>process.env.QLOO_BASE_URL||'https://hackathon.api.qloo.com';
 export const isLiveConfigured=()=>Boolean(process.env.QLOO_API_KEY);
 export const entityTypeFor=domain=>domain==='movies'?'urn:entity:movie':'urn:entity:place';
@@ -9,11 +11,34 @@ function endpoint(pathname,params={}){const origin=base();if(!allowedBases.has(o
 function fromCache(key){const hit=cache.get(key);if(!hit||Date.now()-hit.created>CACHE_TTL_MS){cache.delete(key);return null;}cache.delete(key);cache.set(key,hit);return hit.value;}
 function saveCache(key,value){cache.set(key,{created:Date.now(),value});if(cache.size>CACHE_LIMIT)cache.delete(cache.keys().next().value);return value;}
 const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+async function requestFresh(url,fetchImpl){
+  for(let attempt=0;attempt<3;attempt++){
+    try{
+      const response=await fetchImpl(url,{headers:{'X-Api-Key':process.env.QLOO_API_KEY,Accept:'application/json'},signal:AbortSignal.timeout(8000)});
+      if(response.ok)return await response.json();
+      if(response.status===401||response.status===403){
+        const auth=error(`Qloo request failed (${response.status}). Check the configured server credential.`,502);
+        auth.retryable=false;
+        throw auth;
+      }
+      if(response.status<500&&response.status!==429)throw error(`Qloo request failed (${response.status}). Check the favorite or live API access.`,response.status);
+    }catch(caught){
+      if(caught.retryable===false||caught.status&&caught.status<500)throw caught;
+    }
+    if(attempt<2)await wait(150*(attempt+1));
+  }
+  throw error('Qloo is temporarily unavailable after three safe GET attempts. No demo evidence was substituted.');
+}
 async function get(pathname,params,fetchImpl=fetch){
   if(!isLiveConfigured())throw error('Live Qloo mode requires QLOO_API_KEY. Demo mode remains available.',503);
-  const url=endpoint(pathname,params), key=url.toString(), hit=fromCache(key);if(hit)return {payload:hit,cached:true,url};
-  for(let attempt=0;attempt<3;attempt++){try{const response=await fetchImpl(url,{headers:{'X-Api-Key':process.env.QLOO_API_KEY,Accept:'application/json'},signal:AbortSignal.timeout(8000)});if(response.ok)return {payload:saveCache(key,await response.json()),cached:false,url};if(response.status===401||response.status===403){const auth=error(`Qloo request failed (${response.status}). Check the configured server credential.`,502);auth.retryable=false;throw auth;}if(response.status<500&&response.status!==429)throw error(`Qloo request failed (${response.status}). Check the favorite or live API access.`,response.status);}catch(caught){if(caught.retryable===false||caught.status&&caught.status<500)throw caught;}if(attempt<2)await wait(150*(attempt+1));}
-  throw error('Qloo is temporarily unavailable after three safe GET attempts. No demo evidence was substituted.');
+  const url=endpoint(pathname,params),key=url.toString(),hit=fromCache(key);
+  if(hit)return {payload:hit,cached:true,url};
+  const pending=inFlight.get(key);
+  if(pending)return {payload:await pending,cached:true,url};
+  const task=(async()=>saveCache(key,await requestFresh(url,fetchImpl)))();
+  inFlight.set(key,task);
+  try{return {payload:await task,cached:false,url};}
+  finally{if(inFlight.get(key)===task)inFlight.delete(key);}
 }
 const array=value=>Array.isArray(value)?value:[];
 // A valid empty Qloo entities array means 'no matches', not a malformed upstream envelope.
@@ -64,4 +89,4 @@ export async function searchFavorite(name,{fetchImpl=fetch}={}){
 export async function insights(entityIds,domain,{city,budget='any',shortlist=[],fetchImpl=fetch}={}){const ids=[...new Set(entityIds)].slice(0,3);if(!ids.length)throw error('At least one resolved Qloo entity is required.',422);const params={'filter.type':entityTypeFor(domain),'signal.interests.entities':ids.join(','),take:12};if(shortlist.length)params['filter.results.entities']=[...new Set(shortlist)].slice(0,12).join(',');if(domain==='places'&&city?.trim()){params['filter.location.query']=city.trim();params['filter.location.radius']=0;}if(domain==='places'&&budget!=='any')params['filter.price_level.max']={low:1,mid:2,high:4}[budget];const {payload,cached,url}=await get('/v2/insights',params,fetchImpl);if(!hasEntitiesArray(payload))throw error('Qloo returned an unsupported Insights response structure.',502);
 const results=parseInsights(payload);
 return {results:results.slice(0,12),cached,url:url.pathname+url.search};}
-export const __resetQlooCache=()=>cache.clear();
+export const __resetQlooCache=()=>{cache.clear();inFlight.clear();};

@@ -65,3 +65,30 @@ test('malformed Insights response is rejected instead of silently returning zero
   const fetchImpl=async()=>response({unexpected:true});
   await assert.rejects(()=>insights(['urn:entity:movie:test'],'movies',{fetchImpl}),/unsupported Insights response/);
 });
+
+test('concurrent identical Qloo lookups share one upstream request',async()=>{
+  let hits=0;
+  const fetchImpl=async()=>{hits++;await new Promise(resolve=>setTimeout(resolve,20));return response(fixtures.search);};
+  const [a,b,c]=await Promise.all([
+    searchFavorite('Everything Everywhere All at Once',{fetchImpl}),
+    searchFavorite('Everything Everywhere All at Once',{fetchImpl}),
+    searchFavorite('Everything Everywhere All at Once',{fetchImpl})
+  ]);
+  assert.equal(hits,1);
+  assert.equal(a.status,'resolved');
+  assert.ok(b.cached||c.cached);
+  assert.deepEqual([a.exact.id,b.exact.id,c.exact.id],[a.exact.id,a.exact.id,a.exact.id]);
+});
+test('failed Qloo requests are not cached as successes and can be retried',async()=>{
+  let calls=0;
+  const first=async()=>{calls++;return {ok:false,status:401,json:async()=>({})};};
+  const second=async()=>{calls++;return response(fixtures.search);};
+  await assert.rejects(()=>Promise.all([
+    searchFavorite('Everything Everywhere All at Once',{fetchImpl:first}),
+    searchFavorite('Everything Everywhere All at Once',{fetchImpl:first})
+  ]),/401/);
+  assert.equal(calls,1);
+  const recovered=await searchFavorite('Everything Everywhere All at Once',{fetchImpl:second});
+  assert.equal(recovered.status,'resolved');
+  assert.equal(calls,2);
+});

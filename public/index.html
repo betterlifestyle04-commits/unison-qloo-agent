@@ -50,6 +50,8 @@
           <button type="button" data-preset="movie" aria-pressed="false"><span aria-hidden="true">▣</span><b>Movie night</b></button>
           <button type="button" data-preset="date" aria-pressed="false"><span aria-hidden="true">♡</span><b>Date night</b></button>
         </div>
+        <button type="button" id="instant-demo" class="instant-demo"><span aria-hidden="true">▶</span> Run a one-click fictional demonstration <span aria-hidden="true">↗</span></button>
+        <p class="demo-explainer">For judges and first-time visitors. Uses deterministic fictional taste evidence, not Qloo API calls.</p>
       </div>
       <form id="plan-form">
         <fieldset class="field-section"><legend><span class="field-number">1</span> What are you planning?</legend>
@@ -84,6 +86,12 @@
             <label class="source-tile" id="live-choice"><input type="radio" name="mode" value="live"><span class="source-copy"><b>Live Qloo intelligence</b><small>Real cultural taste recommendations via the Qloo API.</small></span><span class="source-tag">LIVE</span></label>
             <label class="source-tile"><input type="radio" name="mode" value="demo" checked><span class="source-copy"><b>Explore demo mode</b><small>Clearly labeled fictional data. No Qloo requests.</small></span><span class="source-tag neutral">DEMO</span></label>
           </div>
+          <div id="qloo-diagnostics" class="qloo-diagnostics" hidden>
+            <div class="diagnostics-heading"><div><strong>Is Live Qloo working?</strong><p>Check a real Qloo Search and two Insights stages before trying a group plan.</p></div>
+              <button type="button" id="qloo-check">Check Qloo connection ↗</button></div>
+            <p class="diagnostics-caution">Optional. Uses a fixed public movie sample, no group names or favorites. Up to three Qloo requests plus possible retries. Maximum two checks per ten minutes per connection.</p>
+            <div id="qloo-check-results" class="diagnostics-results" role="status" aria-live="polite"></div>
+          </div>
         </fieldset>
         <button class="primary" type="submit" id="submit-plan"><span id="submit-label">Find our common ground</span><span aria-hidden="true">↗</span></button>
         <div class="share-tools">
@@ -94,6 +102,12 @@
         <p id="form-error" class="error" role="alert" tabindex="-1"></p>
         <p class="form-note"><span aria-hidden="true">♢</span> Transparent methodology. No sign-up required. Names are not sent to Qloo.</p>
       </form>
+      <section class="device-library" aria-labelledby="device-library-heading">
+        <div class="library-heading"><div><p class="overline">OPTIONAL / ON THIS DEVICE</p><h3 id="device-library-heading">Your saved group plans</h3></div><span aria-hidden="true">◈</span></div>
+        <p>Save a plan only when you choose. It stores your group's names, favorites, selected cultural IDs, and a result summary in this browser's storage. Anyone with access to this browser profile may see them.</p>
+        <div id="device-plans" class="device-plans" aria-live="polite"></div>
+        <p id="library-message" class="library-message" role="status" aria-live="polite"></p>
+      </section>
     </section>
     <section class="panel results-panel" aria-labelledby="results-heading">
       <div class="section-heading result-section-heading"><span class="step-no accent-step">02</span><div><p class="overline">YOUR SHARED SHORTLIST</p><h3 id="results-heading">Where tastes meet.</h3></div></div>
@@ -109,7 +123,7 @@
   <article class="feature-card"><span class="feature-icon">◇</span><span class="feature-num">02 / BALANCE</span><h3>Protect every voice</h3><p>Our transparent group ranking considers the lowest relative fit and the group average. Missing evidence isn't mistaken for agreement.</p></article>
   <article class="feature-card"><span class="feature-icon">↺</span><span class="feature-num">03 / REPLAN</span><h3>Make it yours</h3><p>Compare how options fit everyone, veto a suggestion, and explore a new compromise with a visible decision trace.</p></article>
 </div><p class="method-note">UNISON scores are relative ranking heuristics, not probabilities of enjoyment or scientifically validated satisfaction measures. Qloo insights describe cultural affinities, not an individual's guaranteed behavior.</p></div></section>
-<footer class="site-footer"><div class="content-wide footer-content"><div class="footer-brand"><span class="brand-symbol" aria-hidden="true"><i></i><i></i><i></i></span><span>unison.</span></div><p>Different tastes. One great plan.</p><a href="https://github.com/betterlifestyle04-commits/unison-qloo-agent" target="_blank" rel="noopener noreferrer">View open-source code ↗</a><span>Built for the Qloo Agentic Hackathon 2026</span></div></footer>
+<footer class="site-footer"><div class="content-wide footer-content"><div class="footer-brand"><span class="brand-symbol" aria-hidden="true"><i></i><i></i><i></i></span><span>unison.</span></div><p>Different tastes. One great plan.</p><a href="https://github.com/betterlifestyle04-commits/unison-qloo-agent" target="_blank" rel="noopener noreferrer">View open-source code ↗</a><a href="/privacy">Privacy &amp; data</a><span>Built for the Qloo Agentic Hackathon 2026</span></div></footer>
 <template id="person-template"><div class="person"><span class="person-avatar" aria-hidden="true"></span><label class="input-label person-name">Name<input data-field="name" maxlength="32" required placeholder="Name"></label><label class="input-label person-favorite">Favorite cultural references<input data-field="favorite" maxlength="180" required placeholder="e.g. Interstellar, jazz"><small data-pinned class="pinned-summary"></small></label><button type="button" class="remove" aria-label="Remove participant" title="Remove person">×</button></div></template>
 <script type="module" src="/app.js"></script>
 </body></html>

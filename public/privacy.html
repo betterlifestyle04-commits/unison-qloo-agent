@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#111b25">
+<meta name="description" content="UNISON data and privacy practices: Qloo requests, share links, browser storage, and locally generated plans.">
+<title>Privacy and data — UNISON</title><link rel="stylesheet" href="/styles.css">
+</head><body>
+<a class="skip" href="#privacy-main">Skip to privacy information</a>
+<div class="site-shell"><nav class="site-nav" aria-label="Main navigation">
+<a class="brand" href="/" aria-label="UNISON home"><span class="brand-symbol" aria-hidden="true"><i></i><i></i><i></i></span><span>unison<span class="brand-period">.</span></span></a>
+<div class="nav-links"><a href="/#planner">Plan together</a><a href="/#how-it-works">How it works</a><a href="https://github.com/betterlifestyle04-commits/unison-qloo-agent" target="_blank" rel="noopener noreferrer">GitHub ↗</a></div>
+<span class="nav-chip">Privacy &amp; transparency</span>
+</nav></div>
+<main id="privacy-main" class="privacy-page">
+<p class="overline">TRUST / HOW UNISON HANDLES DATA</p>
+<h1>Understand what you share.</h1>
+<p class="privacy-intro">UNISON is a public hackathon prototype. It doesn't require an account. You control when to use the live Qloo service and when to save or share a group plan. This page explains the difference.</p>
+<section class="privacy-section"><h2>What happens to the group brief?</h2>
+<p>When you generate a plan, your browser sends the group names, cultural favorites, and selected constraints to UNISON's server. The application processes the request to return recommendations. The application code does not store completed group briefs in a database. Hosting and infrastructure providers can nonetheless collect request metadata and operational logs.</p>
+<p>In <strong>demo mode</strong>, UNISON uses fictional, deterministic recommendation evidence. In <strong>live mode</strong>, UNISON uses a server-only Qloo API key. Qloo receives selected cultural search terms, entity IDs, and relevant city or price constraints. Participant names are not deliberately included in Qloo API request parameters.</p></section>
+<section class="privacy-section"><h2>When is data kept on your device?</h2>
+<p>UNISON stores group briefs and recommendation summaries in your browser's <code>localStorage</code> <strong>only if you click “Save on this device.”</strong> Saved plans can include names, favorites and Qloo entity IDs. These records are not encrypted; other people using the same browser profile might view them. Use Delete to remove a saved plan from this browser. You can also clear site data in your browser settings.</p>
+<p>Group votes are temporary, local to the current page session, and aren't authenticated. They are not automatically synchronized between devices.</p></section>
+<section class="privacy-section"><h2>Sharing links, exports and external services</h2>
+<p>Group setup links encode names and preferences in a URL fragment. A fragment is not sent in the normal HTTP request to UNISON's server, but <strong>anyone who receives the link can read its contents</strong>. Encoding is not encryption. Avoid sharing sensitive information.</p>
+<p>Decision Reports and tentative calendar events are generated inside your browser and downloaded when you choose. They can contain names, favorites and votes, so review their contents before forwarding.</p>
+<p>Clicking a Google Maps search link opens Google's service. Its privacy practices are independent of UNISON. UNISON does not claim to make bookings, verify opening hours or guarantee venue availability.</p></section>
+<section class="privacy-section"><h2>What does “Live Qloo” mean?</h2>
+<p>The status indicator checks whether the server has an API key configured. It does <strong>not</strong> guarantee that every Qloo Insights call will succeed or that each suggested venue is geographically correct. UNISON explains which evidence is observed and which scores are locally derived approximations.</p>
+<p>Live mode is opt-in. The one-click demo and demo-mode recommendations never call Qloo endpoints.</p></section>
+<section class="privacy-section"><h2>Questions and source code</h2>
+<p>The public source is available on <a href="https://github.com/betterlifestyle04-commits/unison-qloo-agent" target="_blank" rel="noopener noreferrer">GitHub</a>, so technical data flows can be reviewed. This information describes the current prototype; hosting providers and external services can have their own retention practices.</p></section>
+<a class="button button-dark" href="/#planner">Return to the group planner ↗</a>
+</main><footer class="site-footer"><div class="content-wide footer-content"><span>UNISON — Different tastes. One great plan.</span><a href="/">Home</a><a href="https://github.com/betterlifestyle04-commits/unison-qloo-agent" target="_blank" rel="noopener noreferrer">Source code ↗</a></div></footer>
+</body></html>

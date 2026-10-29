@@ -82,3 +82,55 @@ We do not claim venue opening hours, reservation availability, guaranteed locati
 UNISON now separates two decisions: **Qloo-informed candidate discovery and ranking** versus **explicit human approval**. The new per-candidate group ballot records Yes / Maybe / No responses only in the browser, and a unanimous approval badge appears only when every participant says Yes. This does not change the inferred preference fit or make any additional Qloo API request. It is an in-person convenience, not a remote voting system. The optional Qloo Taste Finder helps users discover official entity names on demand. Live recommendation artwork is accepted only from a Qloo-controlled image CDN, with no invented venue photographs.
 
 This improves the hackathon demonstration's clarity: an agent proposes and transparently evaluates options, but the group retains the final decision.
+
+## Decision Lab — comparing tradeoffs without invented metrics
+
+UNISON now provides an inspectable Decision Lab using only candidates with complete observed group coverage. It compares balanced, protect-lowest-fit, group-average-weighted rules, and an average-only baseline. The resulting explanation shows when a fairness-aware winner differs from the highest-mean candidate and whether the decision remains stable as weights change. No popularity statistics or satisfaction predictions are fabricated, and changing weights does not spend additional API quota.
+
+## Optional device-only plan library
+
+For returning visitors, UNISON can save up to eight group briefs and recommendation summaries **only when the user clicks Save**. Users can reopen a brief, copy a summary or delete it. We clearly warn that names and cultural preferences will be stored in this browser profile. Reopened briefs default to demo mode and require explicit opt-in before any live Qloo calls.
+
+## Bringing the group decision into the real world
+
+UNISON now includes a zero-integration calendar handoff. Once the shortlist is generated, the group can pick a supported option, agree on a proposed date and meeting location, and export a tentative standard calendar event. The app explicitly does not make bookings, check availability or send invitations. This is a local completion step rather than another AI or Qloo API request.
+
+We also corrected an accessibility and security-policy conflict: recommendation fit visualizations use native meters and remain visible under a restrictive Content Security Policy without relying on blocked inline CSS.
+
+## Export the agent's reasoning
+
+To make the result genuinely portable, UNISON can now download a **Decision Report** in Markdown. It records individual relative-fit estimates, group fairness weighting, evidence coverage, vetoes, voluntary Yes/Maybe/No votes and labeled agent steps, distinguishing real Qloo requests from fictional demonstration and local computation. The export is intentionally opt-in because it may contain participant names and cultural references. Creating the report does not trigger further Qloo API calls.
+
+## Public privacy disclosure
+
+A dedicated privacy page explains what enters our backend, which cultural signals are sent to Qloo, what stays on the visitor's device, why share-link fragments are not encrypted, and why human votes are only session-local. The website also avoids CSP-blocked inline styling for its clipboard fallback. These changes improve product trust without introducing accounts, tracking, or another dependency.
+
+## Human agreement and Qloo quota efficiency
+
+The new **Agreement Pulse** makes the human-in-the-loop component more visible. It shows actual Yes/Maybe/No votes, who still needs to answer, and where the leading recommendation has been rejected. It may suggest discussing a different supported choice but never replaces the Qloo-derived shortlist or fabricates consent.
+
+UNISON now also deduplicates concurrent identical Qloo requests and limits cross-site browser requests to its API endpoints. These changes protect limited API quota and keep the hackathon experience more reliable without introducing accounts, a new database, or paid dependencies.
+
+## Auditable Qloo pipeline and head-to-head comparison
+
+To validate more than a server configuration flag, we now run an integration test with mocked Qloo Search and Insights tools across the entire live-mode agent pipeline. It checks person-specific taste resolution, discovery, shared shortlist evaluation, stable provenance traces, missing-evidence handling, and refusal to substitute fictional results into live mode. Tests are deterministic and incur no Qloo quota; they do not establish real Insights availability.
+
+The new **Head-to-Head** comparator lets groups choose any two supported candidates and see which person-level ordinal-fit estimate favors each option. This is independent of the explicit human-voting flow. No extra API requests are made when changing the comparison.
+
+## Reliable and transparent live-mode recovery
+
+UNISON no longer treats Qloo downtime or ambiguous favorites as an opaque recommendation failure. A dedicated recovery UI explains possible causes without inventing new evidence, preserves the group brief for revision and requires an explicit action before switching to fictional demo mode. Shared links always reopen in demo mode, protecting API quota and user intent. A memory-bounded request limiter prevents unbounded growth in the per-client planning and Taste Finder throttles.
+
+The automated suite includes regression checks for these safeguards; comprehensive live Qloo Insights and interactive cross-browser verification remain separate work.
+
+## Guarding the quality of the group shortlist
+
+The latest release adds explicit candidate-integrity checks on every real Qloo Insights response. UNISON accepts only unique, correctly categorized Qloo candidates and screens the shared-shortlist evaluation against the exact requested entity IDs. This prevents unexpected, unrelated results from being promoted into the group comparison or changing rank-derived fit scores. The result interface and evidence trace disclose screening counts and limitations transparently. All screening is **local computation**, with no additional Qloo quota spent.
+
+Automated tests inject duplicate, wrong-domain, and outside-shortlist candidates into mocked Qloo responses and verify they are excluded. This validates our handling of imperfect responses; it is **not** proof that all live Qloo Insights requests or venue details are correct.
+
+## Self-service evidence of a working Qloo integration
+
+UNISON now offers a manual **Qloo connection diagnostic** visible only in live mode. A visitor can explicitly test a fixed public sample through real Search, Insights discovery and Insights shortlist evaluation. The results report each stage separately so a configured API key is never confused with verified Insights responses. No private group names or favorites are sent during this diagnostic. We limit frequency to protect API quota; passing a one-title movie diagnostic is not a guarantee that other filters or places will return good recommendations.
+
+Its logic has isolated tests with fake Qloo tools, and browser tests verify the control doesn't call the API without a click. We have **not** claimed an actual verified production Insights result until a user runs the live diagnostic successfully.

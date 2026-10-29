@@ -119,4 +119,220 @@
 
 /* Trace provenance and keyboard focus are first-class product signals. */
 .trace-kind{display:inline-flex;align-items:center;border-radius:999px;padding:2px 6px;margin:0 5px 0 0;font-size:.54rem;line-height:1.2;font-weight:800;letter-spacing:.03em;text-transform:uppercase;background:#edf0f7;color:#667086}.trace-qloo .trace-kind{background:#e7f7ed;color:#28704b}.trace-demo .trace-kind{background:#f5edff;color:#7256aa}.trace-local .trace-kind{background:#eef1f7;color:#5c6679}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid #7968dc;outline-offset:3px}
+
+/* Decision Lab: transparency over invented percentages. */
+.decision-lab{margin:0 0 17px;padding:15px;background:#fcfbff;border:1px solid #e5e1f3;border-radius:13px}
+.decision-lab>summary{list-style:none;cursor:pointer;font-size:.79rem;font-weight:820;color:#57538f}
+.decision-lab>summary::-webkit-details-marker{display:none}
+.decision-lab>summary:after{content:' +';float:right}
+.decision-lab[open]>summary:after{content:' −'}
+.decision-lab>p{font-size:.7rem;color:#7b7b95;line-height:1.55;margin:13px 0}
+.lab-style-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.lab-style{border:1px solid #eae7f5;background:white;border-radius:10px;padding:12px 10px;display:flex;flex-direction:column;gap:5px;min-width:0}
+.lab-style span,.lab-baseline>span{font-size:.61rem;text-transform:uppercase;letter-spacing:.045em;font-weight:850;color:#8171c7}
+.lab-style strong,.lab-baseline strong{font-size:.83rem;line-height:1.35;color:#343c58;overflow-wrap:anywhere}
+.lab-style small,.lab-baseline small{font-size:.62rem;line-height:1.45;color:#8a8da0}
+.lab-baseline{display:flex;flex-direction:column;gap:4px;margin-top:9px;border:1px dashed #c9ccdf;border-radius:10px;padding:11px 13px;background:#f7f8fc}
+.lab-baseline>span{color:#607492}
+.lab-sensitivity{font-size:.72rem;font-weight:780;color:#5c5799;margin-top:12px}
+.decision-lab .lab-explanation{color:#626d81}
+.lab-disclaimer{display:block;margin-top:10px;font-size:.62rem;color:#9294a5;line-height:1.55}
+.device-library{padding:20px 0 0;margin-top:26px;border-top:1px solid #e9e7ef}
+.library-heading{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.library-heading h3{font-size:1.07rem;letter-spacing:-.035em;margin:0}
+.library-heading .overline{font-size:.59rem;margin-bottom:4px}
+.library-heading>span{font-size:1.3rem;color:#7869d1}
+.device-library>p{color:#8e91a0;font-size:.69rem;line-height:1.65;margin:10px 0}
+.device-plans{display:grid;gap:8px;margin-top:12px}
+.device-empty{font-size:.71rem;color:#9da0ac;line-height:1.5;margin:0}
+.device-item{border:1px solid #e9e6ee;background:#fbfbfd;border-radius:11px;padding:11px 12px;display:flex;flex-direction:column;gap:9px}
+.device-item strong{font-size:.79rem;color:#4c5264;display:block}
+.device-item small{display:block;color:#9294a3;font-size:.65rem;margin-top:4px;line-height:1.5;overflow-wrap:anywhere}
+.device-item-actions{display:flex;gap:6px;flex-wrap:wrap}
+.device-item-actions button{border:1px solid #dedcea;border-radius:7px;background:#fff;color:#625b8c;font-size:.66rem;font-weight:750;padding:7px 9px}
+.device-item-actions button:hover{background:#efedfc}
+.device-item-actions button[data-delete-device]{color:#a4565f}
+.library-message{color:#7162a6;font-size:.67rem;font-weight:690;line-height:1.5;margin:10px 0 0}
+.library-message:empty{display:none}
+@media(max-width:580px){.lab-style-grid{grid-template-columns:1fr}.lab-style{padding:9px 10px}.device-item-actions button{flex:1}}
+
+/* Native meter bars remain visible under strict CSP (no inline style attributes). */
+.fit-meter{height:8px;min-width:30px;flex:1;display:block;border:0;border-radius:12px;background:#ebe8f5;color:#7161d8;overflow:hidden;appearance:auto}
+.fit-meter::-webkit-meter-bar{border:0;background:#ebe8f5;border-radius:12px;box-shadow:none}
+.fit-meter::-webkit-meter-optimum-value{background:linear-gradient(90deg,#a89cf6,#6455da);border-radius:12px}
+.fit-meter::-webkit-meter-suboptimum-value{background:linear-gradient(90deg,#a89cf6,#6455da);border-radius:12px}
+.fit-meter::-webkit-meter-even-less-good-value{background:linear-gradient(90deg,#a89cf6,#6455da);border-radius:12px}
+.fit-meter::-moz-meter-bar{background:#7664db;border-radius:12px}
+.taste-list .fit-meter.tiny-meter{height:7px;width:65px;min-width:45px;flex:0 0 65px;margin-left:auto}
+
+/* A practical final step: turn an agreed choice into a tentative calendar plan. */
+.plan-handoff{margin:16px 0 19px;background:linear-gradient(135deg,#f3f8fb,#f9f6ff);border:1px solid #dfe5f2;border-radius:16px;padding:18px}
+.handoff-heading{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.handoff-mark{display:flex;align-items:center;justify-content:center;background:#e6e4ff;color:#5d50b8;font-size:1.35rem;font-weight:750;flex:0 0 37px;width:37px;height:37px;border-radius:12px}
+.handoff-heading .overline{margin:0 0 3px;font-size:.59rem}
+.handoff-heading h4{font-size:1.16rem;letter-spacing:-.045em;line-height:1.25;margin:0}
+.handoff-lead{color:#777f91;font-size:.74rem;line-height:1.6;margin:0 0 16px}
+.handoff-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.handoff-fields .input-label{min-width:0}
+.handoff-fields .input-label input,.handoff-fields .input-label select{background:white;width:100%;min-width:0}
+.handoff-choice,.handoff-wide{grid-column:1/-1}
+.handoff-timezone,.handoff-footnote{font-size:.65rem;line-height:1.6;color:#8a91a3;margin:12px 0}
+.handoff-timezone strong{color:#555c79;overflow-wrap:anywhere}
+.handoff-actions{display:flex;flex-wrap:wrap;gap:9px;margin:15px 0 3px}
+.handoff-actions button{border:0;border-radius:9px;background:#6257cb;padding:11px 13px;color:white;font-size:.74rem;font-weight:800}
+.handoff-actions button+button{background:white;color:#6758b1;border:1px solid #ded9f6}
+.handoff-actions button:hover{filter:brightness(.96)}
+.handoff-message{margin:9px 0 0;color:#6557a7;font-size:.72rem;line-height:1.5;font-weight:690}
+.handoff-message:empty{display:none}
+@media(max-width:580px){.plan-handoff{padding:14px}.handoff-fields{grid-template-columns:1fr}.handoff-actions button{width:100%}}
+
+/* Group Evidence Audit: coverage and person-level comparison, without fake confidence. */
+.evidence-audit{margin:0 0 18px;padding:17px;border:1px solid #dfe7ed;border-radius:14px;background:linear-gradient(145deg,#f8fbff,#fbfcff)}
+.audit-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.audit-head .eyebrow{font-size:.58rem;margin:0 0 5px;color:#6d83ae}
+.audit-head h4{font-size:1rem;line-height:1.3;letter-spacing:-.032em;margin:0}
+.audit-coverage{background:#e7effa;color:#607399;font-size:.63rem;font-weight:840;border-radius:7px;padding:6px 9px;white-space:nowrap}
+.audit-summary{font-size:.71rem;color:#707d94;line-height:1.6;margin:11px 0}
+.audit-overview{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0}
+.audit-overview>div{border:1px solid #e6eaf2;border-radius:10px;background:#fff;padding:11px 9px;display:flex;flex-direction:column;gap:3px;min-width:0}
+.audit-overview strong{font-size:1.3rem;color:#3d5478;line-height:1.2;letter-spacing:-.04em}
+.audit-overview small{font-size:.61rem;color:#8a94a6;line-height:1.4}
+.audit-detail{border-top:1px solid #e4eaf4;padding-top:11px;margin-top:13px}
+.audit-detail>summary{cursor:pointer;font-size:.72rem;color:#576b99;font-weight:780}
+.audit-person-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;margin:14px 0}
+.audit-person{min-width:0}
+.audit-person-label{display:flex;justify-content:space-between;gap:8px;font-size:.7rem;color:#65728c;align-items:center;margin-bottom:7px}
+.audit-person-label strong{font-size:.66rem;color:#7482a0}
+.audit-person .fit-meter{width:100%;height:9px}
+.audit-comparison{padding:12px;background:#fff;border:1px solid #e6eaf3;border-radius:10px;margin:12px 0}
+.audit-comparison p{font-size:.7rem;color:#758094;line-height:1.6;margin:0 0 9px}
+.audit-comparison p strong{color:#566b91}
+.audit-compare-table{overflow-x:auto}
+.audit-compare-table table{width:100%;border-collapse:collapse;min-width:310px}
+.audit-compare-table th,.audit-compare-table td{padding:8px 7px;font-size:.65rem;border-bottom:1px solid #e9edf3;text-align:left;overflow-wrap:anywhere}
+.audit-compare-table thead th{color:#687da2;font-weight:820}
+.audit-compare-table tbody th{color:#667083;font-weight:720}
+.audit-comparison small{display:block;color:#8a93a4;font-size:.63rem;margin-top:8px;line-height:1.5}
+.audit-missing{margin-top:12px;border:1px dashed #d9dce9;border-radius:9px;padding:10px}
+.audit-missing summary{cursor:pointer;font-size:.71rem;font-weight:760;color:#6f789a}
+.audit-missing ul,.audit-recovery ul{padding-left:17px;margin:9px 0;display:grid;gap:5px}
+.audit-missing li,.audit-recovery li,.audit-missing p{font-size:.67rem;color:#7f8799;line-height:1.55}
+.audit-recovery{margin:15px 0 0;border-radius:10px;background:#fff8f0;border:1px solid #f2e1cd;padding:11px}
+.audit-recovery>strong{color:#94603f;font-size:.73rem}
+.audit-recovery button{border:1px solid #e8c9a8;background:white;color:#a36d47;font-size:.7rem;font-weight:780;border-radius:8px;padding:9px 10px;margin-top:5px}
+.audit-recovery button:hover{background:#fff3e5}
+.instant-demo{width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:12px;border:0;border-radius:10px;background:linear-gradient(115deg,#6556ce,#5544ba);color:white;padding:11px 13px;font-weight:790;font-size:.75rem}
+.instant-demo:hover{filter:brightness(.95)}
+.demo-explainer{margin:7px 0 0;color:#8587a5;font-size:.64rem;line-height:1.5}
+@media(max-width:580px){.audit-head{flex-direction:column;gap:6px}.audit-overview{grid-template-columns:repeat(2,minmax(0,1fr))}.audit-person-grid{grid-template-columns:1fr}.audit-overview>div{min-height:76px}}
+
+/* Downloadable provenance report and clipboard support under strict CSP. */
+.clipboard-proxy{position:fixed;left:0;top:0;width:1px;height:1px;opacity:0;pointer-events:none}
+.report-privacy{color:#85869b;font-size:.65rem;line-height:1.6;margin:0 0 15px;display:flex;gap:7px;align-items:flex-start}
+.report-privacy span{color:#8573ca;font-size:.78rem;line-height:1.3}
+.report-message{color:#6556a5;font-size:.72rem;font-weight:700;line-height:1.55;margin:0 0 12px}
+.report-message:empty{display:none}
+
+/* Dedicated, keyboard-friendly privacy and data disclosure page. */
+.privacy-page{max-width:900px;margin:0 auto;padding:72px 28px 105px}
+.privacy-page h1{font-size:clamp(2.5rem,6vw,4.3rem);letter-spacing:-.067em;line-height:1.08;margin:0 0 17px;color:#1c2840}
+.privacy-intro{font-size:1.06rem;color:#657085;line-height:1.75;max-width:70ch;margin:0 0 37px}
+.privacy-section{background:#fff;border:1px solid #e7e5ef;border-radius:16px;padding:23px 26px;margin:0 0 16px;box-shadow:0 8px 24px #272e4510}
+.privacy-section h2{font-size:1.18rem;letter-spacing:-.03em;color:#313b5a;margin:0 0 10px}
+.privacy-section p{font-size:.88rem;line-height:1.8;color:#657082;margin:0 0 11px}
+.privacy-section p:last-child{margin-bottom:0}
+.privacy-section a{color:#6456ce;text-decoration:underline;text-underline-offset:3px}
+.privacy-section code{background:#f2effd;border-radius:5px;padding:2px 5px}
+.privacy-page>.button{margin-top:17px}
+@media(max-width:580px){.privacy-page{padding:44px 15px 65px}.privacy-section{padding:18px}.privacy-intro{font-size:.94rem}}
+
+/* Agreement Pulse: actual on-device responses, never predicted group satisfaction. */
+.agreement-pulse{border:1px solid #d9e7e4;border-radius:15px;padding:17px;margin:0 0 18px;background:linear-gradient(130deg,#f0fbf7,#f6f9ff)}
+.agreement-head{display:flex;gap:12px;justify-content:space-between;align-items:start}
+.agreement-head .overline{color:#388365;font-size:.61rem;margin:0 0 5px}
+.agreement-head h4{font-size:1.07rem;line-height:1.25;letter-spacing:-.04em;margin:0;color:#2f5e58}
+.agreement-count{display:inline-block;border:1px solid #cce7dc;border-radius:8px;background:white;color:#41816d;padding:6px 9px;white-space:nowrap;font-size:.64rem;font-weight:850}
+.agreement-message{font-size:.77rem;color:#557c72;margin:11px 0;line-height:1.55}
+.agreement-meter-row{display:flex;align-items:center;gap:10px}
+.agreement-meter-row .fit-meter{width:100%;height:10px}
+.agreement-meter-row strong{font-size:.75rem;color:#396f5f;min-width:37px;text-align:right}
+.agreement-totals{display:flex;flex-wrap:wrap;gap:8px;margin:11px 0}
+.agreement-totals span{background:#fff;border:1px solid #e0eae9;border-radius:7px;color:#647b7d;padding:5px 8px;font-size:.66rem;font-weight:760}
+.agreement-next{margin:10px 0;color:#536e75;font-size:.7rem;line-height:1.6}
+.agreement-winner{background:#e3f8eb;border-radius:8px;padding:9px 10px;font-size:.7rem;color:#23754d;line-height:1.55}
+.agreement-pulse>button{border:1px solid #b9ded1;background:white;color:#2e8168;padding:9px 12px;border-radius:9px;font-size:.71rem;font-weight:810}
+.agreement-pulse>button:hover{background:#e8f8f0}
+.agreement-privacy{font-size:.62rem;line-height:1.55;color:#8b9b9a;margin:11px 0 0}
+@media(max-width:580px){.agreement-head{flex-direction:column;gap:8px}.agreement-totals span{flex:1}}
+
+/* Compare two fully supported Qloo-informed alternatives without conflating scores and votes. */
+.head-to-head{border:1px solid #e2def5;border-radius:15px;background:linear-gradient(135deg,#fcfbff,#f4f3ff);padding:17px;margin:0 0 18px}
+.head-to-head .overline{color:#7b65b8;font-size:.62rem;margin:0 0 4px}
+.head-to-head h4{font-size:1.12rem;letter-spacing:-.035em;color:#48436b;margin:0 0 7px}
+.head-to-head p{color:#7d8094;font-size:.71rem;line-height:1.55;margin:6px 0 12px}
+.head-to-head-picker{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:end;gap:10px}
+.head-to-head-picker .input-label{min-width:0}
+.head-to-head-picker select{width:100%;min-width:0;background:white}
+.head-to-head-picker>span{font-weight:850;color:#998cc2;font-size:.76rem;padding-bottom:11px}
+.comparison-scoreboard{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0}
+.comparison-scoreboard>div{background:white;border:1px solid #e7e4f3;border-radius:10px;text-align:center;padding:10px 5px}
+.comparison-scoreboard strong{font-size:1.25rem;display:block;color:#5d54a6}
+.comparison-scoreboard small{font-size:.61rem;color:#8b8ca5}
+.head-to-head-table{overflow-x:auto}
+.head-to-head-table table{border-collapse:collapse;width:100%;min-width:360px}
+.head-to-head-table th,.head-to-head-table td{text-align:left;border-bottom:1px solid #e5e4ee;padding:9px 7px;font-size:.67rem;color:#646a82}
+.head-to-head-table thead th{color:#625a9a;font-weight:800}
+.head-to-head-table tbody th{font-weight:790}
+.head-to-head .comparison-comment{color:#59567f;font-weight:700;margin:12px 0 8px}
+.head-to-head>small{display:block;font-size:.62rem;color:#89869d;line-height:1.5}
+@media(max-width:580px){.head-to-head-picker{grid-template-columns:1fr;gap:6px}.head-to-head-picker>span{padding:0;text-align:center}.head-to-head{padding:13px}}
+
+/* Never silently turn an upstream Qloo failure into fictional recommendations. */
+.plan-recovery{padding:22px;background:linear-gradient(130deg,#fffbf6,#fcf9ff);border:1px solid #eedfce;border-radius:15px;display:flex;flex-direction:column;align-items:flex-start;gap:11px}
+.plan-recovery .eyebrow{color:#966c54;font-size:.6rem}
+.plan-recovery h3{font-size:1.36rem;color:#5b4b52;letter-spacing:-.04em;margin:0}
+.plan-recovery h4{font-size:.77rem;color:#7b5d5d;margin:6px 0 0}
+.plan-recovery p{font-size:.73rem;line-height:1.65;color:#7a7383;margin:0}
+.plan-recovery details{width:100%;border:1px solid #eee5e1;border-radius:8px;background:white;padding:9px 11px}
+.plan-recovery details summary{cursor:pointer;font-size:.68rem;color:#82727b;font-weight:700}
+.plan-recovery details p{font-size:.65rem;overflow-wrap:anywhere;margin-top:9px}
+.plan-recovery ul{padding-left:20px;margin:0;display:grid;gap:7px}
+.plan-recovery li{color:#716e81;font-size:.7rem;line-height:1.6}
+.recovery-actions{display:flex;gap:9px;flex-wrap:wrap}
+.recovery-actions button{border-radius:9px;border:1px solid #b8a6db;color:#5b4e95;background:white;padding:10px 13px;font-weight:800;font-size:.72rem}
+.recovery-actions button:first-child{background:#6253c7;color:white;border-color:#6253c7}
+.recovery-actions button:hover{filter:brightness(.96)}
+.plan-recovery .recovery-explainer{font-size:.63rem;color:#9c8c98}
+@media(max-width:580px){.plan-recovery{padding:15px}.recovery-actions,.recovery-actions button{width:100%}}
+
+/* Screens the exact returned Qloo candidate set before assigning ordinal-fit evidence. */
+.integrity-review{border:1px solid #dfe8ee;background:#f8fbfe;border-radius:11px;padding:10px 13px;margin:0 0 14px}
+.integrity-review>summary{list-style:none;cursor:pointer;color:#586e83;font-size:.71rem;font-weight:780;line-height:1.5}
+.integrity-review>summary::-webkit-details-marker{display:none}
+.integrity-review>summary:after{content:'+';float:right;font-size:.82rem}
+.integrity-review[open]>summary:after{content:'−'}
+.integrity-review>summary strong{color:#375973}
+.integrity-review p{color:#708293;font-size:.68rem;line-height:1.65;margin:12px 0}
+.integrity-review small{display:block;font-size:.63rem;color:#8493a2;line-height:1.55;margin-top:10px}
+.integrity-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.integrity-metrics span{border:1px solid #e5eaf2;background:white;border-radius:8px;padding:9px;display:flex;flex-direction:column;gap:3px;color:#83909f;font-size:.65rem}
+.integrity-metrics strong{font-size:1.17rem;font-weight:850;color:#3f697f}
+@media(max-width:580px){.integrity-metrics span{padding:7px}.integrity-metrics strong{font-size:.96rem}}
+
+/* An explicit live connectivity diagnostic. Never runs during page initialization. */
+.qloo-diagnostics{border:1px solid #d7e3f5;background:linear-gradient(120deg,#f6faff,#f7f4ff);border-radius:13px;padding:14px;margin-top:16px}
+.qloo-diagnostics[hidden]{display:none}
+.diagnostics-heading{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.diagnostics-heading strong{font-size:.81rem;color:#455c87;line-height:1.4}
+.diagnostics-heading p{font-size:.68rem;color:#687e99;margin:4px 0 0;line-height:1.55}
+.diagnostics-heading button{border:1px solid #6a64cd;border-radius:9px;padding:10px 12px;background:white;color:#564fac;font-weight:790;font-size:.72rem;white-space:nowrap}
+.diagnostics-heading button:disabled{opacity:.58;cursor:wait}
+.qloo-diagnostics .diagnostics-caution{font-size:.65rem;color:#8591a4;line-height:1.6;margin:10px 0 0}
+.diagnostics-results{font-size:.69rem;color:#5e718b;line-height:1.6;margin-top:11px}
+.diagnostics-results:empty{display:none}
+.diagnostics-results strong{color:#3e6085}
+.diagnostics-results ol{padding-left:21px;display:grid;gap:4px;margin:8px 0}
+.diagnostics-results li{overflow-wrap:anywhere}
+.diagnostics-results p{margin:7px 0 0;color:#79889d}
+@media(max-width:580px){.diagnostics-heading{align-items:stretch;flex-direction:column}.diagnostics-heading button{white-space:normal;width:100%}}
 .quick-start-options button[aria-pressed="true"]{background:#6556d7;border-color:#6556d7;color:#fff;box-shadow:0 5px 14px #5e4ecb2e}.quick-start-options button[aria-pressed="true"] span{color:#fff}

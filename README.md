@@ -125,3 +125,96 @@ Qloo's Search API can return multiple cultural entities with the **same visible 
 Unselected, manually typed favorites continue through the documented server-side name resolver. The application validates the selected ID format and its relationship to the entered favorite before contacting Qloo. Qloo remains the authority on whether the chosen entity ID is recognized.
 
 Share links can contain Qloo public entity IDs in addition to the group's names and favorites. A shared link does not automatically execute the Qloo API.
+
+## Decision Lab and saved plans (October 2026)
+
+**Decision Lab** compares **the same fully observed candidate set** under three predeclared, transparent aggregation formulas. It shows each rule's winning candidate and a pure average-fit baseline, while stating when rankings are sensitive to the weight choices. It excludes vetoed candidates and any option with incomplete group coverage. The baseline is **not** an observed popularity metric, and no formula is a calibrated happiness prediction. All calculations are local and make no new Qloo requests.
+
+**Saved group plans** are explicitly opt-in and stay in the current browser's `localStorage`. Each saved record contains the group brief (including participant names, favorites and any public Qloo entity IDs), a user-facing plan summary, a timestamp, and a winner label. It does not store the Qloo API key or create an account. Up to eight recent records can be saved. Users can reopen a brief, copy a saved summary, or delete a record. **Reopening always selects demo mode** and does not automatically query Qloo. Since browser storage is not encrypted, users on shared devices should not save private details.
+
+Implementation: `public/planner-state.js` exports `analyzeDecisionTradeoffs`; `public/saved-plans.js` handles explicit storage operations with validation and bounds. New unit and HTTP regression tests verify both features.
+
+## Tentative calendar handoff and CSP-safe scoring
+
+After generating a group shortlist, the **Make it happen** section lets people choose any fully supported, non-vetoed option; add a tentative date, start time, duration, meeting location and notes; and download a standard `.ics` calendar event or copy the meeting details. These are entirely browser-side operations and make no new Qloo calls. Event timestamps are created from the **visitor's browser-local timezone** and encoded as UTC in the calendar file. Users planning in another timezone must verify the imported event before sharing. Every generated calendar entry has **TENTATIVE** status and explicitly states that UNISON has not booked a reservation or verified availability.
+
+The recommendation comparison bars now use **native HTML `<meter>` elements** rather than HTML-injected inline CSS widths. This keeps the charts visible under the existing strict `style-src 'self'` Content Security Policy and improves their accessibility.
+
+The calendar helper is in `public/calendar.js`, covered by `test/calendar.test.js` and first-party routing tests. No calendar permissions, notifications, background processes or third-party calendar API integration are required.
+
+## Group Evidence Audit and one-click judge demo
+
+The results screen includes a **Group Evidence Audit** powered by `public/evidence-audit.js`. It reports active candidates with complete person-level evidence, each participant's observed share of the active candidate set, a side-by-side comparison of the top two fully supported candidates, and a list of missing signals. When no candidate can be treated as a group compromise, it gives concrete, non-automatic suggestions to revise preferences or broaden the price constraint. **Missing evidence is not imputed as negative preference.** All audit values are based on the current result only and do not cause additional Qloo requests.
+
+The **Run a one-click fictional demonstration** action loads a sample brief in demo mode, explicitly locks its mode to `demo`, and runs the existing local deterministic scenario. It never calls Qloo endpoints. This makes the agent UI safely explorable for judges and for first-time visitors without spending hackathon API quota. The demo results and agent steps are always labeled simulated.
+
+See [JUDGE_DEMO.md](JUDGE_DEMO.md) for a reproducible two-minute walkthrough that differentiates live Qloo evidence from fictional demonstrations and includes transparency caveats.
+
+Regression tests: `test/evidence-audit.test.js` and `test/http-ux.test.js`. Browser-driven visual acceptance checks remain outstanding.
+
+## Exportable decision report and privacy disclosure
+
+The shortlist now offers **Download Decision Report**. The browser generates a Markdown file from the current candidate rankings, evidence coverage, participant-level fit, selected fairness style, optional on-device group votes, and classified agent trace steps. Live Qloo candidates and fictional demo results are marked unambiguously. Report generation is opt-in and entirely local; it does not send data to another website or use additional Qloo requests. **Reports can contain participant names, cultural preferences and votes**, so recipients can read those details. The download states that UNISON has not verified reservations, opening hours or satisfaction outcomes. See `public/decision-report.js` and `test/decision-report.test.js`.
+
+The dedicated [privacy and data information page](/privacy) explains server request handling, live Qloo parameters, optional browser storage, one-device voting, share URL fragments, exports, and third-party map searches. It avoids promising that infrastructure providers retain no request metadata. The page is linked from the homepage footer.
+
+**Reliability fixes:** clipboard fallback now uses a first-party CSS class rather than inline styling blocked by Content Security Policy. Favorite resolution is bounded to two concurrent participants with up to two favorite lookups per participant, limiting pressure on Qloo. These changes do not introduce new third-party dependencies.
+
+## Agreement Pulse and Qloo request coalescing
+
+- **Agreement Pulse** tracks explicit Yes/Maybe/No votes on the leading fully supported recommendation and identifies participants who have not voted. If someone votes No, it can suggest discussing another supported, non-rejected candidate, but **does not silently change the model ranking or equate inferred tastes with human approval**. Votes remain on the current page/device and never reach Qloo. The interface provides a direct action to open the candidate's vote controls. See `public/consensus.js` and `test/consensus.test.js`.
+- **Single-flight Qloo GET requests:** concurrent, identical Search or Insights requests now share one upstream API request, while retaining the existing five-minute cache. Errors do not become successful cached results. This lowers redundant upstream traffic without reducing evidence coverage. See `src/qloo.js` and new concurrency regression tests.
+- **Cross-site request protection:** requests carrying a different `Origin` or browser `Sec-Fetch-Site: cross-site` are rejected from the Qloo lookup and planning endpoints before work begins. HTML and APIs also send `Referrer-Policy: no-referrer`; static pages limit camera, microphone and geolocation permissions. This is a defensive safeguard, not full account-based authentication or a solution to abusive direct clients.
+- **Expanded syntax checks:** `npm run check` now covers every production JavaScript module, including newer browser-only features.
+
+## End-to-end agent integration tests (no real API spend)
+
+A full **Qloo two-pass agent workflow integration test** lives in `test/live-pipeline.test.js`. Its controlled, realistic mock tools simulate each person's entity resolution, a separate discovery request, a common shortlisted Qloo Insights evaluation, and rank-derived fairness. Assertions verify that no missing participant evidence is ever invented, that zero candidates fail with clear wording instead of fictional fallback, and that result traces stay in participant order even when tools finish in different orders.
+
+`runAgent(input,{qlooTools})` accepts test-only tool injection; the public web service invokes the agent without overrides, so production still uses the real server-side Qloo credentials. The tests **do not prove real Qloo Insights availability, venue accuracy, or valid API entitlements**, which still need a separate authenticated live test.
+
+## Head-to-Head decision comparison
+
+Results now offer a **Head-to-Head** panel: choose any two fully supported, non-vetoed candidates to inspect each participant's relative fit, count which candidate scores higher for each person, and see the difference in the lowest group fit. Only actual observations are compared; missing evidence is never filled in, and there are no network requests when switching candidates. This is a comparison of UNISON's heuristic evidence, **not an actual human vote**. The independent Yes/Maybe/No voting flow remains the source of explicit group approval.
+
+Modules: `public/head-to-head.js` and `test/head-to-head.test.js`.
+
+## Better live-Qloo failure recovery (October 2026)
+
+The planner now preserves the user's group brief when the live Qloo service returns an error. Instead of showing a generic dead end or quietly substituting fictional recommendations, a new **Recovery panel** identifies common categories: too many requests, ambiguous cultural entities, missing city, no comparable candidates, unavailable key, and temporary upstream problems. Each category offers specific next steps and a button to review/edit the group brief. A clearly labeled "Switch to fictional demo mode" option **only selects the radio button**; it never automatically executes a Qloo or demo plan.
+
+Shareable briefs are now explicitly demo-only when opened, even after asynchronous key-status loading. Moving into Live Qloo requires a fresh direct user selection. Regression tests guard against accidentally reintroducing the previous auto-switch behavior.
+
+The API uses a bounded, in-memory, per-client request limiter. Entries expire after their rate-limit window and the total number of tracked client identifiers is capped to prevent unbounded memory growth. Rate limiting is a best-effort infrastructure protection, not an account-based access-control system.
+
+Modules: `public/recovery.js`, `src/request-limiter.js`, `test/recovery.test.js`, `test/request-limiter.test.js`, and `test/http-ux.test.js`. `npm run check` covers the added JavaScript modules.
+
+## Qloo candidate integrity screening
+
+To keep fairness calculations grounded in the **same requested pool of candidates**, the backend now screens every live Qloo Insights response in `src/candidate-integrity.js`. Discovery records must have a usable ID and name and must not explicitly belong to the wrong requested domain (places versus movies). Duplicate IDs are removed. The subsequent per-person evaluation is additionally restricted to **exact IDs in the shared shortlist**. Any returned extra or wrong-type entity is excluded **before** its ordinal position can influence a fit estimate. This is independent of the Qloo API's `filter.results.entities` query parameter and makes unexpected upstream responses safe to interpret.
+
+The response includes an aggregate `quality` object with counts of accepted and excluded items. The UI exposes an expandable **Qloo response integrity** inspector; the agent trace records screening stages as **local computation**, not extra Qloo requests. A missing entity-type label is reported, not silently claimed verified. A filtered-out result is **not** evidence of dislike.
+
+This protects candidate *membership*, not geographic truth or factual metadata: UNISON does **not** independently certify venue addresses, city boundaries, opening hours, prices, or bookability. Scores remain ordinal UNISON heuristics, not measured satisfaction.
+
+Qloo's published [Insights parameter reference](https://github.com/qloo/docs-public/blob/main/reference/insights-api-deep-dive.md) documents `filter.results.entities` for the shared-candidate evaluation. The extra local screening is UNISON's own safeguard. See `test/candidate-integrity.test.js` and the contamination scenarios in `test/live-pipeline.test.js`.
+
+## Actual Chromium browser acceptance testing
+
+UNISON now has a dedicated **Chromium end-to-end job in GitHub Actions** (in addition to the existing fast unit/integration suite). It opens and uses the actual HTML/JavaScript interface rather than merely checking that the source contains expected strings.
+
+The browser suite in `browser-tests/e2e.test.js` covers desktop and mobile fictional demo planning, fairness reweighting, Head-to-Head, Yes/Maybe/No voting, download of a Decision Report and tentative calendar entry, local saved plans, and shared-link safety. A separate **mocked live UI** scenario validates explicit Live Qloo opt-in, Taste Finder entity pinning and error recovery without using a credential or making Qloo API calls.
+
+The first browser run uncovered a production startup crash: `starters.forEach(addPerson)` passed each loop index as the helper's `chosenEntities` argument, causing `chosenEntities.map is not a function`. This is fixed by passing the group row explicitly with `starters.forEach(values=>addPerson(values))`, plus defensive optional-argument validation.
+
+In CI, screenshots of the working desktop and mobile demo are uploaded as a **unison-browser-screenshots** artifact retained for seven days. Browser automation runs only in CI with an ephemeral Playwright installation, so **production still has no extra runtime dependencies**. Local developers can run `npm install --no-save playwright@1.64.1`, `npx playwright install chromium`, then `npm run test:e2e`.
+
+A successful mocked-live browser test **does not establish real authenticated Qloo Insights availability**; live API verification remains a separate acceptance criterion.
+
+## Explicit live-Qloo connection check
+
+The Live Qloo selection now contains an **optional "Check Qloo connection"** button that calls `POST /api/qloo-diagnostics`. Unlike the configuration-only `GET /api/status` badge, it attempts a real, fixed-example sequence on the server: `/search` for a known public film, `/v2/insights` movie discovery, then a second `/v2/insights` evaluation restricted to the discovered shortlist. The UI discloses whether each stage passed or failed; errors never get replaced with demo evidence. It uses **zero names or favorites from the user's group brief**.
+
+The check runs **only on an explicit click in Live mode**, not when loading the page, opening a group link or switching modes. It is throttled to **two attempts per ten minutes per connection** and may use up to **three Qloo GET operations, plus Qloo-adapter retries on transient failures**. It is a limited integration diagnostic, not proof that every other movie, geographic place, budget filter or recommendation will work. A check with valid Search but no matching Insights returns `ok:false`, not a made-up success.
+
+The pure diagnostic is `src/qloo-diagnostics.js` (mock tests: `test/qloo-diagnostics.test.js`). Browser testing intercepts the health request with a labeled mock response to verify explicit consent and zero transfer of group data; those mocks must never be described as authenticated Qloo availability. To validate actual credentials, use the opt-in control on the deployed website and inspect its live result.
