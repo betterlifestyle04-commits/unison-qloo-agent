@@ -178,3 +178,13 @@ A full **Qloo two-pass agent workflow integration test** lives in `test/live-pip
 Results now offer a **Head-to-Head** panel: choose any two fully supported, non-vetoed candidates to inspect each participant's relative fit, count which candidate scores higher for each person, and see the difference in the lowest group fit. Only actual observations are compared; missing evidence is never filled in, and there are no network requests when switching candidates. This is a comparison of UNISON's heuristic evidence, **not an actual human vote**. The independent Yes/Maybe/No voting flow remains the source of explicit group approval.
 
 Modules: `public/head-to-head.js` and `test/head-to-head.test.js`.
+
+## Better live-Qloo failure recovery (October 2026)
+
+The planner now preserves the user's group brief when the live Qloo service returns an error. Instead of showing a generic dead end or quietly substituting fictional recommendations, a new **Recovery panel** identifies common categories: too many requests, ambiguous cultural entities, missing city, no comparable candidates, unavailable key, and temporary upstream problems. Each category offers specific next steps and a button to review/edit the group brief. A clearly labeled "Switch to fictional demo mode" option **only selects the radio button**; it never automatically executes a Qloo or demo plan.
+
+Shareable briefs are now explicitly demo-only when opened, even after asynchronous key-status loading. Moving into Live Qloo requires a fresh direct user selection. Regression tests guard against accidentally reintroducing the previous auto-switch behavior.
+
+The API uses a bounded, in-memory, per-client request limiter. Entries expire after their rate-limit window and the total number of tracked client identifiers is capped to prevent unbounded memory growth. Rate limiting is a best-effort infrastructure protection, not an account-based access-control system.
+
+Modules: `public/recovery.js`, `src/request-limiter.js`, `test/recovery.test.js`, `test/request-limiter.test.js`, and `test/http-ux.test.js`. `npm run check` covers the added JavaScript modules.
