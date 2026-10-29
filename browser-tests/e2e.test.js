@@ -130,3 +130,44 @@ test('shared link remains demo-only even when status indicates Qloo is configure
     assert.deepEqual(errors,[]);
   }finally{await context.close();}
 });
+
+test('mocked live browser journey: explicit opt-in, precise Taste Finder and honest recovery',async()=>{
+  const context=await browser.newContext({viewport:{width:1280,height:800}});
+  const page=await context.newPage();
+  trackErrors(page);
+  const submissions=[];
+  await page.route('**/api/status',route=>route.fulfill({
+    status:200,contentType:'application/json',
+    body:JSON.stringify({configured:true,mode:'live-ready',source:'server-configuration'})
+  }));
+  await page.route('**/api/taste-lookup?**',route=>route.fulfill({
+    status:200,contentType:'application/json',
+    body:JSON.stringify({query:'Interstellar',matches:[{id:'057DA9D9-399B-437E-8BCA-A80E499125EF',name:'Interstellar',type:'urn:entity:movie'}],exact:true,cached:false})
+  }));
+  await page.route('**/api/plan',async route=>{
+    submissions.push(route.request().postDataJSON());
+    await route.fulfill({status:422,contentType:'application/json',body:JSON.stringify({error:'Please clarify Jon\'s favorite using Taste Finder. Multiple entities share the title.'})});
+  });
+  try{
+    await page.goto(origin+'/',{waitUntil:'networkidle'});
+    assert.equal(await page.locator('input[name="mode"][value="demo"]').isChecked(),true);
+    assert.equal(await page.locator('input[name="mode"][value="live"]').isEnabled(),true);
+    await page.locator('input[name="mode"][value="live"]').check({force:true});
+    await page.locator('#city').fill('Oslo');
+    assert.equal(await page.locator('#taste-finder').isVisible(),true);
+    await page.locator('#taste-query').fill('Interstellar');
+    await page.locator('#taste-find').click();
+    await page.locator('.taste-match').first().click();
+    assert.match(await page.locator('#people .person').first().locator('[data-pinned]').innerText(),/Interstellar \(movie\)/);
+    await page.locator('#submit-plan').click();
+    await page.locator('.plan-recovery').waitFor({timeout:10000});
+    assert.match(await page.locator('#recovery-title').innerText(),/clarification/i);
+    assert.equal(submissions.length,1);
+    assert.equal(submissions[0].mode,'live');
+    assert.ok(submissions[0].people[0].selectedEntities.some(item=>item.id==='057DA9D9-399B-437E-8BCA-A80E499125EF'));
+    await page.locator('#recovery-demo').click();
+    assert.equal(await page.locator('input[name="mode"][value="demo"]').isChecked(),true);
+    assert.equal(submissions.length,1,'switching to demo must not trigger automatic plan submissions');
+    assert.deepEqual(errors,[]);
+  }finally{await context.close();}
+});
