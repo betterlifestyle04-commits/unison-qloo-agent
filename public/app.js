@@ -50,7 +50,8 @@ function addPerson(values=['',''],chosenEntities=[]){
   node.querySelector('.remove').addEventListener('click',()=>{if(people.children.length<=2){showError('A group needs at least two people.');return;}node.remove();updateGroup();});
   people.append(node);showPinned(node);updateGroup();
 }
-starters.forEach(addPerson);
+// forEach also passes an index; addPerson's second parameter is an entity array, not the index.
+starters.forEach(values=>addPerson(values));
 $('#add-person').addEventListener('click',()=>{if(people.children.length>=5)return;addPerson();people.lastElementChild.querySelector('[data-field=name]').focus();});
 function showError(message=''){error.textContent=message;}
 async function copyText(text){
