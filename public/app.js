@@ -312,7 +312,7 @@ function renderEvidenceAudit(data){
     <p>A missing signal means the Qloo comparison did not return evidence for that participant; it must not be counted as a negative reaction.</p>
   </details>`:''; 
   const suggestions=audit.complete===0?recoverySuggestions(data,audit):[];
-  return `<section class="evidence-audit" aria-labelledby="audit-heading">
+  return `<section id="evidence-audit" class="evidence-audit" aria-labelledby="audit-heading">
     <div class="audit-head"><div><span class="eyebrow">GROUP EVIDENCE · ${data.mode==='demo'?'SIMULATED':'QLOO-INFORMED'}</span><h4 id="audit-heading">Are we comparing everyone fairly?</h4></div><span class="audit-coverage">${audit.complete}/${audit.total} comparable</span></div>
     <p class="audit-summary">${escape(audit.summary)}</p>
     <div class="audit-overview"><div><strong>${coverage}%</strong><small>Active options with complete group evidence</small></div><div><strong>${audit.people.length}</strong><small>Participants being considered</small></div>${audit.winner?`<div><strong>${Math.round(audit.spread)}</strong><small>Top option's estimated max–min fit gap</small></div>`:''}</div>
@@ -327,13 +327,13 @@ function renderEvidenceAudit(data){
 function renderAgreementPulse(data){
   const pulse=agreementPulse(data,app.ballots);
   if(!pulse.top){
-    return '<section class="agreement-pulse"><p class="overline">HUMAN AGREEMENT / NEXT STEP</p><h4>We need an eligible choice first.</h4><p>'+escape(pulse.nextAction)+'</p></section>';
+    return '<section id="group-agreement" class="agreement-pulse"><p class="overline">HUMAN AGREEMENT / NEXT STEP</p><h4>We need an eligible choice first.</h4><p>'+escape(pulse.nextAction)+'</p></section>';
   }
   const top=pulse.top;
   const fill=top.total?Math.round(top.voted/top.total*100):0;
   const approved=pulse.unanimous.length>0;
   const hasVotes=Object.values(app.ballots).some(ballot=>Object.keys(ballot||{}).length>0);
-  return `<section class="agreement-pulse" aria-label="Current human vote progress">
+  return `<section id="group-agreement" class="agreement-pulse" aria-label="Current human vote progress">
     <div class="agreement-head"><div><p class="overline">HUMAN AGREEMENT / NEXT STEP</p><h4 id="agreement-heading" tabindex="-1">${approved?'A group-approved choice!':'See what everyone thinks.'}</h4></div><span class="agreement-count">${top.voted} / ${top.total} responses</span></div>
     <p class="agreement-message">${escape(pulse.message)}</p>
     <div class="agreement-meter-row"><meter class="fit-meter" min="0" max="100" value="${fill}" aria-label="${fill} percent of participants have voted on the leading option">${fill}%</meter><strong>${fill}%</strong></div>
@@ -372,14 +372,14 @@ function renderGroupStability(data){
 }
 function renderHeadToHead(data){
   const choices=eligibleComparisons(data);
-  if(choices.length<2)return '<section class="head-to-head"><p class="overline">EXPLORE THE TRADE-OFFS</p><h4>Head-to-Head</h4><p>At least two fully supported, non-vetoed options are needed before you can compare them fairly.</p></section>';
+  if(choices.length<2)return '<section id="option-comparison" class="head-to-head"><p class="overline">EXPLORE THE TRADE-OFFS</p><h4>Head-to-Head</h4><p>At least two fully supported, non-vetoed options are needed before you can compare them fairly.</p></section>';
   const validIds=new Set(choices.map(item=>item.id));
   if(!validIds.has(app.compare.left))app.compare.left=choices[0].id;
   if(!validIds.has(app.compare.right)||app.compare.right===app.compare.left)app.compare.right=choices.find(item=>item.id!==app.compare.left).id;
   const analysis=compareOptions(data,app.compare.left,app.compare.right);
   const optionList=selected=>choices.map(choice=>`<option value="${escape(choice.id)}" ${selected===choice.id?'selected':''}>${escape(choice.name)}</option>`).join('');
   const people=analysis.people.map(person=>`<tr><th scope="row">${escape(person.name)}</th><td>${person.left}/100</td><td>${person.right}/100</td><td>${person.preference==='tie'?'Equal':person.preference==='left'?'Prefers A':'Prefers B'}</td></tr>`).join('');
-  return `<section class="head-to-head" aria-labelledby="comparison-heading">
+  return `<section id="option-comparison" class="head-to-head" aria-labelledby="comparison-heading">
     <p class="overline">A BETTER GROUP DECISION</p><h4 id="comparison-heading">Head-to-Head</h4>
     <p>Compare any two fully supported options against the same group's available relative-fit evidence.</p>
     <div class="head-to-head-picker">
@@ -435,6 +435,13 @@ function renderVenueReadiness(data,choices){
     <small>Checklist marks stay in this page only. They are self-reported, do not change Qloo ranking, do not verify venue facts, and do not make or confirm bookings. Changing options displays that option's separate checklist.</small>
   </section>`;
 }
+function renderDecisionWorkspaceNav(data,top){
+  const links=[];
+  if(top)links.push(['#decision-summary','Recommendation']);
+  if(eligibleComparisons(data).length>=2)links.push(['#option-comparison','Compare']);
+  links.push(['#evidence-audit','Evidence'],['#group-agreement','Group vote'],['#decision-trace','Agent trace']);
+  return `<nav class="decision-workspace-nav" aria-label="Decision workspace">${links.map(([href,label])=>`<a href="${href}">${label}</a>`).join('')}</nav>`;
+}
 function render(data){
   app.lastResult=data;
   const approved=data.ranked.filter(item=>item.sufficient&&!item.vetoed);
@@ -445,6 +452,7 @@ function render(data){
   const status=data.mode==='live'?'Qloo API · Live evidence':'Demo · Simulated evidence';
   results.innerHTML=`<div class="result-topline"><div><p class="overline">${escape(status)}</p><h3>${top?'Your best shared match':'We need a little more evidence'}</h3><p class="result-sub">${escape(data.domain==='places'?(data.city?'Planning for '+data.city:'No city selected'):'Movie night')} · ${data.people.length} people · ${count} fully covered option${count===1?'':'s'}</p></div><div class="result-actions"><button id="download-report" class="text-button" type="button">↓ Decision report</button><button id="save-plan" class="text-button" type="button">Save on this device</button><button id="copy-plan" class="text-button" type="button" ${top?'':'disabled'}>Copy plan ↗</button><button id="reset-veto" class="text-button" type="button">Clear vetoes</button></div></div>
     <div class="source-banner ${data.mode==='live'?'live':''}" role="status"><strong>${escape(sourceName(data))}.</strong> ${escape(data.disclaimer)}</div>
+    ${renderDecisionWorkspaceNav(data,top)}
     ${integrityReview(data)}
     ${placeConstraintDisclosure(data)}
     <p class="report-privacy"><span aria-hidden="true">◈</span> The Decision Report downloads to your device and includes group names, cultural favorites, and any votes recorded here. Share it thoughtfully.</p>
@@ -462,14 +470,14 @@ function render(data){
     <div class="voting-intro"><strong>New · Agree together</strong><span>Each person can vote Yes, Maybe or No on any candidate. Votes stay on this device, separate from Qloo predictions.</span></div>
     ${groupApproved?`<div class="approved-choice" role="status">✓ Group agreement recorded: <strong>${escape(groupApproved.name)}</strong>. Everyone voted Yes.</div>`:''}
     ${data.needsMoreEvidence?`<div class="notice" role="status">${escape(data.nextAction||'Evidence is incomplete. Add another preference.')}</div>`:''}
-    ${top?`<article class="winner"><div class="winner-inner"><p class="eyebrow">✳ THE BEST CURRENT COMPROMISE</p><h3>${escape(top.name)}</h3><div class="winner-meta"><span>${escape(data.domain==='movies'?'Movie recommendation':'Place recommendation')}</span><span>${escape(data.mode==='live'?'Qloo candidates':'Fictional demo candidates')}</span>${data.city&&data.domain==='places'?'<span>'+escape(data.city)+'</span>':''}</div><p>${escape(top.note||top.address||'Recommended based on the available cross-person taste signals.')}</p><div class="winner-stats"><div><strong>${escape(top.score)}</strong><small>UNISON relative score / 100</small></div><div><strong>${number(top.minimum)}</strong><small>Lowest relative fit</small></div><div><strong>${Math.round(top.coverage*100)}%</strong><small>Signal coverage</small></div></div></div></article>`:''}
+    ${top?`<article id="decision-summary" class="winner"><div class="winner-inner"><p class="eyebrow">✳ THE BEST CURRENT COMPROMISE</p><h3>${escape(top.name)}</h3><div class="winner-meta"><span>${escape(data.domain==='movies'?'Movie recommendation':'Place recommendation')}</span><span>${escape(data.mode==='live'?'Qloo candidates':'Fictional demo candidates')}</span>${data.city&&data.domain==='places'?'<span>'+escape(data.city)+'</span>':''}</div><p>${escape(top.note||top.address||'Recommended based on the available cross-person taste signals.')}</p><div class="winner-stats"><div><strong>${escape(top.score)}</strong><small>UNISON relative score / 100</small></div><div><strong>${number(top.minimum)}</strong><small>Lowest relative fit</small></div><div><strong>${Math.round(top.coverage*100)}%</strong><small>Signal coverage</small></div></div></div></article>`:''}
     ${top?`<div class="compromise-context"><span class="context-icon">◎</span><span><strong>What makes this a compromise?</strong><small>${escape(leastMatched?leastMatched.name+' has the lowest relative fit at '+number(top.minimum)+'/100. UNISON considers this alongside the group average when ranking options.':'UNISON compares each participant using relative-fit evidence.')}</small></span></div>`:''}
     ${planHandoff(data,approved,groupApproved)}
     ${renderVenueReadiness(data,approved)}
     <div class="cards-heading"><h4>Explore the shortlist</h4><small>${data.ranked.length} candidate${data.ranked.length===1?'':'s'}</small></div>
     <div class="cards">${show.map((item,i)=>card(item,i,data)).join('')}</div>
     ${data.ranked.length>6?`<button id="show-all" class="add-person" type="button">${app.showAll?'Show fewer options':'Show all '+data.ranked.length+' options'} <span aria-hidden="true">↓</span></button>`:''}
-    <details class="trace"><summary>How UNISON reached this decision · ${data.trace.length} steps</summary><ol>${data.trace.map(step=>{const label=step.kind==='qloo'?'Qloo request':step.kind==='demo'?'Simulated evidence':'Local computation';const tone=step.kind==='qloo'?'qloo':step.kind==='demo'?'demo':'local';return `<li class="trace-step trace-${tone}"><span class="trace-kind">${label}</span><strong>${escape(step.step)}</strong> — ${escape(step.detail)}${step.requests?.length?`<span class="trace-url">${step.requests.map(request=>escape(request.url+(request.cached?' (cached)':''))).join(' · ')}</span>`:''}</li>`;}).join('')}</ol></details>`;
+    <details id="decision-trace" class="trace"><summary>How UNISON reached this decision · ${data.trace.length} steps</summary><ol>${data.trace.map(step=>{const label=step.kind==='qloo'?'Qloo request':step.kind==='demo'?'Simulated evidence':'Local computation';const tone=step.kind==='qloo'?'qloo':step.kind==='demo'?'demo':'local';return `<li class="trace-step trace-${tone}"><span class="trace-kind">${label}</span><strong>${escape(step.step)}</strong> — ${escape(step.detail)}${step.requests?.length?`<span class="trace-url">${step.requests.map(request=>escape(request.url+(request.cached?' (cached)':''))).join(' · ')}</span>`:''}</li>`;}).join('')}</ol></details>`;
   const agendaFields={choiceId:'#agenda-choice',date:'#agenda-date',time:'#agenda-time',duration:'#agenda-duration',meeting:'#agenda-meeting',notes:'#agenda-notes'};
   for(const [key,selector] of Object.entries(agendaFields)){
     results.querySelector(selector)?.addEventListener('change',event=>{

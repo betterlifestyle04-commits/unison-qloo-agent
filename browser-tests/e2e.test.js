@@ -49,6 +49,10 @@ test('desktop: full demo workflow, votes, weighting, archive, report and calenda
     assert.ok(await page.locator('.decision-lab').count()>0);
     assert.ok(await page.locator('.evidence-audit').count()>0);
     assert.ok(await page.locator('.head-to-head').count()>0);
+    assert.ok(await page.locator('.decision-workspace-nav a').count()>=4);
+    await page.locator('.decision-workspace-nav a[href="#evidence-audit"]').click();
+    assert.match(page.url(),/#evidence-audit$/);
+    assert.ok(await page.locator('#evidence-audit').isVisible());
     const stability=page.locator('.group-stability');
     assert.equal(await stability.count(),1);
     await stability.locator('summary').click();
