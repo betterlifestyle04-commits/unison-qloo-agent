@@ -4,6 +4,7 @@ import {readFile,mkdir} from 'node:fs/promises';
 import {chromium} from 'playwright';
 import {server} from '../server.js';
 import {encodeShareBrief} from '../public/planner-state.js';
+import {runAgent} from '../src/agent.js';
 
 let browser,origin;
 const errors=[];
@@ -361,5 +362,50 @@ test('mocked live browser journey: explicit opt-in, precise Taste Finder and hon
     // the deliberately mocked API validation failure, not a JavaScript exception.
     const unexpected=errors.filter(error=>!/Browser console: Failed to load resource: .*422 \(Unprocessable Entity\)/.test(error));
     assert.deepEqual(unexpected,[]);
+  }finally{await context.close();}
+});
+
+test('mocked live venue UI exposes external research, unsent enquiry and anonymous feedback without a Qloo call',async()=>{
+  const context=await browser.newContext({viewport:{width:1260,height:850},permissions:['clipboard-read','clipboard-write']});
+  const page=await context.newPage();trackErrors(page);
+  const sample=await runAgent({mode:'demo',domain:'places',city:'London, UK',budget:'any',people:[
+    {name:'Ada',favorites:['jazz']},{name:'Bea',favorites:['films']}
+  ]});
+  const mock={...sample,mode:'live',disclaimer:'Mocked Qloo fixture for browser acceptance; no upstream Qloo request.',ranked:sample.ranked.map((item,i)=>({
+    ...item,name:'Mock Test Venue '+(i+1),address:'Test street, London'
+  }))};
+  let submitted=0;
+  await page.route('**/api/status',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({configured:true,mode:'live-ready'})}));
+  await page.route('**/api/plan',route=>{
+    submitted++;
+    return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(mock)});
+  });
+  try{
+    await page.goto(origin+'/',{waitUntil:'networkidle'});
+    await page.locator('input[name=mode][value=live]').check({force:true});
+    await page.locator('#city').fill('London, UK');
+    await page.locator('#submit-plan').click();
+    await waitForResults(page);
+    assert.equal(submitted,1);
+    assert.equal(await page.locator('#venue-readiness .venue-external a').count(),2);
+    const links=await page.locator('#venue-readiness .venue-external a').evaluateAll(nodes=>nodes.map(node=>node.href));
+    assert.ok(links.every(link=>link.startsWith('https://www.google.com/')));
+    assert.match(await page.locator('#venue-readiness').innerText(),/does not retrieve, check or confirm their availability/);
+    await page.locator('#venue-copy-inquiry').click();
+    const message=await page.evaluate(()=>navigator.clipboard.readText());
+    assert.match(message,/confirm the exact address/);
+    assert.match(message,/2 people/);
+    assert.equal(submitted,1,'research links, clipboard and ratings should never send another Qloo plan');
+    const survey=page.locator('#outcome-study');
+    await survey.locator('[data-feedback-stage="expected"]').first().selectOption('2');
+    await survey.locator('[data-feedback-stage="experienced"]').first().selectOption('5');
+    assert.match(await survey.locator('#outcome-summary').innerText(),/expectation gap, not proof/i);
+    const dl=page.waitForEvent('download');
+    await survey.locator('#export-outcomes').click();
+    const file=await dl;
+    const text=await readFile(await file.path(),'utf8');
+    assert.match(text,/SELF-REPORTED - NOT CAUSAL EVIDENCE/);
+    assert.doesNotMatch(text,/Ada|Bea|Mock Test Venue/);
+    assert.equal(submitted,1);
   }finally{await context.close();}
 });
