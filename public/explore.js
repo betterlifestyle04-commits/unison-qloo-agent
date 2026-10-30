@@ -56,7 +56,7 @@ function cardFor(scenario){
 }
 
 /** One-time UI mount. Selecting a template never invokes the planning API. */
-export function mountExplorer({root=document,storage=globalThis.localStorage}={}){
+export function mountExplorer({root=document,storage=null}={}){
   const gallery=root.querySelector('#explore-gallery');
   const search=root.querySelector('#explore-search');
   const count=root.querySelector('#explore-count');
@@ -68,7 +68,7 @@ export function mountExplorer({root=document,storage=globalThis.localStorage}={}
     const caption=root.querySelector('#workspace-saved-caption');
     if(!number||!caption)return;
     let saved=[];
-    try{saved=loadDevicePlans(storage);}catch{saved=[];}
+    try{saved=loadDevicePlans(storage||globalThis.localStorage);}catch{saved=[];}
     number.textContent=String(saved.length);
     caption.textContent=saved.length?'Saved privately in this browser':'No plans saved yet';
   };
