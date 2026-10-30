@@ -729,9 +729,9 @@ function paintDeviceLibrary(items=loadDevicePlans(window.localStorage)){
         </div>
       </div>
       <div class="library-participants"><span class="library-avatars">${avatars}</span><span>${names.length} participants · ${escape(names.join(', '))}</span></div>
-      <div class="device-item-actions"><button type="button" data-open-device="${escape(item.id)}">↗ Open editable brief</button><button type="button" data-copy-device="${escape(item.id)}">Copy summary</button><button type="button" data-delete-device="${escape(item.id)}">Delete</button></div>
+      <div class="device-item-actions"><button type="button" data-open-device="${escape(item.id)}">↗ Open brief to edit</button><button type="button" data-copy-device="${escape(item.id)}">Copy summary</button><button type="button" data-delete-device="${escape(item.id)}">Delete</button></div>
     </article>`;
-  }).join(''):items.length?'<p class="device-empty">No saved plans match this search. Try a city or participant name.</p>':'<p class="device-empty">Nothing saved yet. Generate a group decision and select “Save on this device” to build your private library.</p>';
+  }).join(''):items.length?'<p class="device-empty">No saved plans match this search. Try a city or participant name.</p>':'<p class="device-empty">No saved plans yet. Generate a group decision and select “Save on this device” to build your private library.</p>';
   shelf.querySelectorAll('[data-open-device]').forEach(button=>button.addEventListener('click',()=>{
     const entry=loadDevicePlans(window.localStorage).find(item=>item.id===button.dataset.openDevice);
     if(!entry)return;
