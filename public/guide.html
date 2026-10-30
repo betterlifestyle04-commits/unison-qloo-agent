@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#171d33">
+<meta name="description" content="UNISON getting started guide. Learn group taste planning, Qloo versus fictional demo data, scoring, voting, saved decisions, and privacy.">
+<title>Product Guide & Help — UNISON</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%236556d7'/%3E%3Cpath d='M18 23h28M18 32h28M18 41h28' stroke='white' stroke-width='6' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/styles.css">
+<link rel="stylesheet" href="/guide.css">
+</head>
+<body class="help-app">
+<a href="#help-main" class="skip">Skip to guide content</a>
+<div class="help-site-head">
+<nav class="site-nav" aria-label="Main navigation">
+  <a class="brand" href="/" aria-label="UNISON home"><span class="brand-symbol" aria-hidden="true"><i></i><i></i><i></i></span><span>unison<span class="brand-period">.</span></span></a>
+  <div class="help-nav-links"><a href="/#explore">Explore</a><a href="/#planner">Plan</a><a href="/workspace">My workspace</a><a href="/privacy">Privacy</a></div>
+  <a class="help-nav-cta" href="/#planner">Create a plan ↗</a>
+</nav>
+</div>
+<main id="help-main">
+  <section class="help-hero">
+    <div class="help-hero-inner">
+      <div class="help-hero-copy">
+        <p class="help-eyebrow"><span aria-hidden="true">✧</span> UNISON / PRODUCT GUIDE</p>
+        <h1>Better decisions start with <em>better questions.</em></h1>
+        <p>Learn how to go from wildly different tastes to a transparent shared shortlist—without confusing a fictional demo, a cultural signal, or a group vote with a confirmed booking.</p>
+        <div class="help-hero-buttons"><a class="help-hero-primary" href="/#planner">Start planning ↗</a><a class="help-hero-secondary" href="#help-faq">Find an answer ↓</a></div>
+      </div>
+      <div class="help-art" aria-hidden="true">
+        <div class="help-art-card help-art-one"><span class="help-art-avatar">M</span><span>Maya<small>Spirited Away</small></span><span>✓</span></div>
+        <div class="help-art-card help-art-two"><span class="help-art-avatar peach">J</span><span>Jon<small>Radiohead</small></span><span>✓</span></div>
+        <div class="help-art-card help-art-three"><span class="help-art-avatar sky">P</span><span>Priya<small>Knives Out</small></span><span>✓</span></div>
+        <span class="help-art-spark">✳</span><span class="help-art-caption">EXAMPLE PEOPLE · NOT REAL USER DATA</span>
+      </div>
+    </div>
+  </section>
+  <div class="help-content">
+    <div class="help-jumplinks" aria-label="Browse this guide"><a href="#help-steps">Getting started</a><a href="#help-modes">Evidence sources</a><a href="#help-scores">Understanding results</a><a href="#help-faq">Questions & answers</a></div>
+    <section id="help-steps" class="help-section" aria-labelledby="help-steps-heading">
+      <div class="help-section-heading"><p class="help-overline">01 / GETTING STARTED</p><h2 id="help-steps-heading">Four steps to common ground.</h2><p>Everything begins with a group brief. No account required, no automated submission from a sample click.</p></div>
+      <div class="help-step-grid">
+        <article class="help-step"><span class="help-step-num">01</span><span class="help-step-icon" aria-hidden="true">✳</span><h3>Start with a situation</h3><p>Choose outings or movies. Browse nine fictional starter briefs, or start from scratch.</p><a href="/#explore">Explore examples ↗</a></article>
+        <article class="help-step"><span class="help-step-num">02</span><span class="help-step-icon" aria-hidden="true">◇</span><h3>Give everyone a voice</h3><p>Add two to five people and up to three cultural favorites each. The Taste Inspiration panel can suggest recognizable starting points.</p><a href="/#taste-shelf">Find taste inspiration ↗</a></article>
+        <article class="help-step"><span class="help-step-num">03</span><span class="help-step-icon" aria-hidden="true">◈</span><h3>Choose your evidence</h3><p>Try the fictional demonstration, or explicitly choose live Qloo intelligence if available. Only generating a plan starts the comparison.</p><a href="/#source-options">Review evidence modes ↗</a></article>
+        <article class="help-step"><span class="help-step-num">04</span><span class="help-step-icon" aria-hidden="true">▣</span><h3>Decide and make a plan</h3><p>Review individual fit, coverage and alternatives. Discuss, veto, vote locally, and prepare a tentative group handoff.</p><a href="/#planner">Open the planner ↗</a></article>
+      </div>
+    </section>
+    <section id="help-modes" class="help-section" aria-labelledby="help-modes-heading">
+      <div class="help-section-heading"><p class="help-overline">02 / WHERE DATA COMES FROM</p><h2 id="help-modes-heading">Know which evidence you're viewing.</h2><p>UNISON separates editorial suggestions, simulated examples, and Qloo API results. They have different meanings.</p></div>
+      <div class="help-evidence-grid">
+        <article class="help-evidence-card"><span class="help-source-badge">EDITORIAL INPUT</span><h3>Taste Inspiration</h3><p>36 manually selected public cultural references to help fill in your group. They are not Qloo-confirmed entity IDs, popularity data, or recommendation scores.</p><ul><li>Local search and selection only</li><li>No API request to browse</li><li>Optional input assistance</li></ul></article>
+        <article class="help-evidence-card"><span class="help-source-badge demo">FICTIONAL DEMO</span><h3>Explore the process</h3><p>Deterministic fictional taste evidence illustrates how the decision logic works. It is not an authenticated Qloo Insights response.</p><ul><li>No external Qloo API calls</li><li>Editable sample participants</li><li>Not evidence of real venues</li></ul></article>
+        <article class="help-evidence-card"><span class="help-source-badge live">LIVE QLOO</span><h3>Observed taste signals</h3><p>With live mode explicitly selected and a working server key, UNISON resolves cultural favorites and evaluates a shared shortlist using Qloo.</p><ul><li>Server-only Qloo credential</li><li>Provenance and missing data visible</li><li>Not verified venue availability</li></ul></article>
+      </div>
+      <div class="help-clarity"><span aria-hidden="true">♢</span><p><strong>A configured key is not a successful API request.</strong> The status indicator means live requests can be attempted. The agent trace and optional connection check provide more specific evidence. Opening hours, addresses, bookings, prices and real-world satisfaction still require independent confirmation.</p></div>
+    </section>
+    <section id="help-scores" class="help-section" aria-labelledby="help-scores-heading">
+      <div class="help-section-heading"><p class="help-overline">03 / READING YOUR SHORTLIST</p><h2 id="help-scores-heading">A score is a clue, not a promise.</h2><p>These are transparent project heuristics and group-decision aids—not validated probabilities of personal happiness.</p></div>
+      <div class="help-glossary">
+        <article><div class="help-glossary-icon">↘</div><div><h3>Lowest individual fit</h3><p>The weakest observed relative-fit signal among people with evidence for that option. UNISON gives this more weight than a simple popularity average.</p></div></article>
+        <article><div class="help-glossary-icon">≈</div><div><h3>Average fit</h3><p>The average of known, locally estimated relative-fit values. A high group average can conceal a poorly supported participant.</p></div></article>
+        <article><div class="help-glossary-icon">◉</div><div><h3>Evidence coverage</h3><p>How many participants have an observed signal for a candidate. Missing evidence is unknown, not a negative opinion or group agreement.</p></div></article>
+        <article><div class="help-glossary-icon">✕</div><div><h3>Veto and local votes</h3><p>Participants can reject an option or mark Yes/Maybe/No on one browser. These do not modify Qloo's upstream evidence or create authenticated remote voting.</p></div></article>
+      </div>
+      <div class="help-example"><div><span class="help-example-kicker">RECOMMENDATION-FIRST</span><h3>What should I inspect first?</h3><p>Read the top recommendation and shortlist, then open the evidence details. Check that all participants are represented before interpreting it as a supported compromise. For real outings, verify the location and booking facts yourself.</p></div><a href="/#planner">Try the decision workspace ↗</a></div>
+    </section>
+    <section id="help-faq" class="help-section" aria-labelledby="help-faq-heading">
+      <div class="help-section-heading"><p class="help-overline">04 / QUESTIONS & ANSWERS</p><h2 id="help-faq-heading">Answers without the guesswork.</h2><p>Search product guidance or expand a question. This help search runs locally without tracking or API requests.</p></div>
+      <label class="help-search"><span aria-hidden="true">⌕</span><input id="help-search-input" type="search" maxlength="140" placeholder="Search questions, for example “booking” or “Qloo”…" aria-label="Search help questions" autocomplete="off"></label>
+      <div id="help-count" class="help-count" role="status" aria-live="polite">8 answers</div>
+      <div id="help-faq-list" class="help-faq-list">
+        <details data-help-topic="source"><summary>How do I know if recommendations came from Qloo?</summary><p>Choose Live Qloo explicitly, generate a plan, and read the source banner and execution trace. A server reporting “key present” means only that requests can be attempted. Demo results are always labeled fictional.</p></details>
+        <details data-help-topic="group"><summary>How many people and favorites can I add?</summary><p>UNISON supports two to five people. Each needs a unique name and one to three cultural favorites. The optional Taste Inspiration panel contains 36 editorial examples; only live Taste Finder identifies official Qloo entities.</p></details>
+        <details data-help-topic="bookings"><summary>Does UNISON book tables or verify opening hours?</summary><p>No. It recommends a shortlist and supplies external lookup links and a tentative calendar handoff. Venues, hours, addresses, price details, accessibility and reservations must be verified with the actual business before you go.</p></details>
+        <details data-help-topic="privacy"><summary>Where are saved plans stored and who can read them?</summary><p>Saved briefs and summaries are stored only when you choose “Save on this device,” in that browser profile's local storage. Anyone using the profile may see them. Backups are unencrypted readable JSON. You can manage up to eight stored plans in My Workspace.</p></details>
+        <details data-help-topic="sharing"><summary>Are group links private or encrypted?</summary><p>No. Copying a group setup link puts names and favorites into a URL fragment. The fragment isn't normally sent to UNISON in the HTTP request, but anyone who receives the link can read it. Use it only with trusted people.</p></details>
+        <details data-help-topic="missing"><summary>Why might a shortlist have no fully supported winner?</summary><p>Some participants may lack a matching Qloo signal for the same candidate. UNISON does not present incomplete evidence as full consensus. You can refine cultural favorites, broaden constraints, or deliberately submit a revised brief.</p></details>
+        <details data-help-topic="voting"><summary>Can remote group members vote in real time?</summary><p>Not currently. The Yes/Maybe/No controls support an in-person group using one browser. Votes do not sync across devices or authenticate individual users, and they do not alter Qloo's native signals.</p></details>
+        <details data-help-topic="offline"><summary>Can I try UNISON without a Qloo key or account?</summary><p>Yes. Demo mode requires no Qloo API key, and the application requires no account. The server returns deterministic fictional results so you can explore fairness, voting, and planning. Live requests require a configured, working Qloo key on the server.</p></details>
+      </div>
+      <p id="help-no-results" class="help-no-results" hidden>No matching help articles. Try a shorter search or <button id="help-reset" type="button">show all questions</button>.</p>
+    </section>
+    <section class="help-next" aria-labelledby="help-next-title">
+      <div><p class="help-overline">YOU'RE READY TO START</p><h2 id="help-next-title">Make the next group decision easier.</h2><p>Start with fictional examples to learn the controls, or bring a real group brief and select the evidence mode you trust.</p></div>
+      <div><a href="/#planner">Start a group plan ↗</a><a href="/workspace">My saved plans</a></div>
+    </section>
+  </div>
+</main>
+<footer class="site-footer"><div class="content-wide footer-content"><span>UNISON — Different tastes. One great plan.</span><a href="/">Home</a><a href="/privacy">Privacy & data</a><a href="https://github.com/betterlifestyle04-commits/unison-qloo-agent" target="_blank" rel="noopener noreferrer">Open-source code ↗</a></div></footer>
+<script type="module" src="/guide.js"></script>
+</body>
+</html>
