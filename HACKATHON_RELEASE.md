@@ -80,3 +80,13 @@ Real API runs establish successful orchestration in these specific cases. They d
 - **Quality of idea:** Emphasize minimum-fit fairness, evidence coverage, cultural taste crossover, local replanning and human group consent — not another one-person recommendation page.
 
 **Outstanding uncertainties:** Independent venue/price/hours checks, human usability study, testing unusual cultural anchors, and account-level Devpost submission confirmation. These are not reasons to falsely present an incomplete product as finished.
+
+
+## Further verified work before submission — October 30
+
+- **Live multi-city Qloo smoke test:** Bergen, Norway, and London, UK, each returned 12 place candidates fully covered for the two fictional participants. Tastes spanned *Interstellar* (film) and *Radiohead* (artist). [Public run](https://github.com/betterlifestyle04-commits/unison-qloo-agent/actions/runs/40977183116).
+- **Venue practical verification:** External Maps and website searches and a copyable reservation enquiry are available; these do not verify a venue or book a table.
+- **Outcome research instrument:** Optional anonymous in-page before-and-after 1–5 ratings and CSV export; no real participants have been studied, so do not claim improved enjoyment.
+- **Follow-up research approach:** [VALIDATION_PROTOCOL.md](VALIDATION_PROTOCOL.md) describes factual verification and study design.
+
+The project remains suitable to submit without inventing unsupported real-time venue or impact claims. The Devpost entry still requires a final user confirmation.
