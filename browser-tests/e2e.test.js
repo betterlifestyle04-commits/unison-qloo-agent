@@ -704,3 +704,56 @@ test('mobile taste inspiration catalog is usable and does not overflow',async()=
     await page.screenshot({path:'browser-tests/screenshots/taste-inspiration-mobile.png',fullPage:true});
   }finally{await context.close();}
 });
+
+
+test('product guide: truthful evidence explanation, local FAQ search, and no automatic Qloo calls',async()=>{
+  const context=await browser.newContext({viewport:{width:1320,height:860}});
+  const page=await context.newPage();
+  trackErrors(page);
+  const calls=[];
+  page.on('request',request=>{if(request.url().includes('/api/plan')||request.url().includes('/api/taste-lookup')||request.url().includes('/api/qloo-diagnostics'))calls.push(request.url());});
+  try{
+    await page.goto(origin+'/guide',{waitUntil:'networkidle'});
+    assert.equal(await page.title(),'Product Guide & Help — UNISON');
+    assert.equal(await page.locator('#help-faq-list details').count(),8);
+    assert.match(await page.locator('#help-modes').innerText(),/FICTIONAL DEMO/);
+    assert.match(await page.locator('#help-modes').innerText(),/LIVE QLOO/);
+    assert.match(await page.locator('#help-modes').innerText(),/EDITORIAL INPUT/);
+    assert.match(await page.locator('#help-count').innerText(),/8 answers/);
+    await page.locator('#help-search-input').fill('booking');
+    assert.equal(await page.locator('#help-faq-list details:visible').count(),1);
+    assert.match(await page.locator('#help-count').innerText(),/1 of 8 answers/);
+    await page.locator('[data-help-topic="bookings"] summary').click();
+    assert.match(await page.locator('[data-help-topic="bookings"] p').innerText(),/No\./);
+    await page.locator('#help-search-input').fill('no such help topic 222');
+    assert.equal(await page.locator('#help-faq-list details:visible').count(),0);
+    assert.equal(await page.locator('#help-no-results').isVisible(),true);
+    await page.locator('#help-reset').click();
+    assert.equal(await page.locator('#help-search-input').inputValue(),'');
+    assert.equal(await page.locator('#help-faq-list details:visible').count(),8);
+    assert.equal(calls.length,0,'reading help must not send live or demo planning requests');
+    await page.screenshot({path:'browser-tests/screenshots/product-guide.png',fullPage:true});
+    await page.locator('.help-hero-primary').click();
+    assert.equal(new URL(page.url()).pathname,'/');
+    assert.equal(calls.length,0,'navigating to the planner must not auto-submit');
+  }finally{await context.close();}
+});
+
+test('mobile guide fits and its FAQ can be navigated by keyboard',async()=>{
+  const context=await browser.newContext({viewport:{width:375,height:812}});
+  const page=await context.newPage();
+  trackErrors(page);
+  try{
+    await page.goto(origin+'/guide',{waitUntil:'networkidle'});
+    const sizes=await page.evaluate(()=>({document:document.documentElement.scrollWidth,viewport:window.innerWidth}));
+    assert.ok(sizes.document<=sizes.viewport+1,'guide overflows mobile: '+JSON.stringify(sizes));
+    await page.locator('#help-search-input').fill('Qloo');
+    assert.ok(await page.locator('#help-faq-list details:visible').count()>=1);
+    await page.locator('#help-search-input').press('Escape');
+    assert.equal(await page.locator('#help-search-input').inputValue(),'');
+    await page.locator('[data-help-topic="source"] summary').focus();
+    await page.keyboard.press('Enter');
+    assert.equal(await page.locator('[data-help-topic="source"]').evaluate(el=>el.open),true);
+    await page.screenshot({path:'browser-tests/screenshots/product-guide-mobile.png',fullPage:true});
+  }finally{await context.close();}
+});
