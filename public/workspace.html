@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#151b30">
+  <meta name="description" content="Your private UNISON planning workspace: saved decisions, cultural reference insights, and editable group plans. Everything stays in this browser.">
+  <title>My Workspace — UNISON</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%236556d7'/%3E%3Cpath d='M18 23h28M18 32h28M18 41h28' stroke='white' stroke-width='6' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/workspace-dashboard.css">
+</head>
+<body class="workspace-app">
+  <a href="#workspace-content" class="skip">Skip to workspace content</a>
+  <div class="app-layout">
+    <aside class="app-sidebar" aria-label="Workspace sidebar">
+      <a href="/" class="brand app-brand" aria-label="UNISON home"><span class="brand-symbol" aria-hidden="true"><i></i><i></i><i></i></span><span>unison<span class="brand-period">.</span></span></a>
+      <div class="app-sidebar-label">YOUR SPACE</div>
+      <nav class="app-menu" aria-label="Workspace pages">
+        <a href="/workspace" class="active" aria-current="page"><span aria-hidden="true">◫</span> Overview</a>
+        <a href="/#explore"><span aria-hidden="true">✳</span> Discover</a>
+        <a href="/#planner"><span aria-hidden="true">⊕</span> New group plan</a>
+        <a href="#workspace-history"><span aria-hidden="true">▣</span> Saved decisions</a>
+        <a href="#workspace-insights"><span aria-hidden="true">◈</span> Taste snapshot</a>
+      </nav>
+      <div class="app-sidebar-label app-sidebar-bottom-label">TRANSPARENCY</div>
+      <nav class="app-menu" aria-label="Other links">
+        <a href="/privacy"><span aria-hidden="true">♢</span> Privacy & data</a>
+        <a href="https://github.com/betterlifestyle04-commits/unison-qloo-agent" target="_blank" rel="noopener noreferrer"><span aria-hidden="true">↗</span> Source code</a>
+      </nav>
+      <div class="app-sidebar-foot">
+        <span class="local-dot" aria-hidden="true"></span><strong>Browser-only workspace</strong>
+        <p>No account. No tracking dashboard. The information on this page is computed from plans saved in this browser.</p>
+      </div>
+    </aside>
+
+    <div class="app-main">
+      <header class="app-topbar">
+        <a href="/" class="brand app-mobile-brand" aria-label="UNISON home"><span class="brand-symbol" aria-hidden="true"><i></i><i></i><i></i></span><span>unison<span class="brand-period">.</span></span></a>
+        <div class="app-breadcrumb"><a href="/">UNISON</a><span aria-hidden="true">/</span><strong>My workspace</strong></div>
+        <div class="app-topbar-right"><span class="topbar-local"><span class="local-dot" aria-hidden="true"></span> Saved on this device</span><a href="/#planner" class="topbar-create">+ New plan</a></div>
+      </header>
+      <nav class="workspace-mobile-nav" aria-label="Workspace quick navigation"><a href="/workspace" aria-current="page">Overview</a><a href="/#explore">Discover</a><a href="/#planner">Plan</a><a href="#workspace-history">Saved</a></nav>
+
+      <main id="workspace-content" class="app-content">
+        <div class="app-pageheading">
+          <div><p class="app-overline">GOOD DECISIONS, KEPT TOGETHER</p><h1>Your space to <em>plan together.</em></h1><p>Pick up where your group left off. Discover patterns in your saved briefs, revisit a decision, or start fresh.</p></div>
+          <a href="/#planner" class="app-primary-action">+ Start a new plan <span aria-hidden="true">↗</span></a>
+        </div>
+
+        <section class="app-overview" aria-label="Your browser-only plan summary">
+          <article class="app-stat"><span class="app-stat-icon violet" aria-hidden="true">▣</span><span class="app-stat-label">Saved decisions</span><strong id="ws-total">0</strong><small>Only plans you chose to save</small></article>
+          <article class="app-stat"><span class="app-stat-icon peach" aria-hidden="true">♧</span><span class="app-stat-label">Participant places</span><strong id="ws-people">0</strong><small>Across plans, not unique people</small></article>
+          <article class="app-stat"><span class="app-stat-icon mint" aria-hidden="true">◈</span><span class="app-stat-label">Qloo-sourced saves</span><strong id="ws-live">0</strong><small>From a live run, not rechecked</small></article>
+          <article class="app-stat"><span class="app-stat-icon sky" aria-hidden="true">⌁</span><span class="app-stat-label">Average group size</span><strong id="ws-average">—</strong><small>Participants per saved brief</small></article>
+        </section>
+
+        <section class="app-feature" aria-label="Plan together">
+          <div class="app-feature-text">
+            <span class="app-feature-kicker"><span aria-hidden="true">✳</span> YOUR NEXT SHARED MOMENT</span>
+            <h2>Different tastes.<br>Still one great plan.</h2>
+            <p>Start with your group's cultural favorites, review grounded evidence, and arrive at a decision you can explain to everyone.</p>
+            <div class="app-feature-actions"><a href="/#planner">Open group planner <span aria-hidden="true">↗</span></a><a href="/#explore">Browse 9 fictional starter briefs</a></div>
+          </div>
+          <div class="app-feature-art" aria-hidden="true"><span class="orbit orbit-a"></span><span class="orbit orbit-b"></span><span class="orbit orbit-c"></span><span class="orbit-core">✳</span><span class="orbit-dot orbit-dot-a">M</span><span class="orbit-dot orbit-dot-b">J</span><span class="orbit-dot orbit-dot-c">P</span></div>
+        </section>
+
+        <section class="app-section" id="workspace-history" aria-labelledby="ws-history-title">
+          <div class="app-section-heading"><div><p class="app-overline">YOUR DECISIONS / ON THIS DEVICE</p><h2 id="ws-history-title">Planning history</h2><p>Search and revisit saved group briefs. Nothing is uploaded or synchronized.</p></div><span id="ws-showing" class="app-count" aria-live="polite">0 plans</span></div>
+          <div class="app-filterbar">
+            <label class="ws-search-label"><span aria-hidden="true">⌕</span><input type="search" id="ws-search" placeholder="Search cities, people, tastes, decisions…" autocomplete="off" aria-label="Search your saved plans"></label>
+            <label><span class="filter-label">Type</span><select id="ws-domain" aria-label="Filter by plan type"><option value="all">All plans</option><option value="places">Outings</option><option value="movies">Movies</option></select></label>
+            <label><span class="filter-label">Evidence</span><select id="ws-mode" aria-label="Filter by source"><option value="all">All sources</option><option value="live">Live Qloo</option><option value="demo">Fictional demo</option></select></label>
+            <label><span class="filter-label">Sort</span><select id="ws-sort" aria-label="Sort plans"><option value="newest">Newest</option><option value="oldest">Oldest</option><option value="title">Name A–Z</option></select></label>
+          </div>
+          <div id="ws-plan-list" class="ws-plan-list" aria-live="polite">
+            <div class="ws-empty"><div class="ws-empty-symbol" aria-hidden="true">✳</div><h3>A clean slate for your next plan</h3><p>Save a decision in the planner to build your private workspace.</p><a href="/#planner">Create a group plan ↗</a></div>
+          </div>
+        </section>
+
+        <section class="app-section" id="workspace-insights" aria-labelledby="ws-insights-title">
+          <div class="app-section-heading"><div><p class="app-overline">A SMALL SNAPSHOT / NOT ANALYTICS</p><h2 id="ws-insights-title">What you've planned</h2><p>Counts from this browser's saved briefs only. These are not popularity, taste affinity, or happiness measurements.</p></div></div>
+          <div class="insight-grid">
+            <article class="insight-panel"><div class="insight-panel-heading"><span class="insight-icon lilac" aria-hidden="true">◎</span><div><h3>Types of plans</h3><p>Saved decisions by activity</p></div></div><div id="ws-types" class="insight-rows"></div></article>
+            <article class="insight-panel"><div class="insight-panel-heading"><span class="insight-icon mint" aria-hidden="true">◇</span><div><h3>Evidence source</h3><p>How saved plans were generated</p></div></div><div id="ws-sources" class="insight-rows"></div></article>
+            <article class="insight-panel"><div class="insight-panel-heading"><span class="insight-icon sky" aria-hidden="true">⌁</span><div><h3>Cities in your briefs</h3><p>Mentions in saved outing plans</p></div></div><div id="ws-cities" class="insight-rows"></div></article>
+            <article class="insight-panel"><div class="insight-panel-heading"><span class="insight-icon peach" aria-hidden="true">✳</span><div><h3>Recurring cultural references</h3><p>Number of saved plans mentioning each</p></div></div><div id="ws-references" class="insight-rows"></div></article>
+          </div>
+        </section>
+
+        <section class="app-backup" aria-labelledby="ws-backup-title">
+          <span class="app-backup-icon" aria-hidden="true">♢</span>
+          <div><h2 id="ws-backup-title">Make your plans portable.</h2><p>Your workspace lives in this browser. Export a JSON backup to keep your saved briefs or import an existing UNISON backup. Files include personal names and favorites in readable, unencrypted text.</p><p id="ws-message" role="status" aria-live="polite"></p></div>
+          <div class="app-backup-actions">
+            <button id="ws-export" type="button">↓ Export backup</button>
+            <button id="ws-import" type="button">↑ Import backup</button>
+            <input type="file" id="ws-import-file" accept=".json,application/json" hidden tabindex="-1" aria-hidden="true">
+          </div>
+        </section>
+        <p class="app-footnote">UNISON is a hackathon prototype. This page does not verify venues, update live Qloo results, infer unique users, or measure personal happiness. <a href="/privacy">How your information is handled ↗</a></p>
+      </main>
+      <footer class="app-footer"><span>UNISON · Different tastes. One great plan.</span><span>Private, on-device decision library</span></footer>
+    </div>
+  </div>
+  <script type="module" src="/workspace-page.js"></script>
+</body>
+</html>
