@@ -22,7 +22,7 @@
 .library-backup-actions button{display:flex;justify-content:center;align-items:center;background:white;border:1px solid #e3e0eb;border-radius:9px;padding:10px 8px;color:#5f55a8;font-size:.72rem;font-weight:780}
 .library-backup-actions button:hover{background:#f1eeff;border-color:#d0c6f4}
 .library-backup-actions button:disabled{opacity:.4}
-.library-file-input{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;pointer-events:none}
+.library-file-input{display:none}
 .library-privacy{font-size:.65rem!important;line-height:1.6!important;color:#8a8999!important;margin:11px 0 0!important}
 .device-plans{gap:11px}
 .device-item{padding:15px;border-radius:13px;background:white;gap:12px;border-color:#e8e5ef;transition:border-color .14s,box-shadow .14s}
