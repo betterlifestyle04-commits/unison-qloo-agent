@@ -757,3 +757,59 @@ test('mobile guide fits and its FAQ can be navigated by keyboard',async()=>{
     await page.screenshot({path:'browser-tests/screenshots/product-guide-mobile.png',fullPage:true});
   }finally{await context.close();}
 });
+
+
+test('evidence studio: six real source-linked Qloo records, filters, zero upstream calls and responsive mobile',async()=>{
+ const context=await browser.newContext({viewport:{width:1366,height:900}});
+ const page=await context.newPage();
+ trackErrors(page);
+ const requests=[];
+ page.on('request',r=>{if(r.url().includes('/api/'))requests.push(r.url());});
+ try{
+   await page.goto(origin+'/evidence',{waitUntil:'networkidle'});
+   assert.equal(await page.title(),'Validation & Evidence — UNISON');
+   assert.equal(await page.locator('#evidence-cards .evidence-case-card').count(),6);
+   assert.equal(await page.locator('#evidence-case-count').innerText(),'6');
+   assert.equal(await page.locator('#evidence-city-count').innerText(),'3');
+   assert.equal(await page.locator('#evidence-group-sizes').innerText(),'2, 3, 5');
+   assert.equal(await page.locator('#evidence-run-count').innerText(),'5');
+   assert.equal(await page.locator('.evidence-proof-link').count(),6);
+   const links=await page.locator('.evidence-proof-link').evaluateAll(nodes=>nodes.map(n=>n.href));
+   assert.ok(links.every(url=>url.startsWith('https://github.com/betterlifestyle04-commits/unison-qloo-agent/actions/runs/')));
+   assert.equal(new Set(links).size,5,'same cross-city run underpins Bergen and London');
+   await page.locator('#evidence-domain').selectOption('places');
+   assert.equal(await page.locator('#evidence-cards .evidence-case-card').count(),4);
+   await page.locator('#evidence-city').selectOption('Oslo');
+   assert.equal(await page.locator('#evidence-cards .evidence-case-card').count(),2);
+   await page.locator('#evidence-people').selectOption('3');
+   assert.equal(await page.locator('#evidence-cards .evidence-case-card').count(),1);
+   assert.match(await page.locator('.evidence-case-card').innerText(),/six Insights calls/);
+   assert.match(await page.locator('.evidence-case-card').innerText(),/12 \/ 12/);
+   await page.locator('#evidence-search').fill('not a verified scenario');
+   assert.equal(await page.locator('.evidence-case-card').count(),0);
+   assert.match(await page.locator('.evidence-no-results').innerText(),/No matching verified cases/);
+   await page.locator('.evidence-no-results button').click();
+   assert.equal(await page.locator('.evidence-case-card').count(),6);
+   await page.locator('#evidence-search').fill('Radiohead');
+   assert.equal(await page.locator('.evidence-case-card').count(),2);
+   assert.equal(requests.length,0,'filtering historical records must never query Qloo or UNISON APIs');
+   await page.locator('#evidence-reset').click();
+   await page.screenshot({path:'browser-tests/screenshots/evidence-studio.png',fullPage:true});
+ }finally{await context.close();}
+});
+test('mobile evidence studio uses accessible filtering with no horizontal page overflow',async()=>{
+ const context=await browser.newContext({viewport:{width:375,height:812}});
+ const page=await context.newPage();
+ trackErrors(page);
+ try{
+   await page.goto(origin+'/evidence',{waitUntil:'networkidle'});
+   const dimensions=await page.evaluate(()=>({document:document.documentElement.scrollWidth,viewport:innerWidth}));
+   assert.ok(dimensions.document<=dimensions.viewport+1,'mobile evidence studio overflows: '+JSON.stringify(dimensions));
+   await page.locator('#evidence-city').selectOption('Bergen');
+   assert.equal(await page.locator('.evidence-case-card').count(),1);
+   assert.match(await page.locator('.evidence-case-card').innerText(),/Bergen/);
+   const link=page.locator('.evidence-proof-link');
+   assert.equal(await link.getAttribute('rel'),'noopener noreferrer');
+   await page.screenshot({path:'browser-tests/screenshots/evidence-studio-mobile.png',fullPage:true});
+ }finally{await context.close();}
+});
