@@ -267,3 +267,14 @@ A separate one-time production test verified UNISON's advertised **maximum five-
 See [real five-person production smoke test](https://github.com/betterlifestyle04-commits/unison-qloo-agent/actions/runs/40886047104). This validates the five-person orchestration path, **not the accuracy of five unique taste profiles**, the reliability of all possible inputs, film availability or calibrated happiness. The first smoke attempt encountered unexpected non-JSON content before it submitted any plan; the successful rerun used two previously verified anchors and explicit response validation. Both results are retained in GitHub Actions.
 
 The verified production coverage now includes 2-person live movie, 2-person Oslo places without a price tier, 3-person Oslo places with a mid restaurant price-level cap, and 5-person live movies with shared public anchors. Browser tests still use explicitly mocked Qloo responses, independently of these real network checks.
+
+
+## Additional cities and mixed-domain cultural evidence (October 30, 2026)
+
+A [one-time live production check](https://github.com/betterlifestyle04-commits/unison-qloo-agent/actions/runs/40977183116) verified place-planning API responses for **Bergen, Norway**, and **London, UK**, using a film (*Interstellar*) and a music artist (*Radiohead*) as different participants' cultural references. Both returned **12 Qloo place candidates, all 12 covered by evidence for both participants**. This does not independently verify business identities, addresses, opening hours, reservation availability, or every cultural preference combination.
+
+## External venue checks and optional outcome worksheet
+
+For real Qloo place candidates, the Venue Reality Check links to a Google Maps venue search and a separate search for the official business website. A copyable message helps people request group opening hours, costs, address and booking rules. These are searches and draft enquiries, **not confirmed booking or verification services**. No checklist item is automatically checked.
+
+The optional **Did the plan meet expectations?** worksheet lets participants record anticipated enjoyment and actual post-visit enjoyment on a 1–5 scale. Only paired self-reports are compared, and the result is an **expectation gap**, not evidence of improved happiness caused by UNISON. Ratings remain in browser memory until refresh; anonymous participant-number CSV export is optional, with fictional-demo exports labeled non-field-evidence. For credible evidence of impact, real user participation and a comparison group are required. See [VALIDATION_PROTOCOL.md](VALIDATION_PROTOCOL.md).
