@@ -11,6 +11,7 @@ import {venueCheckItems,updateVenueCheck,venueCheckProgress} from './venue-readi
 import {updateFeedback,summarizeFeedback,exportFeedbackCsv,venueCheckLinks,venueInquiry} from './field-validation.js';
 import {describePlaceConstraints,manuallyConfirmedMeetingLocation} from './place-constraints.js';
 import {planningRecovery} from './recovery.js';
+import {mountExplorer} from './explore.js';
 const $=selector=>document.querySelector(selector);
 const people=$('#people'),template=$('#person-template'),form=$('#plan-form'),results=$('#results'),error=$('#form-error'),submitBtn=$('#submit-plan'),statusBadge=$('#mode-status');
 const starters=[['Maya','Studio Ghibli'],['Jon','Anthony Bourdain'],['Priya','Knives Out']];
@@ -733,6 +734,7 @@ function paintDeviceLibrary(items=loadDevicePlans(window.localStorage)){
     paintDeviceLibrary(saved);
     $('#library-message').textContent='Saved plan deleted from this browser.';
   }));
+  window.dispatchEvent(new Event('unison:library-updated'));
 }
 try{paintDeviceLibrary();}catch{$('#device-plans').textContent='Browser storage is unavailable. You can still plan without saving.';}
 
@@ -813,14 +815,16 @@ function applyBrief(raw){
   results.innerHTML='<div class="empty"><span class="eyebrow">READY FOR YOUR GROUP</span><h3>Different tastes, one plan.</h3><p>Review the group brief and select Find our common ground to create a new shortlist.</p></div>';
   showError();updateFormPresentation();updateBriefReadiness();
 }
-document.querySelectorAll('[data-preset]').forEach(button=>button.addEventListener('click',()=>{
+document.addEventListener('click',event=>{
+  const button=event.target.closest('[data-preset]');
+  if(!button)return;
   const preset=starterGroups.find(item=>item.id===button.dataset.preset);
   if(!preset)return;
   applyBrief({...preset,mode:currentMode()});
   setActivePreset(preset.id);
   $('#share-message').textContent='Loaded '+preset.label+'. Edit the names and tastes to make it yours.';
   form.scrollIntoView({behavior:'smooth',block:'start'});
-}));
+});
 $('#instant-demo').addEventListener('click',()=>{
   if(app.requesting)return;
   const demo=starterGroups.find(item=>item.id==='friends')||starterGroups[0];
@@ -852,6 +856,7 @@ try{
   $('#share-message').textContent='That group link could not be opened. You can still create a new plan.';
 }
 
+mountExplorer();
 updateFormPresentation();
 updateBriefReadiness();
 fetch('/api/status',{cache:'no-store'}).then(r=>r.json()).then(status=>{
