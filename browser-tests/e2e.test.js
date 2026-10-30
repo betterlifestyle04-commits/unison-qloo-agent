@@ -394,7 +394,7 @@ test('mocked live venue UI exposes external research, unsent enquiry and anonymo
     await page.locator('#venue-copy-inquiry').click();
     const message=await page.evaluate(()=>navigator.clipboard.readText());
     assert.match(message,/confirm the exact address/);
-    assert.match(message,/2 people/);
+    assert.match(message,/group of 2/);
     assert.equal(submitted,1,'research links, clipboard and ratings should never send another Qloo plan');
     const survey=page.locator('#outcome-study');
     await survey.locator('[data-feedback-stage="expected"]').first().selectOption('2');
