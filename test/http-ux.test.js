@@ -281,3 +281,23 @@ test('self-reported outcomes are browser-only and external venue research is not
   assert.match(privacy.body,/not authenticated venue pages/);
   assert.match(css.body,/\.outcome-study/);
 });
+
+
+test('first-party personal workspace is routable with CSP and no server analytics API',async()=>{
+  const [page,module,insights,css]=await Promise.all([
+    request('/workspace'),request('/workspace-page.js'),
+    request('/workspace-insights.js'),request('/workspace-dashboard.css')
+  ]);
+  assert.equal(page.response.status,200);
+  assert.match(page.response.headers.get('content-type'),/text\/html/);
+  assert.match(page.response.headers.get('content-security-policy'),/default-src 'self'/);
+  assert.match(page.body,/id="ws-total"/);
+  assert.match(page.body,/id="workspace-insights"/);
+  assert.match(page.body,/Saved on this device/);
+  assert.match(module.body,/sessionStorage/);
+  assert.match(module.response.headers.get('content-type'),/javascript/);
+  assert.match(insights.body,/archiveInsights/);
+  assert.match(css.response.headers.get('content-type'),/text\/css/);
+  const absent=await request('/api/workspace');
+  assert.equal(absent.response.status,404,'workspace data must not be served from a user-account API');
+});
