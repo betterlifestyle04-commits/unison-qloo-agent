@@ -109,6 +109,12 @@ UNISON now has a separate **[My Workspace](https://unison-qloo.onrender.com/work
 
 Choosing **Open brief** transfers the chosen normalized group through same-origin `sessionStorage` just for navigation, removes the transfer record upon return to the planner, and opens it in demo mode. Unlike copyable share links, participant names and favorites do not enter the browser URL. The restored brief makes no Qloo call unless the visitor explicitly chooses and submits live planning. The workspace supports manual backup export/import using the existing versioned, unencrypted local JSON format. All 8-plan device storage limits and validation protections remain in place.
 
+## Cultural inspiration and first-time onboarding
+
+The group planner contains a **Taste Inspiration** browser with 36 manually authored examples across film, music, books/stories and cultural creators. Users can search, browse categories and add a reference to a selected person's editable favorites (maximum three per person). The suggestions are widely recognized names used only as starting points, **not live Qloo search matches, provider-confirmed IDs, usage statistics or recommendation evidence**. No API request is sent when someone searches or selects an example. With live mode enabled, the existing official Qloo Taste Finder remains a separate opt-in lookup for exact entity identity.
+
+The browser's default mode is still fictional demo. Nothing from the inspiration catalog generates group recommendations or triggers live Qloo until the person deliberately submits the plan.
+
 ## Private workspace and backup
 
 The Discovery Studio includes nine fictional, editable starter briefs. Saved plans are opt-in and live in browser `localStorage`, not an account or remotely synchronized database. The workspace provides local title/city/participant search and shows saved examples with source-mode labels. A versioned JSON export contains each explicitly saved normalized brief and a decision summary; it is plain text, unencrypted, and can reveal participant names, cultural tastes, and selected Qloo entity IDs. Users choose when to export and when to import. Import checks the schema, rejects damaged or oversized files, skips duplicates and excess plans, and **never overwrites an existing plan or automatically calls Qloo**. The library caps at eight plans on each browser profile. Reopening a saved item restores the editable brief in demo mode; it does not resurrect outdated live Qloo evidence or auto-run a new request.
