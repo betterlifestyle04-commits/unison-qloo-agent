@@ -57,6 +57,14 @@
         <div class="discovery-stat"><span class="stat-icon" aria-hidden="true">▣</span><strong id="workspace-saved-number">0</strong><span class="stat-label">Your saved plans</span><small id="workspace-saved-caption">Only stored on this browser</small><a href="#device-library-heading">Manage plans ↗</a></div>
       </div>
     </div>
+    <details class="source-methods" id="data-methods">
+  <summary><span aria-hidden="true">◈</span> Understand the data behind UNISON <span class="source-methods-sub">Qloo results · Fictional examples · Your saved plans</span></summary>
+  <div class="source-methods-grid">
+    <div><strong>01 · Live Qloo signals</strong><p>When selected, UNISON asks Qloo for cultural matches, then computes relative-fit rankings locally on the server. It does not verify opening hours, prices or bookability.</p></div>
+    <div><strong>02 · Fictional demonstrations</strong><p>Examples are synthetic and never presented as real films or venues. They let you explore the decision process without using Qloo.</p></div>
+    <div><strong>03 · Your browser library</strong><p>Only explicitly saved briefs and summaries are stored on your device. No account sync; backups are manual, readable JSON files containing personal details.</p></div>
+  </div>
+</details>
     <div class="discovery-filterbar">
       <div><p class="overline">CURATED STARTING POINTS</p><h3>Find a scenario for your group</h3></div>
       <div class="discovery-filters">
@@ -153,7 +161,19 @@
       </form>
       <section class="device-library" aria-labelledby="device-library-heading">
         <div class="library-heading"><div><p class="overline">OPTIONAL / ON THIS DEVICE</p><h3 id="device-library-heading">Your saved group plans</h3></div><span aria-hidden="true">◈</span></div>
-        <p>Save a plan only when you choose. It stores your group's names, favorites, selected cultural IDs, and a result summary in this browser's storage. Anyone with access to this browser profile may see them.</p>
+        <p>Save a plan only when you choose. Your group's names, favorites, selected cultural IDs, and decision summary stay in this browser profile. This is not a cloud account and the files are not encrypted.</p>
+        <div class="library-control-panel">
+          <div class="library-toolbar">
+            <label class="library-find" for="library-search"><span aria-hidden="true">⌕</span><input type="search" id="library-search" maxlength="90" placeholder="Search saved plans" aria-label="Search saved plans by title, city or participant"></label>
+            <span class="library-total" id="library-total" aria-live="polite">0 / 8 saved</span>
+          </div>
+          <div class="library-backup-actions">
+            <button type="button" id="library-export">↓ Export backup</button>
+            <button type="button" id="library-import">↑ Import backup</button>
+            <input type="file" id="library-import-file" class="library-file-input" accept=".json,application/json" aria-label="Choose a UNISON library backup">
+          </div>
+          <p class="library-privacy"><span aria-hidden="true">♢</span> Export and import are manual. Backup JSON includes private names and tastes in plain text. Keep it safe. Imports never replace saved plans and never call Qloo.</p>
+        </div>
         <div id="device-plans" class="device-plans" aria-live="polite"></div>
         <p id="library-message" class="library-message" role="status" aria-live="polite"></p>
       </section>
