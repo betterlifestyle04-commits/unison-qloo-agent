@@ -35,3 +35,16 @@ test('demo errors never mislead user toward a live service switch',()=>{
   assert.equal(r.showDemo,false);
   assert.match(r.title,/Check the group brief/);
 });
+
+test('user cancellation is not represented as a completed server-side cancellation',()=>{
+  const r=planningRecovery(0,'Stopped waiting',{mode:'live',interruption:'cancelled'});
+  assert.match(r.title,/stopped waiting/i);
+  assert.match(r.detail,/server may still continue and use API quota/);
+  assert.match(r.suggestions.join(' '),/only if needed/);
+});
+test('timeout gives actionable feedback without claiming Qloo dislikes a group',()=>{
+  const r=planningRecovery(0,'Timeout',{mode:'live',interruption:'timeout'});
+  assert.match(r.title,/took too long/);
+  assert.match(r.detail,/may still be processing/);
+  assert.match(r.suggestions.join(' '),/Avoid repeated submissions/);
+});
