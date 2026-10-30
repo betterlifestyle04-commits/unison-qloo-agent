@@ -50,3 +50,16 @@
 @media(max-width:850px){.source-methods-grid{grid-template-columns:1fr}.source-methods-sub{flex-basis:100%;padding-left:38px}}
 @media(max-width:580px){.library-toolbar{flex-wrap:wrap}.library-total{margin-left:auto}.library-backup-actions button{font-size:.68rem}.device-item-actions{display:grid;grid-template-columns:1fr 1fr}.device-item-actions button:first-child{grid-column:1/-1}.source-methods{margin-bottom:20px}.source-methods summary{padding:14px}}
 @media(prefers-reduced-motion:reduce){.device-item{transition:none}}
+
+/* Always-accessible mobile path to the core product areas. */
+.mobile-workspace-nav{display:none}
+@media(max-width:670px){
+  .mobile-workspace-nav{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;padding:9px 12px 11px;background:#fbfaff;border-bottom:1px solid #e9e5f1}
+  .mobile-workspace-nav a{display:flex;align-items:center;justify-content:center;min-height:37px;text-align:center;padding:7px 4px;border:1px solid #eeeaf7;border-radius:9px;color:#62579c;background:#fff;font-weight:780;font-size:.68rem;white-space:nowrap}
+  .mobile-workspace-nav a:hover{background:#eeebff;border-color:#d5cbff}
+  .mobile-workspace-nav a:focus-visible{outline:3px solid #8c7af0;outline-offset:2px}
+  .nav-links a:nth-child(2){display:inline}
+  .nav-links a:nth-child(n+3){display:none}
+  .nav-links{gap:13px}
+}
+@media(max-width:390px){.nav-links a:first-child{display:none}}
