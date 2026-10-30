@@ -552,9 +552,9 @@ test('mobile workspace navigation exposes planning and saved plans without backg
     const nav=page.locator('.mobile-workspace-nav');
     assert.equal(await nav.isVisible(),true);
     assert.equal(await nav.locator('a').count(),4);
-    await nav.getByRole('link',{name:'Plan'}).click();
+    await nav.getByRole('link',{name:'Plan',exact:true}).click();
     assert.match(page.url(),/#planner$/);
-    await nav.getByRole('link',{name:'Saved plans'}).click();
+    await nav.getByRole('link',{name:'Saved plans',exact:true}).click();
     assert.match(page.url(),/#device-library-heading$/);
     assert.equal(requests.length,0);
   }finally{await context.close();}
