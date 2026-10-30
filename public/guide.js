@@ -41,4 +41,4 @@ export function mountHelpSearch({root=document}={}){
   });
   update();
 }
-mountHelpSearch();
+if(typeof document!=='undefined')mountHelpSearch();
