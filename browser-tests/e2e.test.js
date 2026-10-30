@@ -493,3 +493,69 @@ test('discovery studio: search, filter, edit fictional brief and track on-device
     await page.screenshot({path:'browser-tests/screenshots/discovery-studio.png',fullPage:true});
   }finally{await context.close();}
 });
+
+
+test('private workspace: saved plans search, JSON backup export and safe restore without Qloo calls',async()=>{
+  const context=await browser.newContext({viewport:{width:1200,height:850},acceptDownloads:true});
+  const page=await context.newPage();
+  trackErrors(page);
+  const requests=[];
+  page.on('request',request=>{if(request.url().includes('/api/plan')||request.url().includes('/api/taste-lookup'))requests.push(request.url());});
+  try{
+    await page.goto(origin+'/',{waitUntil:'networkidle'});
+    assert.equal(await page.locator('#library-export').isDisabled(),true);
+    assert.ok(await page.locator('#data-methods').count());
+    await page.locator('#instant-demo').click();
+    await waitForResults(page);
+    assert.equal(requests.length,1);
+    await page.locator('#save-plan').click();
+    assert.equal(await page.locator('#workspace-saved-number').innerText(),'1');
+    assert.equal(await page.locator('#library-total').innerText(),'1 / 8 saved');
+    assert.equal(await page.locator('#device-plans .device-item').count(),1);
+    await page.locator('#library-search').fill('missing-city-name');
+    assert.equal(await page.locator('#device-plans .device-item').count(),0);
+    await page.locator('#library-search').fill('Maya');
+    assert.equal(await page.locator('#device-plans .device-item').count(),1);
+    await page.locator('#library-search').fill('');
+    const downloadEvent=page.waitForEvent('download');
+    await page.locator('#library-export').click();
+    const download=await downloadEvent;
+    assert.equal(download.suggestedFilename(),'unison-private-plan-backup.json');
+    const backup=await readFile(await download.path(),'utf8');
+    assert.match(backup,/unison-device-plans/);
+    assert.match(backup,/Maya/);
+    assert.match(await page.locator('#library-message').innerText(),/not encrypted/i);
+    await page.locator('#device-plans [data-delete-device]').click();
+    assert.equal(await page.locator('#workspace-saved-number').innerText(),'0');
+    await page.locator('#library-import-file').setInputFiles({name:'unison-private-plan-backup.json',mimeType:'application/json',buffer:Buffer.from(backup)});
+    await page.waitForFunction(()=>document.querySelector('#workspace-saved-number')?.textContent==='1',null,{timeout:5000});
+    assert.equal(await page.locator('#workspace-saved-number').innerText(),'1');
+    assert.match(await page.locator('#library-message').innerText(),/1 plan imported/);
+    await page.locator('#library-import-file').setInputFiles({name:'invalid.json',mimeType:'application/json',buffer:Buffer.from('{"format":"not-unison"}')});
+    await page.waitForFunction(()=>document.querySelector('#library-message')?.textContent.startsWith('Nothing imported:'),null,{timeout:5000});
+    assert.equal(await page.locator('#workspace-saved-number').innerText(),'1');
+    assert.match(await page.locator('#library-message').innerText(),/Nothing imported/);
+    assert.equal(requests.length,1,'local search, export and import must not request planning or spend Qloo quota');
+    await page.screenshot({path:'browser-tests/screenshots/private-workspace.png',fullPage:true});
+  }finally{await context.close();}
+});
+
+
+test('mobile workspace navigation exposes planning and saved plans without background requests',async()=>{
+  const context=await browser.newContext({viewport:{width:390,height:844}});
+  const page=await context.newPage();
+  trackErrors(page);
+  const requests=[];
+  page.on('request',request=>{if(request.url().includes('/api/plan'))requests.push(request.url());});
+  try{
+    await page.goto(origin+'/',{waitUntil:'networkidle'});
+    const nav=page.locator('.mobile-workspace-nav');
+    assert.equal(await nav.isVisible(),true);
+    assert.equal(await nav.locator('a').count(),4);
+    await nav.getByRole('link',{name:'Plan',exact:true}).click();
+    assert.match(page.url(),/#planner$/);
+    await nav.getByRole('link',{name:'Saved plans',exact:true}).click();
+    assert.match(page.url(),/#device-library-heading$/);
+    assert.equal(requests.length,0);
+  }finally{await context.close();}
+});

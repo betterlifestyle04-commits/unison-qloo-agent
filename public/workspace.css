@@ -1,0 +1,65 @@
+/* Private library and data provenance — scope avoids changing the ranking UI. */
+.source-methods{background:#fff;border:1px solid #e6e4ef;border-radius:15px;padding:0;margin:0 0 24px;overflow:hidden;box-shadow:0 5px 20px #1a214005}
+.source-methods summary{cursor:pointer;display:flex;align-items:center;gap:11px;flex-wrap:wrap;padding:16px 21px;color:#4b4776;font-size:.82rem;font-weight:800;list-style:none}
+.source-methods summary::-webkit-details-marker{display:none}
+.source-methods summary:after{content:'+';margin-left:auto;color:#6b5be0;font-size:1.2rem;line-height:1}
+.source-methods[open] summary:after{content:'−'}
+.source-methods summary>span:first-child{display:inline-flex;align-items:center;justify-content:center;background:#f0edff;border-radius:9px;width:29px;height:29px;color:#6554d8;font-size:1.1rem}
+.source-methods-sub{font-weight:550;font-size:.69rem;color:#9693a4}
+.source-methods-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;padding:15px 21px 22px;border-top:1px solid #f0eef4}
+.source-methods-grid>div{background:#faf9fd;border:1px solid #eeeaf5;border-radius:12px;padding:15px}
+.source-methods-grid strong{display:block;font-size:.74rem;color:#52487f;line-height:1.4;margin-bottom:8px}
+.source-methods-grid p{font-size:.73rem;color:#7e8291;line-height:1.65;margin:0}
+
+.library-control-panel{margin:15px 0 14px;padding:13px;background:#f7f7fb;border:1px solid #e8e7f2;border-radius:13px}
+.library-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.library-find{display:flex;align-items:center;gap:7px;border:1px solid #e3e0ef;border-radius:9px;background:white;padding:0 10px;flex:1;color:#9287bd}
+.library-find input{font:inherit;font-weight:600;min-width:0;width:100%;font-size:.74rem;color:#374050;background:none;border:0;outline:none;min-height:38px}
+.library-find:focus-within{outline:2px solid #b2a7fc;outline-offset:2px}
+.library-find input:focus-visible{outline:none}
+.library-total{font-size:.65rem;font-weight:830;color:#7a6ac7;white-space:nowrap}
+.library-backup-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:11px 0 0}
+.library-backup-actions button{display:flex;justify-content:center;align-items:center;background:white;border:1px solid #e3e0eb;border-radius:9px;padding:10px 8px;color:#5f55a8;font-size:.72rem;font-weight:780}
+.library-backup-actions button:hover{background:#f1eeff;border-color:#d0c6f4}
+.library-backup-actions button:disabled{opacity:.4}
+.library-file-input{display:none}
+.library-privacy{font-size:.65rem!important;line-height:1.6!important;color:#8a8999!important;margin:11px 0 0!important}
+.device-plans{gap:11px}
+.device-item{padding:15px;border-radius:13px;background:white;gap:12px;border-color:#e8e5ef;transition:border-color .14s,box-shadow .14s}
+.device-item:hover{border-color:#d7cef4;box-shadow:0 6px 18px #433a7810}
+.device-item-main{display:flex;align-items:flex-start;gap:11px}
+.library-item-icon{display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg,#f0edff,#e7e2ff);color:#6451cf;border-radius:10px;width:43px;height:43px;flex-shrink:0;font-size:1.5rem}
+.device-item-copy{min-width:0;flex:1}
+.library-item-tags{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:5px}
+.library-item-tags span{display:inline-flex;padding:3px 7px;border-radius:5px;background:#f3f1fb;color:#7364ae;text-transform:uppercase;letter-spacing:.06em;font-size:.54rem;font-weight:830}
+.library-item-tags .library-mode-live{background:#e8f7ee;color:#357957}
+.library-item-tags .library-mode-demo{background:#f1edf9;color:#8173a0}
+.device-item-copy strong{font-size:.88rem;letter-spacing:-.018em;color:#31384c}
+.device-item-copy small{font-size:.67rem;color:#858e9b;line-height:1.5}
+.library-participants{display:flex;align-items:center;gap:10px;color:#777f8f;font-size:.66rem;line-height:1.5;min-width:0}
+.library-participants>span:last-child{min-width:0;overflow-wrap:anywhere}
+.library-avatars{display:flex;align-items:center;padding-left:5px;flex-shrink:0}
+.library-avatar{display:inline-flex;align-items:center;justify-content:center;width:25px;height:25px;border:2px solid white;border-radius:50%;margin-left:-5px;background:#e5e0ff;color:#6e59b5;font-size:.63rem;font-weight:850}
+.library-avatar:nth-child(2){background:#e1ecff;color:#3973b0}
+.library-avatar:nth-child(3){background:#ffe7d9;color:#b96b53}
+.library-avatar:nth-child(4){background:#e0f1e8;color:#4c8a6a}
+.device-item-actions{border-top:1px solid #eeeaf3;padding-top:10px}
+.device-item-actions button:first-child{background:#6254d6;border-color:#6254d6;color:white}
+.device-item-actions button:first-child:hover{background:#5142bf;border-color:#5142bf}
+.library-message{border-radius:9px;font-size:.7rem;line-height:1.6;margin-top:11px}
+@media(max-width:850px){.source-methods-grid{grid-template-columns:1fr}.source-methods-sub{flex-basis:100%;padding-left:38px}}
+@media(max-width:580px){.library-toolbar{flex-wrap:wrap}.library-total{margin-left:auto}.library-backup-actions button{font-size:.68rem}.device-item-actions{display:grid;grid-template-columns:1fr 1fr}.device-item-actions button:first-child{grid-column:1/-1}.source-methods{margin-bottom:20px}.source-methods summary{padding:14px}}
+@media(prefers-reduced-motion:reduce){.device-item{transition:none}}
+
+/* Always-accessible mobile path to the core product areas. */
+.mobile-workspace-nav{display:none}
+@media(max-width:670px){
+  .mobile-workspace-nav{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;padding:9px 12px 11px;background:#fbfaff;border-bottom:1px solid #e9e5f1}
+  .mobile-workspace-nav a{display:flex;align-items:center;justify-content:center;min-height:37px;text-align:center;padding:7px 4px;border:1px solid #eeeaf7;border-radius:9px;color:#62579c;background:#fff;font-weight:780;font-size:.68rem;white-space:nowrap}
+  .mobile-workspace-nav a:hover{background:#eeebff;border-color:#d5cbff}
+  .mobile-workspace-nav a:focus-visible{outline:3px solid #8c7af0;outline-offset:2px}
+  .nav-links a:nth-child(2){display:inline}
+  .nav-links a:nth-child(n+3){display:none}
+  .nav-links{gap:13px}
+}
+@media(max-width:390px){.nav-links a:first-child{display:none}}

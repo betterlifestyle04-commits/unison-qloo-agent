@@ -103,6 +103,10 @@ The service can report `live-ready` when a server-side key is present, but that 
 6. **Transparency**: person-level fit, observed coverage, a group-compromise explanation, and an inspectable tool trace are visible, including the fact that rank-derived fit is UNISON's own estimate.
 7. **Harder input boundaries**: max five participants, three favorites per person, bounded field lengths, and defensive 400 responses to malformed requests.
 
+## Private workspace and backup
+
+The Discovery Studio includes nine fictional, editable starter briefs. Saved plans are opt-in and live in browser `localStorage`, not an account or remotely synchronized database. The workspace provides local title/city/participant search and shows saved examples with source-mode labels. A versioned JSON export contains each explicitly saved normalized brief and a decision summary; it is plain text, unencrypted, and can reveal participant names, cultural tastes, and selected Qloo entity IDs. Users choose when to export and when to import. Import checks the schema, rejects damaged or oversized files, skips duplicates and excess plans, and **never overwrites an existing plan or automatically calls Qloo**. The library caps at eight plans on each browser profile. Reopening a saved item restores the editable brief in demo mode; it does not resurrect outdated live Qloo evidence or auto-run a new request.
+
 ## Limitations and priorities
 
 - The venue data is Qloo's recommendation evidence. UNISON does not guarantee geographic accuracy, opening hours, reservations, availability, or prices.

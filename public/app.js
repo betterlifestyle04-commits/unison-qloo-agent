@@ -1,6 +1,6 @@
 import {starterGroups,normalizeBrief,encodeShareBrief,decodeShareBrief,applyVetoLocally,decisionStyles,buildGroupSummary,analyzeDecisionTradeoffs} from './planner-state.js';
 import {ballotChoices,updateBallot,summarizeBallot,winningAgreement} from './ballot.js';
-import {createPlanArchive,loadDevicePlans,saveDevicePlan,removeDevicePlan} from './saved-plans.js';
+import {createPlanArchive,loadDevicePlans,saveDevicePlan,removeDevicePlan,createDeviceBackup,importDeviceBackup,MAX_BACKUP_CHARACTERS,MAX_DEVICE_PLANS} from './saved-plans.js';
 import {buildCalendarEvent,agendaText} from './calendar.js';
 import {auditGroupEvidence,recoverySuggestions} from './evidence-audit.js';
 import {buildDecisionReport,reportFilename} from './decision-report.js';
@@ -711,18 +711,32 @@ function render(data){
 }
 function paintDeviceLibrary(items=loadDevicePlans(window.localStorage)){
   const shelf=$('#device-plans');
-  shelf.innerHTML=items.length?items.map(item=>{
+  const term=($('#library-search')?.value||'').trim().toLocaleLowerCase();
+  const visible=items.filter(item=>[item.title,item.city,item.winner,item.domain,...item.brief.people.map(person=>person.name)].some(field=>String(field||'').toLocaleLowerCase().includes(term)));
+  $('#library-total').textContent=items.length+' / '+MAX_DEVICE_PLANS+' saved';
+  $('#library-export').disabled=!items.length;
+  shelf.innerHTML=visible.length?visible.map(item=>{
     const date=new Date(item.savedAt).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'});
-    return `<div class="device-item">
-      <div><strong>${escape(item.title)}</strong><small>${escape(item.winner)} · ${escape(date)} · ${item.mode==='live'?'Saved from Qloo live results':'Saved from fictional demo'}</small></div>
-      <div class="device-item-actions"><button type="button" data-open-device="${escape(item.id)}">Open brief</button><button type="button" data-copy-device="${escape(item.id)}">Copy summary</button><button type="button" data-delete-device="${escape(item.id)}">Delete</button></div>
-    </div>`;
-  }).join(''):'<p class="device-empty">No saved plans yet. Generate a plan, then select “Save on this device.”</p>';
+    const names=item.brief.people.map(person=>person.name);
+    const avatars=names.slice(0,4).map(name=>'<span aria-hidden="true" class="library-avatar">'+escape(initial(name))+'</span>').join('');
+    return `<article class="device-item" aria-label="${escape(item.title)}">
+      <div class="device-item-main">
+        <span class="library-item-icon" aria-hidden="true">${item.domain==='movies'?'▣':'⌁'}</span>
+        <div class="device-item-copy">
+          <div class="library-item-tags"><span>${item.domain==='movies'?'Movie night':'Group outing'}</span><span class="${item.mode==='live'?'library-mode-live':'library-mode-demo'}">${item.mode==='live'?'Qloo-sourced':'Fictional demo'}</span></div>
+          <strong>${escape(item.title)}</strong>
+          <small>${escape(item.winner)} · ${escape(date)}</small>
+        </div>
+      </div>
+      <div class="library-participants"><span class="library-avatars">${avatars}</span><span>${names.length} participants · ${escape(names.join(', '))}</span></div>
+      <div class="device-item-actions"><button type="button" data-open-device="${escape(item.id)}">↗ Open brief to edit</button><button type="button" data-copy-device="${escape(item.id)}">Copy summary</button><button type="button" data-delete-device="${escape(item.id)}">Delete</button></div>
+    </article>`;
+  }).join(''):items.length?'<p class="device-empty">No saved plans match this search. Try a city or participant name.</p>':'<p class="device-empty">No saved plans yet. Generate a group decision and select “Save on this device” to build your private library.</p>';
   shelf.querySelectorAll('[data-open-device]').forEach(button=>button.addEventListener('click',()=>{
     const entry=loadDevicePlans(window.localStorage).find(item=>item.id===button.dataset.openDevice);
     if(!entry)return;
     applyBrief({...entry.brief,mode:'demo'});
-    $('#library-message').textContent='Restored your group brief in demo mode. Review it and select Live manually if needed; no automatic Qloo calls were made.';
+    $('#library-message').textContent='Restored editable brief in demo mode. The saved decision summary has not been recalculated; select Live manually if desired.';
     $('#plan-form').scrollIntoView({behavior:'smooth',block:'start'});
   }));
   shelf.querySelectorAll('[data-copy-device]').forEach(button=>button.addEventListener('click',async()=>{
@@ -736,7 +750,34 @@ function paintDeviceLibrary(items=loadDevicePlans(window.localStorage)){
   }));
   window.dispatchEvent(new Event('unison:library-updated'));
 }
-try{paintDeviceLibrary();}catch{$('#device-plans').textContent='Browser storage is unavailable. You can still plan without saving.';}
+$('#library-search').addEventListener('input',()=>paintDeviceLibrary());
+$('#library-export').addEventListener('click',()=>{
+  const message=$('#library-message');
+  try{
+    const content=createDeviceBackup(window.localStorage);
+    const blob=new Blob([content],{type:'application/json;charset=utf-8'});
+    const url=URL.createObjectURL(blob);
+    const link=document.createElement('a');
+    link.href=url;link.download='unison-private-plan-backup.json';document.body.append(link);link.click();link.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1500);
+    message.textContent='Backup downloaded to your device. JSON contains participant names, tastes, and saved summaries — it is not encrypted.';
+  }catch(e){message.textContent='Backup was unavailable: '+String(e?.message||'Storage blocked');}
+});
+$('#library-import').addEventListener('click',()=>$('#library-import-file').click());
+$('#library-import-file').addEventListener('change',async event=>{
+  const message=$('#library-message');
+  const selected=event.target.files?.[0];
+  if(!selected)return;
+  try{
+    if(selected.size>MAX_BACKUP_CHARACTERS*4)throw new Error('Backup is too large. Choose an exported UNISON JSON file smaller than 100 KB.');
+    const text=await selected.text();
+    const result=importDeviceBackup(window.localStorage,text);
+    paintDeviceLibrary(result.plans);
+    message.textContent=result.added+' plan'+(result.added===1?'':'s')+' imported; '+result.skipped+' skipped (duplicate or library full). Existing plans were not replaced. No Qloo request was made.';
+  }catch(e){message.textContent='Nothing imported: '+String(e?.message||'Unable to read backup');}
+  finally{event.target.value='';}
+});
+try{paintDeviceLibrary();}catch{$('#device-plans').textContent='Browser storage is unavailable. You can still plan without saving.';$('#library-export').disabled=true;}
 
 async function submitPlan(input,{preserveScroll=false}={}){
   if(app.requesting)return;
