@@ -2,13 +2,21 @@
  * Translate planning failures to concrete next steps, without inventing evidence
  * or silently switching live Qloo to a fictional result.
  */
-export function planningRecovery(status,message,{mode='demo',domain='places'}={}){
+export function planningRecovery(status,message,{mode='demo',domain='places',interruption=null}={}){
   const words=String(message??'').toLowerCase();
   const live=mode==='live';
   let title='We could not finish this plan.';
   let detail='Your group brief is still here. Review the inputs and try again when ready.';
   let suggestions=['Review participant names and cultural favorites.'];
-  if(status===429){
+  if(interruption==='cancelled'){
+    title='You stopped waiting for this plan.';
+    detail='Your group brief has been preserved. The browser stopped waiting, but a Qloo request already received by the server may still continue and use API quota.';
+    suggestions=['Review your group brief and submit again only if needed.'];
+  }else if(interruption==='timeout'){
+    title='The plan took too long to finish.';
+    detail='The browser stopped waiting for this request. The server may still be processing it; this does not mean Qloo disliked your favorites.';
+    suggestions=['Try again manually later if the network is stable. Avoid repeated submissions while the service is slow.'];
+  }else if(status===429){
     title='Too many requests right now.';
     detail='The request limit protects the live service. Nothing has been booked or saved.';
     suggestions=['Allow the request window to reset before generating another plan.'];
