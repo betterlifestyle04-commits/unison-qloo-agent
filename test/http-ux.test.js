@@ -267,3 +267,17 @@ test('place constraints disclose city and restaurant price tier without claiming
   assert.match(app.body,/manuallyConfirmedMeetingLocation\(app\.agenda\.meeting\)/);
   assert.match(home.body,/mainly to restaurants/);
 });
+
+test('self-reported outcomes are browser-only and external venue research is not a fabricated booking provider',async()=>{
+  const [app,module,privacy,css]=await Promise.all([request('/app.js'),request('/field-validation.js'),request('/privacy'),request('/styles.css')]);
+  assert.equal(module.response.status,200);
+  assert.match(module.body,/function updateFeedback|export function updateFeedback/);
+  assert.match(module.body,/NOT CAUSAL EVIDENCE/);
+  assert.match(app.body,/renderOutcomeFeedback/);
+  assert.match(app.body,/id="export-outcomes"/);
+  assert.match(app.body,/venueCheckLinks/);
+  assert.match(app.body,/venue-copy-inquiry/);
+  assert.match(privacy.body,/current browser page memory/);
+  assert.match(privacy.body,/not authenticated venue pages/);
+  assert.match(css.body,/\.outcome-study/);
+});
