@@ -10,13 +10,14 @@
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%236556d7'/%3E%3Cpath d='M18 23h28M18 32h28M18 41h28' stroke='white' stroke-width='6' stroke-linecap='round'/%3E%3C/svg%3E">
   <title>UNISON — Find your common ground</title>
   <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/explore.css">
 </head>
 <body>
 <a class="skip" href="#planner">Skip to planning</a>
 <div class="site-shell">
   <nav class="site-nav" aria-label="Main navigation">
     <a class="brand" href="#top" aria-label="UNISON home"><span class="brand-symbol" aria-hidden="true"><i></i><i></i><i></i></span><span>unison<span class="brand-period">.</span></span></a>
-    <div class="nav-links"><a href="#planner">Plan together</a><a href="#results-heading">Shortlist</a><a href="#how-it-works">How it works</a><a href="https://github.com/betterlifestyle04-commits/unison-qloo-agent" target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a></div>
+    <div class="nav-links"><a href="#explore">Explore</a><a href="#planner">Plan together</a><a href="#results-heading">Shortlist</a><a href="#how-it-works">How it works</a><a href="https://github.com/betterlifestyle04-commits/unison-qloo-agent" target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a></div>
     <span class="nav-chip">Built for Qloo Hackathon '26</span>
   </nav>
 
@@ -25,7 +26,7 @@
       <p class="overline"><span class="tiny-spark">✳</span> THE BETTER WAY TO DECIDE TOGETHER</p>
       <h1>Different tastes.<br><em>One great plan.</em></h1>
       <p class="hero-lead">One friend wants something adventurous. Another loves the familiar. UNISON finds the overlap, so no one gets left out.</p>
-      <div class="hero-actions"><a class="button button-dark" href="#planner">Find our common ground <span aria-hidden="true">↗</span></a><a class="button button-light" href="#how-it-works">See how it works <span aria-hidden="true">↓</span></a></div>
+      <div class="hero-actions"><a class="button button-dark" href="#planner">Find our common ground <span aria-hidden="true">↗</span></a><a class="button button-light" href="#explore">Explore real use cases <span aria-hidden="true">↓</span></a></div>
       <div class="hero-meta"><span class="hero-proof"><span aria-hidden="true">◉</span> 2–5 people</span><span class="hero-proof"><span aria-hidden="true">◇</span> Fairness-first</span><span class="hero-proof"><span aria-hidden="true">✧</span> Explainable decisions</span></div>
     </div>
     <div class="hero-art" aria-hidden="true">
@@ -38,6 +39,43 @@
     </div>
   </header>
 </div>
+
+<section id="explore" class="discovery-studio" aria-labelledby="discovery-heading">
+  <div class="discovery-inner">
+    <div class="discovery-heading">
+      <div><p class="overline">EXPLORE / DISCOVERY STUDIO</p><h2 id="discovery-heading">Your next plan starts <em>here.</em></h2><p>Browse sample group briefs, find a situation like yours, and open it in the planner. Every detail is editable.</p></div>
+      <span class="discovery-guide"><span aria-hidden="true">✧</span> Explore first. Decide together.</span>
+    </div>
+    <div class="discovery-dashboard" aria-label="Explore UNISON workspace overview">
+      <div class="discovery-intro">
+        <span class="discovery-intro-kicker">YOUR WORKSPACE / NO ACCOUNT REQUIRED</span>
+        <h3>Group decisions, without the group chat chaos.</h3>
+        <p>Pick a starting point, add each person's favorites, see the fairest supported shortlist, and turn a decision into a plan. Only a deliberate Plan action requests results.</p>
+      </div>
+      <div class="discovery-summary">
+        <div class="discovery-stat"><span class="stat-icon" aria-hidden="true">◈</span><strong id="workspace-scenarios-number">—</strong><span class="stat-label">Starter briefs</span><small>Fictional people and preferences</small></div>
+        <div class="discovery-stat"><span class="stat-icon" aria-hidden="true">▣</span><strong id="workspace-saved-number">0</strong><span class="stat-label">Your saved plans</span><small id="workspace-saved-caption">Only stored on this browser</small><a href="#device-library-heading">Manage plans ↗</a></div>
+      </div>
+    </div>
+    <div class="discovery-filterbar">
+      <div><p class="overline">CURATED STARTING POINTS</p><h3>Find a scenario for your group</h3></div>
+      <div class="discovery-filters">
+        <div class="discovery-tabs" role="group" aria-label="Filter example briefs">
+          <button type="button" data-explore-domain="all" aria-pressed="true">All scenarios</button>
+          <button type="button" data-explore-domain="places" aria-pressed="false">Outings</button>
+          <button type="button" data-explore-domain="movies" aria-pressed="false">Movies</button>
+        </div>
+        <label class="discovery-search"><span aria-hidden="true">⌕</span><input type="search" id="explore-search" placeholder="Search interests or cities" aria-label="Search sample group briefs" maxlength="90"></label>
+      </div>
+    </div>
+    <div id="explore-gallery" class="explore-gallery" aria-label="Sample scenarios"><p>Loading example group briefs…</p></div>
+    <div class="discovery-bottom">
+      <p><strong id="explore-count" role="status" aria-live="polite">Explore sample briefs</strong> · Sample people, situations and outcome venues in demo mode are fictional. This gallery is not a live venue directory and does not request Qloo data.</p>
+      <div class="discovery-bottom-actions"><button type="button" id="explore-clear">Reset filters</button><a href="#planner">Create my own plan ↗</a></div>
+    </div>
+    <noscript><p>Enable JavaScript to browse scenarios and use the interactive group planner.</p></noscript>
+  </div>
+</section>
 
 <main id="planner" class="workspace" tabindex="-1">
   <div class="workspace-intro"><div><p class="overline">01 / THE GROUP PLANNER</p><h2>A plan made for <em>all</em> of you.</h2><p>Tell us who's coming and what each person loves. We'll make the trade-offs visible.</p></div><div id="mode-status" class="status-chip" role="status" aria-live="polite"><span class="status-dot"></span> Checking Qloo access…</div></div>
