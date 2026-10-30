@@ -1,0 +1,34 @@
+/* Taste Inspiration: opt-in editorial examples, not Qloo recommendations. */
+.taste-shelf{border:1px solid #e8e2f4;background:linear-gradient(135deg,#faf9ff,#fdfcfe);border-radius:14px;margin:16px 0 19px;overflow:hidden}
+.taste-shelf>summary{display:flex;align-items:center;gap:11px;list-style:none;cursor:pointer;padding:14px 15px;color:#4b416f}
+.taste-shelf>summary::-webkit-details-marker{display:none}
+.taste-shelf-summary-icon{display:flex;align-items:center;justify-content:center;flex-shrink:0;width:34px;height:34px;border-radius:10px;background:#ede8ff;color:#715bd6;font-size:1.4rem}
+.taste-shelf>summary>span:nth-child(2){display:flex;flex-direction:column;gap:3px;flex:1;min-width:0}
+.taste-shelf>summary strong{font-weight:800;font-size:.78rem}
+.taste-shelf>summary small{font-size:.67rem;color:#89859e;line-height:1.4}
+.taste-shelf-summary-mark{color:#7766c8;font-weight:900;font-size:1.1rem;line-height:1}
+.taste-shelf[open] .taste-shelf-summary-mark{transform:rotate(45deg)}
+.taste-shelf-body{border-top:1px solid #ece7f5;padding:14px;background:#fff}
+.taste-shelf-notice{margin:0 0 13px;color:#7c8193;font-size:.69rem;line-height:1.6}
+.taste-shelf-notice strong{color:#6559a4}
+.taste-shelf-toolbar{display:grid;grid-template-columns:1fr 1.3fr;gap:10px;align-items:end;margin-bottom:13px}
+.taste-shelf-toolbar label{display:grid;gap:6px;font-size:.64rem;font-weight:810;color:#63677a}
+.taste-shelf-toolbar select,.taste-shelf-toolbar input{width:100%;min-width:0;min-height:39px;padding:8px 10px;border:1px solid #e1dfeb;border-radius:8px;color:#3e4559;background:#fff;font:inherit;font-size:.74rem;font-weight:600}
+.taste-shelf-toolbar input:focus-visible,.taste-shelf-toolbar select:focus-visible{outline:2px solid #8f7de3;outline-offset:2px}
+.taste-shelf-categories{display:flex;gap:5px;overflow-x:auto;padding:0 0 9px;margin-bottom:5px}
+.taste-shelf-tab{border:1px solid #ebe8f2;color:#727383;background:#f8f8fb;padding:7px 10px;border-radius:9px;font-size:.64rem;font-weight:820;white-space:nowrap;cursor:pointer}
+.taste-shelf-tab[aria-pressed=true]{border-color:#6553d4;background:#6553d4;color:#fff}
+.taste-shelf-tab:hover:not([aria-pressed=true]){background:#f1edff}
+.taste-shelf-results{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;max-height:248px;overflow-y:auto;padding:2px 2px 5px}
+.taste-shelf-item{background:#fff;border:1px solid #e7e6ed;border-radius:9px;display:flex;flex-direction:column;gap:3px;align-items:start;min-width:0;text-align:left;padding:10px 11px;cursor:pointer}
+.taste-shelf-item strong{font-size:.72rem;color:#4e5367;font-weight:820;line-height:1.35;overflow-wrap:anywhere}
+.taste-shelf-item small{font-size:.62rem;color:#9996aa}
+.taste-shelf-item:hover{background:#f7f5ff;border-color:#c9bcf7}
+.taste-shelf-item:focus-visible,.taste-shelf-tab:focus-visible,.taste-shelf-bottom button:focus-visible{outline:2px solid #8b79ef;outline-offset:2px}
+.taste-shelf-empty{grid-column:1/-1;border:1px dashed #dedce8;border-radius:9px;padding:20px;color:#8e879d;text-align:center;font-size:.73rem}
+.taste-shelf-bottom{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:10px;color:#9694a5;font-size:.61rem;font-weight:710}
+.taste-shelf-bottom button{border:0;background:transparent;color:#6454bd;font-size:.63rem;font-weight:800;cursor:pointer}
+.taste-shelf-message{color:#6453b0;font-weight:780;font-size:.68rem;line-height:1.6;margin:10px 0 0}
+.taste-shelf-message:empty{display:none}
+@media(max-width:600px){.taste-shelf-toolbar{grid-template-columns:1fr}.taste-shelf>summary{padding:12px}.taste-shelf-results{gap:6px}.taste-shelf-item{padding:9px}.taste-shelf-item strong{font-size:.67rem}}
+@media(prefers-reduced-motion:reduce){.taste-shelf-summary-mark{transition:none}}

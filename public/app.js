@@ -12,6 +12,7 @@ import {updateFeedback,summarizeFeedback,exportFeedbackCsv,venueCheckLinks,venue
 import {describePlaceConstraints,manuallyConfirmedMeetingLocation} from './place-constraints.js';
 import {planningRecovery} from './recovery.js';
 import {mountExplorer} from './explore.js';
+import {mountTasteShelf,refreshTastePeople,appendTasteReference} from './taste-library.js';
 const $=selector=>document.querySelector(selector);
 const people=$('#people'),template=$('#person-template'),form=$('#plan-form'),results=$('#results'),error=$('#form-error'),submitBtn=$('#submit-plan'),statusBadge=$('#mode-status');
 const starters=[['Maya','Studio Ghibli'],['Jon','Anthony Bourdain'],['Priya','Knives Out']];
@@ -40,6 +41,7 @@ function updateGroup(){
   $('#add-person').disabled=people.children.length>=5;
   [...people.querySelectorAll('.person')].forEach((row,index)=>{const input=row.querySelector('[data-field=name]');row.querySelector('.person-avatar').textContent=initial(input.value);row.querySelector('.remove').setAttribute('aria-label','Remove '+(input.value.trim()||'person '+(index+1)));row.querySelector('.remove').disabled=people.children.length<=2;});
   updateTasteOwners();
+  refreshTastePeople();
 }
 function addPerson(values=['',''],chosenEntities=[]){
   const node=template.content.firstElementChild.cloneNode(true);
@@ -907,6 +909,18 @@ try{
   }
 }catch{$('#share-message').textContent='A saved group could not be reopened. You can still start a new plan.';}
 
+mountTasteShelf({onAdd:({index,name})=>{
+  const row=[...people.querySelectorAll('.person')][index];
+  if(!row)throw new Error('Select a participant before adding an example.');
+  const favorite=row.querySelector('[data-field=favorite]');
+  const change=appendTasteReference(favorite.value,name);
+  if(!change.ok)throw new Error(change.reason);
+  favorite.value=change.value;
+  // Keep selected Qloo entity pins and readyness state consistent when
+  // a public editorial example is added manually.
+  favorite.dispatchEvent(new Event('input',{bubbles:true}));
+  return name+' added to '+(row.querySelector('[data-field=name]').value.trim()||'Person '+(index+1))+'. No Qloo lookup was made.';
+}});
 mountExplorer();
 updateFormPresentation();
 updateBriefReadiness();

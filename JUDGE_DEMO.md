@@ -35,6 +35,10 @@ Explain that these are transparent project heuristics, not predicted happiness p
 
 If Qloo is unavailable, **do not present demo evidence as real API responses**. Return to clearly labeled demo mode.
 
+## Optional first-time visitor feature — Taste Inspiration
+
+In the group planner, expand **Need ideas? Browse cultural inspiration**. Search, filter or select a public cultural reference to add it to one participant. This is a client-side editorial starter catalog, not Qloo Search and not an endorsement of a venue. To show actual Qloo entity disambiguation, use the separate Live Qloo Taste Finder.
+
 ## 1:50–2:00 — Turn agreement into action
 1. Open **Make it happen**, pick a candidate, date and meeting point.
 2. Download a tentative calendar event or copy the meeting summary.

@@ -644,3 +644,63 @@ test('mobile personal workspace: small-screen layout and navigable planner witho
     assert.equal(new URL(page.url()).pathname,'/');
   }finally{await context.close();}
 });
+
+
+test('taste inspiration: safely add editorial examples to individual participants without Qloo calls',async()=>{
+  const context=await browser.newContext({viewport:{width:1250,height:850}});
+  const page=await context.newPage();
+  trackErrors(page);
+  const calls=[];
+  page.on('request',request=>{if(request.url().includes('/api/plan')||request.url().includes('/api/taste-lookup')||request.url().includes('/api/qloo-diagnostics'))calls.push(request.url());});
+  try{
+    await page.goto(origin+'/',{waitUntil:'networkidle'});
+    assert.equal(await page.locator('#taste-shelf').count(),1);
+    assert.equal(await page.locator('#taste-shelf').evaluate(el=>el.open),false);
+    await page.locator('#taste-shelf summary').click();
+    assert.equal(await page.locator('#taste-shelf-person option').count(),3);
+    assert.equal(await page.locator('#taste-shelf-item').count(),0,'no unexpected element ID should be needed');
+    assert.equal(await page.locator('[data-taste-reference]').count(),12);
+    await page.locator('#taste-shelf-person').selectOption('1');
+    await page.locator('#taste-shelf-search').fill('Miles Davis');
+    assert.equal(await page.locator('[data-taste-reference]').count(),1);
+    await page.locator('[data-taste-reference="Miles Davis"]').click();
+    assert.equal(await page.locator('#people .person').nth(1).locator('[data-field=favorite]').inputValue(),'Anthony Bourdain, Miles Davis');
+    assert.match(await page.locator('#taste-shelf-message').innerText(),/No Qloo lookup was made/);
+    await page.locator('[data-taste-reference="Miles Davis"]').click();
+    assert.match(await page.locator('#taste-shelf-message').innerText(),/already/);
+    await page.locator('#taste-shelf-search').fill('Radiohead');
+    await page.locator('[data-taste-reference="Radiohead"]').click();
+    assert.equal(await page.locator('#people .person').nth(1).locator('[data-field=favorite]').inputValue(),'Anthony Bourdain, Miles Davis, Radiohead');
+    await page.locator('#taste-shelf-search').fill('David Bowie');
+    await page.locator('[data-taste-reference="David Bowie"]').click();
+    assert.match(await page.locator('#taste-shelf-message').innerText(),/three favorites/);
+    assert.equal(await page.locator('#people .person').nth(1).locator('[data-field=favorite]').inputValue(),'Anthony Bourdain, Miles Davis, Radiohead');
+    await page.locator('#taste-shelf-reset').click();
+    await page.locator('#taste-shelf-categories [data-taste-category="stories"]').click();
+    await page.locator('#taste-shelf-person').selectOption('2');
+    await page.locator('[data-taste-reference="Agatha Christie"]').click();
+    assert.equal(await page.locator('#people .person').nth(2).locator('[data-field=favorite]').inputValue(),'Knives Out, Agatha Christie');
+    assert.equal(calls.length,0,'inspiration catalog is local; selecting examples must not trigger an API call');
+    assert.match(await page.locator('#brief-ready-score').innerText(),/3 \/ 3 ready/);
+    await page.screenshot({path:'browser-tests/screenshots/taste-inspiration.png',fullPage:true});
+    await page.locator('#plan-form').evaluate(node=>node.requestSubmit());
+    await waitForResults(page);
+    assert.equal(calls.length,1,'only a deliberate plan submission should request /api/plan');
+    assert.match(await page.locator('.source-banner').innerText(),/Fictional demonstration/);
+  }finally{await context.close();}
+});
+
+test('mobile taste inspiration catalog is usable and does not overflow',async()=>{
+  const context=await browser.newContext({viewport:{width:375,height:812}});
+  const page=await context.newPage();
+  trackErrors(page);
+  try{
+    await page.goto(origin+'/',{waitUntil:'networkidle'});
+    await page.locator('#taste-shelf summary').click();
+    await page.locator('#taste-shelf-search').fill('jazz');
+    assert.ok(await page.locator('[data-taste-reference]').count()>=1);
+    const width=await page.evaluate(()=>({actual:document.documentElement.scrollWidth,viewport:window.innerWidth}));
+    assert.ok(width.actual<=width.viewport+1,'taste inspiration must not overflow small screens: '+JSON.stringify(width));
+    await page.screenshot({path:'browser-tests/screenshots/taste-inspiration-mobile.png',fullPage:true});
+  }finally{await context.close();}
+});
