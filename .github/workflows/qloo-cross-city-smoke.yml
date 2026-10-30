@@ -1,0 +1,68 @@
+name: One-time cross-city and mixed-cultural-taste Qloo tests
+
+on:
+  push:
+    paths:
+      - '.github/workflows/qloo-cross-city-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  places:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    strategy:
+      fail-fast: false
+      matrix:
+        city: ['London, UK','Bergen, Norway']
+    steps:
+      - name: Real place planning with one film and one music-artist preference
+        shell: bash
+        env:
+          TARGET_CITY: ${{ matrix.city }}
+        run: |
+          set -euo pipefail
+          BASE='https://unison-qloo.onrender.com'
+          echo "## Live mixed-cultural-taste plan: $TARGET_CITY" >> "$GITHUB_STEP_SUMMARY"
+          echo "Fictional participants, one public movie and one artist; no private group data. One live plan attempt, no retries." >> "$GITHUB_STEP_SUMMARY"
+          for term in Interstellar Radiohead; do
+            code=$(curl --silent --show-error --max-time 55 --retry 0 --get --data-urlencode "q=$term" --output "/tmp/$term.json" --write-out '%{http_code}' "$BASE/api/taste-lookup")
+            if [ "$code" != "200" ] || ! jq -e '.matches|type=="array"' "/tmp/$term.json" >/dev/null 2>&1; then
+              echo "❌ Search for $term failed (HTTP $code or unsupported JSON); no group plan submitted." >> "$GITHUB_STEP_SUMMARY"
+              exit 1
+            fi
+          done
+          MOVIE=$(jq -r '[.matches[] | select(.name|ascii_downcase=="interstellar") | select(.type=="urn:entity:movie") | .id][0] // empty' /tmp/Interstellar.json)
+          ARTIST=$(jq -r '[.matches[] | select(.name|ascii_downcase=="radiohead") | select(.type=="urn:entity:artist") | .id][0] // empty' /tmp/Radiohead.json)
+          if [[ ! "$MOVIE" =~ ^[0-9a-fA-F-]{36}$ ]] || [[ ! "$ARTIST" =~ ^[0-9a-fA-F-]{36}$ ]]; then
+            echo '❌ Exact movie+artist entities not both returned; cannot claim mixed-domain planning verified.' >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          jq -n --arg city "$TARGET_CITY" --arg movie "$MOVIE" --arg artist "$ARTIST" '{
+            domain:"places",mode:"live",budget:"any",city:$city,
+            people:[
+              {name:"Ada",favorites:["Interstellar"],selectedEntities:[{name:"Interstellar",type:"urn:entity:movie",id:$movie}]},
+              {name:"Bea",favorites:["Radiohead"],selectedEntities:[{name:"Radiohead",type:"urn:entity:artist",id:$artist}]}
+            ]
+          }' > /tmp/input.json
+          status=$(curl --silent --show-error --max-time 150 --retry 0 --request POST --header 'Content-Type: application/json' --data-binary @/tmp/input.json --output /tmp/plan.json --write-out '%{http_code}' "$BASE/api/plan")
+          if [ "$status" != "200" ]; then
+            echo "❌ Live cross-cultural plan returned HTTP $status" >> "$GITHUB_STEP_SUMMARY"
+            jq -r '.error // "Unsupported response"' /tmp/plan.json >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          jq -r '"Qloo returned "+(.ranked|length|tostring)+" place candidates; "+(.supported|length|tostring)+" with complete group evidence."' /tmp/plan.json | tee -a "$GITHUB_STEP_SUMMARY"
+          jq -e --arg city "$TARGET_CITY" '
+            (.mode=="live") and (.domain=="places") and (.city==$city) and
+            (.people|length==2) and (.ranked|length>0) and
+            ([.trace[]|select(.step=="Qloo discovery tool")]|length==2) and
+            ([.trace[]|select(.step=="Qloo shortlist evaluation tool")]|length==2) and
+            ([.trace[]|.requests[]?|.url? // ""|select(contains("filter.location.query="))]|length>=4)
+          ' /tmp/plan.json > /dev/null || {
+            echo '❌ Missing Qloo city parameter or incomplete live provenance.' >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          }
+          echo '✅ This city and one film/one artist preference group passed the live two-pass Qloo workflow.' >> "$GITHUB_STEP_SUMMARY"
+          echo '⚠️ Candidate addresses, local business identity, operating hours and bookings are NOT independently verified.' >> "$GITHUB_STEP_SUMMARY"
