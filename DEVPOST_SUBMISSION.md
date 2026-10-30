@@ -167,3 +167,12 @@ We've also improved practical transparency. The application explains the differe
 The production service has now also completed a one-shot **five-person live Qloo movie plan** using fictional people and two repeated public movie preferences. It returned **12 Qloo candidates, 11 with complete evidence for all five people**, and recorded each participant's discovery and evaluation in the provenance trace. [Production five-person test](https://github.com/betterlifestyle04-commits/unison-qloo-agent/actions/runs/40886047104). Repeating two taste anchors tests orchestration capacity rather than distinct personal profiles; live preferences and venue facts are not independently validated.
 
 Our external Qloo evidence therefore spans **two**, **three** and **five** participants, with a real mid-budget Oslo places test for three; it does not imply that every location, price tier, group combination or user environment has been tested.
+
+
+## New verified geographic and cultural breadth
+
+On October 30, 2026, independent production checks returned 12 Qloo place candidates with full two-person evidence in each of **Bergen, Norway**, and **London, UK**, for one participant anchored to *Interstellar* (film) and another to *Radiohead* (music artist). [Actual live workflow evidence](https://github.com/betterlifestyle04-commits/unison-qloo-agent/actions/runs/40977183116). These tests verify sample API operation, not physical business locations or opening hours.
+
+## Verification handoff and feedback instrumentation
+
+Venue Reality Check now links to external Google Maps and official-business-site **searches** and offers a copyable venue enquiry. Users must independently verify the correct business, live hours, prices and availability; no reservation is made. Groups can also record optional 1–5 anticipated and experienced enjoyment ratings, download anonymous participant-number CSV, and review matched expectation gaps. These session-only self-reports are **not** evidence that UNISON increased happiness; causal comparisons require real consenting user studies. See [VALIDATION_PROTOCOL.md](VALIDATION_PROTOCOL.md).
