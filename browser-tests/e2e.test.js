@@ -409,3 +409,43 @@ test('mocked live venue UI exposes external research, unsent enquiry and anonymo
     assert.equal(submitted,1);
   }finally{await context.close();}
 });
+
+test('stop waiting and changing a brief never show a stale live result',async()=>{
+  const context=await browser.newContext({viewport:{width:1280,height:800}});
+  const page=await context.newPage();
+  const scriptErrors=[];
+  page.on('pageerror',error=>scriptErrors.push(error.message));
+  let submitted=0;
+  await page.route('**/api/status',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({configured:true,mode:'live-ready'})}));
+  await page.route('**/api/plan',async route=>{
+    submitted++;
+    // Deliberately leave the response pending long enough to exercise cancellation.
+    await new Promise(resolve=>setTimeout(resolve,1600));
+    try{await route.fulfill({status:200,contentType:'application/json',body:'{"unexpected":"stale"}'});}catch{/* the browser cancelled the request */}
+  });
+  try{
+    await page.goto(origin+'/',{waitUntil:'networkidle'});
+    await page.locator('input[name=mode][value=live]').check({force:true});
+    await page.locator('#city').fill('Oslo');
+    await page.locator('#submit-plan').click();
+    await page.locator('#cancel-plan').waitFor({timeout:5000});
+    assert.match(await page.locator('#results .loader').innerText(),/server.*may.*continue|server.*will stop|server.*stop or avoid/i);
+    await page.locator('#cancel-plan').click();
+    await page.locator('.plan-recovery').waitFor({timeout:6000});
+    assert.match(await page.locator('#recovery-title').innerText(),/stopped waiting/i);
+    assert.match(await page.locator('.plan-recovery').innerText(),/API quota/);
+    assert.equal(await page.locator('#submit-plan').isEnabled(),true);
+    assert.equal(submitted,1);
+    // A user can safely start over, then choose a new brief while waiting.
+    await page.locator('#submit-plan').click();
+    await page.locator('#cancel-plan').waitFor();
+    await page.locator('[data-preset]').first().click();
+    assert.equal(await page.locator('#results .empty').count(),1);
+    await page.waitForTimeout(1850);
+    assert.equal(await page.locator('#results .result-topline').count(),0,'stale response did not overwrite new group setup');
+    assert.equal(await page.locator('#results .plan-recovery').count(),0,'old error did not overwrite new group setup');
+    assert.equal(await page.locator('#submit-plan').isEnabled(),true);
+    assert.equal(submitted,2);
+    assert.deepEqual(scriptErrors,[]);
+  }finally{await context.close();}
+});
