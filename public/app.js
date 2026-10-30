@@ -897,6 +897,16 @@ try{
   $('#share-message').textContent='That group link could not be opened. You can still create a new plan.';
 }
 
+try{
+  const transferred=window.sessionStorage.getItem('unison.pending-brief.v1');
+  if(transferred){
+    window.sessionStorage.removeItem('unison.pending-brief.v1');
+    app.hashLoaded=true;
+    applyBrief({...JSON.parse(transferred),mode:'demo'});
+    $('#share-message').textContent='Saved group brief opened from your private workspace. Review it, then generate a fresh plan. No Qloo request was made.';
+  }
+}catch{$('#share-message').textContent='A saved group could not be reopened. You can still start a new plan.';}
+
 mountExplorer();
 updateFormPresentation();
 updateBriefReadiness();
