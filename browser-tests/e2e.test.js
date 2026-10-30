@@ -474,6 +474,14 @@ test('discovery studio: search, filter, edit fictional brief and track on-device
     assert.equal(requests.length,0,'exploring and opening a brief must not invoke any API');
     await page.locator('#submit-plan').click();
     await waitForResults(page);
+    const inReadingOrder=await page.locator('#decision-summary').evaluate(node=>{
+      const shortlist=document.querySelector('#shortlist-heading');
+      const handoff=document.querySelector('#handoff-heading');
+      const analysis=document.querySelector('.decision-lab');
+      const follows=(a,b)=>Boolean(a.compareDocumentPosition(b)&Node.DOCUMENT_POSITION_FOLLOWING);
+      return Boolean(shortlist&&handoff&&analysis&&follows(node,shortlist)&&follows(shortlist,handoff)&&follows(handoff,analysis));
+    });
+    assert.equal(inReadingOrder,true,'recommendation, shortlist and practical plan should precede the advanced decision analysis');
     assert.equal(requests.length,1,'only explicit plan submission invokes the planning API');
     assert.match(await page.locator('.source-banner').innerText(),/Fictional demonstration/);
     await page.locator('#save-plan').click();
