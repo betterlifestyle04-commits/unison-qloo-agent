@@ -537,3 +537,23 @@ test('private workspace: saved plans search, JSON backup export and safe restore
     await page.screenshot({path:'browser-tests/screenshots/private-workspace.png',fullPage:true});
   }finally{await context.close();}
 });
+
+
+test('mobile workspace navigation exposes planning and saved plans without background requests',async()=>{
+  const context=await browser.newContext({viewport:{width:390,height:844}});
+  const page=await context.newPage();
+  trackErrors(page);
+  const requests=[];
+  page.on('request',request=>{if(request.url().includes('/api/plan'))requests.push(request.url());});
+  try{
+    await page.goto(origin+'/',{waitUntil:'networkidle'});
+    const nav=page.locator('.mobile-workspace-nav');
+    assert.equal(await nav.isVisible(),true);
+    assert.equal(await nav.locator('a').count(),4);
+    await nav.getByRole('link',{name:'Plan'}).click();
+    assert.match(page.url(),/#planner$/);
+    await nav.getByRole('link',{name:'Saved plans'}).click();
+    assert.match(page.url(),/#device-library-heading$/);
+    assert.equal(requests.length,0);
+  }finally{await context.close();}
+});
