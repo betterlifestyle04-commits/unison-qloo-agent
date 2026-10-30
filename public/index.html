@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="/styles.css">
   <link rel="stylesheet" href="/explore.css">
   <link rel="stylesheet" href="/workspace.css">
+  <link rel="stylesheet" href="/taste-library.css">
 </head>
 <body>
 <a class="skip" href="#planner">Skip to planning</a>
@@ -120,6 +121,20 @@
           <p class="field-help">Give each person up to three specific favorites, separated by commas. Think films, artists, or cultural references.</p>
           <div id="people" class="people"></div>
           <button class="add-person" type="button" id="add-person"><span aria-hidden="true">＋</span> Add another person</button>
+          <details class="taste-shelf" id="taste-shelf">
+            <summary><span class="taste-shelf-summary-icon" aria-hidden="true">✧</span><span><strong>Need ideas? Browse cultural inspiration.</strong><small>Quickly add film, music and cultural references to anyone's favorites.</small></span><span class="taste-shelf-summary-mark" aria-hidden="true">+</span></summary>
+            <div class="taste-shelf-body">
+              <p class="taste-shelf-notice">36 editorial examples of recognizable cultural works and creators. <strong>Not Qloo-verified entity matches, real-time trends or recommendations.</strong> Adding one only edits the group brief.</p>
+              <div class="taste-shelf-toolbar">
+                <label for="taste-shelf-person">Add to participant<select id="taste-shelf-person" aria-label="Participant for cultural inspiration"></select></label>
+                <label for="taste-shelf-search">Find a reference<input type="search" id="taste-shelf-search" maxlength="90" placeholder="e.g. jazz, mystery, Ghibli" autocomplete="off"></label>
+              </div>
+              <div class="taste-shelf-categories" id="taste-shelf-categories" role="group" aria-label="Cultural reference categories"></div>
+              <div class="taste-shelf-results" id="taste-shelf-results" aria-label="Cultural examples to add"></div>
+              <div class="taste-shelf-bottom"><span id="taste-shelf-count">Browse examples</span><button type="button" id="taste-shelf-reset">Reset search</button></div>
+              <p class="taste-shelf-message" id="taste-shelf-message" role="status" aria-live="polite"></p>
+            </div>
+          </details>
           <section id="taste-finder" class="taste-finder" aria-label="Find cultural references using Qloo" hidden>
             <div class="taste-finder-title"><strong>✧ Taste Finder</strong><span>Look up official cultural entity names using Qloo.</span></div>
             <div class="taste-finder-form">
