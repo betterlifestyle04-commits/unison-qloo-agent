@@ -278,3 +278,9 @@ A [one-time live production check](https://github.com/betterlifestyle04-commits/
 For real Qloo place candidates, the Venue Reality Check links to a Google Maps venue search and a separate search for the official business website. A copyable message helps people request group opening hours, costs, address and booking rules. These are searches and draft enquiries, **not confirmed booking or verification services**. No checklist item is automatically checked.
 
 The optional **Did the plan meet expectations?** worksheet lets participants record anticipated enjoyment and actual post-visit enjoyment on a 1–5 scale. Only paired self-reports are compared, and the result is an **expectation gap**, not evidence of improved happiness caused by UNISON. Ratings remain in browser memory until refresh; anonymous participant-number CSV export is optional, with fictional-demo exports labeled non-field-evidence. For credible evidence of impact, real user participation and a comparison group are required. See [VALIDATION_PROTOCOL.md](VALIDATION_PROTOCOL.md).
+
+## Controlled Qloo waiting and stale-result protection
+
+A group can now explicitly **Stop waiting** while a plan is loading. The front end aborts its own request after that click or after a **three-minute** wait. The recovery panel keeps the user's brief and accurately explains that a request already received by the Node/Qloo server may continue or consume API quota despite the browser stopping. UNISON never silently substitutes fictional recommendations. Switching to a different group preset while a live request is pending aborts the previous browser wait and prevents a stale result from replacing the new brief.
+
+Chromium's acceptance suite explicitly exercises cancellation and preset switching with intentionally delayed, mocked network responses; these tests make no live Qloo requests. The separate production Qloo smoke evidence remains linked above.
