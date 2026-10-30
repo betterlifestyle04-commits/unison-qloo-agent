@@ -418,3 +418,9 @@
 .outcome-study #outcome-message{font-size:.67rem;line-height:1.5;color:#3d8175;margin:8px 0}
 .outcome-study>small{display:block;color:#8188a2;font-size:.64rem;line-height:1.65;margin-top:10px}
 @media(max-width:580px){.outcome-study{padding:12px}.venue-external>a,.venue-external>button{width:100%;text-align:center}}
+
+/* Explicit waiting cancellation does not imply cancellation of upstream Qloo quota. */
+.loader .cancel-plan{border:1px solid #bab7dc;background:transparent;border-radius:9px;padding:10px 14px;margin-top:12px;color:#55518a;font-size:.73rem;font-weight:800;cursor:pointer}
+.loader .cancel-plan:hover{background:#eeecfa}
+.loader .cancel-plan:focus-visible{outline:3px solid #756ed1;outline-offset:3px}
+.loader>small{display:block;max-width:390px;margin:9px auto 0;color:#77788c;font-size:.66rem;line-height:1.55}
