@@ -93,3 +93,7 @@ Expand **Location and budget · What was actually checked?** to demonstrate tran
 ## Maximum-size live test evidence
 
 The [verified five-person real Qloo production run](https://github.com/betterlifestyle04-commits/unison-qloo-agent/actions/runs/40886047104) completed UNISON's full movie agent for fictional Ada/Bea/Cam/Dee/Eli, using *Interstellar* and *Inception* as repeated anchors. It returned 12 Qloo movie candidates; 11 were comparable for all five people. Explain that five-person support is **orchestration-tested**, but that using two repeated tastes does not validate five independent, contrasting profiles. The earlier live [three-person Oslo budget run](https://github.com/betterlifestyle04-commits/unison-qloo-agent/actions/runs/40885037384) separately confirmed Qloo's restaurant-specific mid price-tier filter reached all discovery/evaluation calls.
+
+## Reliable demo handling for slow networks
+
+If the planner takes too long, click **Stop waiting** in the loading panel. The group brief is retained, and UNISON transparently explains that the upstream Qloo request may still be processing and use quota. Selecting a new group preset while a request is pending also discards the outdated browser response. Cancellation is verified by Chromium against delayed mock responses; do not claim that it cancels work already accepted by Qloo.
