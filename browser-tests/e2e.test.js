@@ -554,8 +554,93 @@ test('mobile workspace navigation exposes planning and saved plans without backg
     assert.equal(await nav.locator('a').count(),4);
     await nav.getByRole('link',{name:'Plan',exact:true}).click();
     assert.match(page.url(),/#planner$/);
-    await nav.getByRole('link',{name:'Saved plans',exact:true}).click();
-    assert.match(page.url(),/#device-library-heading$/);
+    await nav.getByRole('link',{name:'Workspace',exact:true}).click();
+    assert.match(page.url(),/\/workspace$/);
+    assert.equal(await page.locator('#ws-total').innerText(),'0');
     assert.equal(requests.length,0);
+  }finally{await context.close();}
+});
+
+
+test('personal workspace: dashboard, real saved-data metrics, search, backup and safe session resume',async()=>{
+  const context=await browser.newContext({viewport:{width:1440,height:900},acceptDownloads:true});
+  const page=await context.newPage();
+  trackErrors(page);
+  const calls=[];
+  page.on('request',request=>{if(request.url().includes('/api/plan')||request.url().includes('/api/taste-lookup'))calls.push(request.url());});
+  try{
+    await page.goto(origin+'/workspace',{waitUntil:'networkidle'});
+    assert.equal(await page.title(),'My Workspace — UNISON');
+    assert.equal(await page.locator('#ws-total').innerText(),'0');
+    assert.equal(await page.locator('#ws-average').innerText(),'—');
+    assert.equal(await page.locator('#ws-export').isDisabled(),true);
+    assert.match(await page.locator('#ws-references').innerText(),/Save a plan/);
+    assert.equal(calls.length,0,'an empty dashboard cannot generate real usage data or Qloo calls');
+
+    await page.locator('.app-primary-action').click();
+    await page.locator('#instant-demo').click();
+    await waitForResults(page);
+    assert.equal(calls.length,1);
+    await page.locator('#save-plan').click();
+    await page.goto(origin+'/workspace',{waitUntil:'networkidle'});
+
+    assert.equal(await page.locator('#ws-total').innerText(),'1');
+    assert.equal(await page.locator('#ws-people').innerText(),'3');
+    assert.equal(await page.locator('#ws-live').innerText(),'0');
+    assert.equal(await page.locator('#ws-average').innerText(),'3');
+    assert.equal(await page.locator('.ws-plan-card').count(),1);
+    assert.match(await page.locator('#ws-types').innerText(),/Outings\s*1/);
+    assert.match(await page.locator('#ws-references').innerText(),/Studio Ghibli/);
+    assert.equal(await page.locator('#ws-plan-list').getByRole('button',{name:/Open brief/}).count(),1);
+    await page.locator('#ws-search').fill('totally unknown');
+    assert.equal(await page.locator('.ws-plan-card').count(),0);
+    await page.locator('#ws-search').fill('Maya');
+    assert.equal(await page.locator('.ws-plan-card').count(),1);
+    await page.locator('#ws-search').fill('');
+    await page.locator('#ws-domain').selectOption('movies');
+    assert.equal(await page.locator('.ws-plan-card').count(),0);
+    await page.locator('#ws-domain').selectOption('all');
+    assert.equal(await page.locator('.ws-plan-card').count(),1);
+    const downloadStarted=page.waitForEvent('download');
+    await page.locator('#ws-export').click();
+    const downloaded=await downloadStarted;
+    const backup=await readFile(await downloaded.path(),'utf8');
+    assert.equal(downloaded.suggestedFilename(),'unison-private-plan-backup.json');
+    assert.match(backup,/unison-device-plans/);
+    assert.equal(calls.length,1,'dashboard charts, filters and export do not call Qloo');
+    await page.locator('.ws-plan-card').getByRole('button',{name:/Open brief/}).click();
+    await page.waitForURL(url=>url.pathname==='/'&&url.hash==='#planner');
+    assert.equal(await page.locator('#people .person').count(),3);
+    assert.equal(await page.locator('input[name="mode"][value="demo"]').isChecked(),true);
+    assert.match(await page.locator('#share-message').innerText(),/private workspace/);
+    assert.equal(await page.evaluate(()=>sessionStorage.getItem('unison.pending-brief.v1')),null);
+    assert.equal(calls.length,1,'resuming a local brief must not re-run the agent');
+    assert.equal(page.url().includes('Maya'),false,'participant names must not leak into navigation URL');
+    await page.screenshot({path:'browser-tests/screenshots/workspace-resumed.png',fullPage:true});
+
+    await page.goto(origin+'/workspace',{waitUntil:'networkidle'});
+    await page.screenshot({path:'browser-tests/screenshots/workspace-dashboard.png',fullPage:true});
+    page.once('dialog',dialog=>dialog.accept());
+    await page.locator('.ws-plan-card').getByRole('button',{name:'Delete'}).click();
+    assert.equal(await page.locator('#ws-total').innerText(),'0');
+    await page.locator('#ws-import-file').setInputFiles({name:'unison-private-plan-backup.json',mimeType:'application/json',buffer:Buffer.from(backup)});
+    await page.waitForFunction(()=>document.querySelector('#ws-total')?.textContent==='1',null,{timeout:5000});
+    assert.equal(await page.locator('#ws-total').innerText(),'1');
+    assert.equal(calls.length,1,'manual backup import cannot make Qloo calls');
+  }finally{await context.close();}
+});
+
+test('mobile personal workspace: small-screen layout and navigable planner without overflow',async()=>{
+  const context=await browser.newContext({viewport:{width:390,height:844}});
+  const page=await context.newPage();
+  trackErrors(page);
+  try{
+    await page.goto(origin+'/workspace',{waitUntil:'networkidle'});
+    assert.equal(await page.locator('.workspace-mobile-nav').isVisible(),true);
+    assert.equal(await page.locator('.app-sidebar').isVisible(),false);
+    const dimensions=await page.evaluate(()=>({document:document.documentElement.scrollWidth,viewport:window.innerWidth}));
+    assert.ok(dimensions.document<=dimensions.viewport+1,'workspace must fit the mobile viewport: '+JSON.stringify(dimensions));
+    await page.locator('.workspace-mobile-nav').getByRole('link',{name:'Plan'}).click();
+    assert.equal(new URL(page.url()).pathname,'/');
   }finally{await context.close();}
 });
