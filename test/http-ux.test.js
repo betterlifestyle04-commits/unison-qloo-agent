@@ -202,7 +202,7 @@ test('error recovery does not fabricate live evidence or auto-submit demo',async
   const [module,app]=await Promise.all([request('/recovery.js'),request('/app.js')]);
   assert.equal(module.response.status,200);
   assert.match(module.response.headers.get('content-type'),/application\/javascript/);
-  assert.match(app.body,/planningRecovery\(e\.status\|\|0/);
+  assert.match(app.body,/planningRecovery\(e\?\.status\|\|0/);
   assert.match(app.body,/id="recovery-demo"/);
   assert.match(app.body,/mode\]\[value=demo/);
   assert.match(module.body,/never|not pretend|without inventing/i);
