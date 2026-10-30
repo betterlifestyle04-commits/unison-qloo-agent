@@ -66,3 +66,7 @@
 
 /* Explainability pathway from the marketing section to product help. */
 .method-guide-link{font-weight:850;color:#6653ce;text-decoration:underline;text-underline-offset:3px}.method-guide-link:hover{color:#4a3aa7}
+
+
+/* Keep extended product navigation tidy on medium screens. */
+@media(max-width:1100px){.site-nav .nav-links a[href="/evidence"]{display:none}}
