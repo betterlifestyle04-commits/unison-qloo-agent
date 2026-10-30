@@ -334,3 +334,20 @@ test('product guide and privacy-first local FAQ assets are served with the exist
   assert.doesNotMatch(js.body,/fetch\s*\(/);
   assert.match(css.response.headers.get('content-type'),/text\/css/);
 });
+
+
+test('historical evidence studio serves source-linked data with existing restrictive CSP',async()=>{
+ const [page,logic,data,css]=await Promise.all([
+   request('/evidence'),request('/evidence-page.js'),request('/evidence-data.js'),request('/evidence.css')
+ ]);
+ assert.equal(page.response.status,200);
+ assert.match(page.response.headers.get('content-type'),/text\/html/);
+ assert.match(page.response.headers.get('content-security-policy'),/default-src 'self'/);
+ assert.match(page.body,/id="evidence-cards"/);
+ assert.match(page.body,/Successful API calls ≠ verified real-world recommendations/);
+ assert.match(page.body,/id="evidence-people"/);
+ assert.match(logic.response.headers.get('content-type'),/javascript/);
+ assert.match(data.response.headers.get('content-type'),/javascript/);
+ assert.match(css.response.headers.get('content-type'),/text\/css/);
+ assert.doesNotMatch(logic.body,/fetch\s*\(/);
+});
