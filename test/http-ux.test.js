@@ -317,3 +317,20 @@ test('taste inspiration examples are local, same-origin and clearly separate fro
   assert.doesNotMatch(js.body,/fetch\s*\(/);
   assert.match(css.response.headers.get('content-type'),/text\/css/);
 });
+
+
+test('product guide and privacy-first local FAQ assets are served with the existing CSP',async()=>{
+  const [guide,js,css]=await Promise.all([
+    request('/guide'),request('/guide.js'),request('/guide.css')
+  ]);
+  assert.equal(guide.response.status,200);
+  assert.match(guide.response.headers.get('content-type'),/text\/html/);
+  assert.match(guide.response.headers.get('content-security-policy'),/default-src 'self'/);
+  assert.match(guide.body,/id="help-faq"/);
+  assert.match(guide.body,/Not Qloo-verified|not Qloo-confirmed/);
+  assert.match(guide.body,/id="help-search-input"/);
+  assert.match(js.response.headers.get('content-type'),/javascript/);
+  assert.match(js.body,/matchingHelpItems/);
+  assert.doesNotMatch(js.body,/fetch\s*\(/);
+  assert.match(css.response.headers.get('content-type'),/text\/css/);
+});

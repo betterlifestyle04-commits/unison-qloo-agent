@@ -109,6 +109,10 @@ UNISON now has a separate **[My Workspace](https://unison-qloo.onrender.com/work
 
 Choosing **Open brief** transfers the chosen normalized group through same-origin `sessionStorage` just for navigation, removes the transfer record upon return to the planner, and opens it in demo mode. Unlike copyable share links, participant names and favorites do not enter the browser URL. The restored brief makes no Qloo call unless the visitor explicitly chooses and submits live planning. The workspace supports manual backup export/import using the existing versioned, unencrypted local JSON format. All 8-plan device storage limits and validation protections remain in place.
 
+## Product guide and first-run support
+
+The public **[UNISON Product Guide](https://unison-qloo.onrender.com/guide)** provides four concrete onboarding steps, source-mode comparisons (editorial input, fictional demo, live Qloo), an explainable-fairness glossary and a locally searchable FAQ. All guidance describes actual supported product behavior and limitations. Searching the FAQ happens entirely in the browser, with no telemetry or upstream requests. The page is served as a first-party static resource under the existing content-security policy and linked from the homepage, the private workspace, and the privacy page.
+
 ## Cultural inspiration and first-time onboarding
 
 The group planner contains a **Taste Inspiration** browser with 36 manually authored examples across film, music, books/stories and cultural creators. Users can search, browse categories and add a reference to a selected person's editable favorites (maximum three per person). The suggestions are widely recognized names used only as starting points, **not live Qloo search matches, provider-confirmed IDs, usage statistics or recommendation evidence**. No API request is sent when someone searches or selects an example. With live mode enabled, the existing official Qloo Taste Finder remains a separate opt-in lookup for exact entity identity.
