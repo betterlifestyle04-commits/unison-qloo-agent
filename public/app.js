@@ -16,7 +16,7 @@ const people=$('#people'),template=$('#person-template'),form=$('#plan-form'),re
 const starters=[['Maya','Studio Ghibli'],['Jon','Anthony Bourdain'],['Priya','Knives Out']];
 const selectedByPerson=new WeakMap();
 function showPinned(node){const selections=[...(selectedByPerson.get(node)?.values()||[])];const hint=node.querySelector('[data-pinned]');if(hint)hint.textContent=selections.length?'Selected Qloo entity: '+selections.map(x=>x.name+' ('+String(x.type||'entity').replace(/^urn:entity:/,'')+')').join(', '):'';}
-const app={configured:false,requesting:false,lastInput:null,lastResult:null,showAll:false,hasChangedMode:false,baseResult:null,hashLoaded:false,decisionStyle:'balanced',ballots:{},compare:{left:'',right:''},venueChecks:{},feedback:{},workspaceObserver:null,lookupBusy:false,agenda:{choiceId:'',date:'',time:'19:00',duration:'120',meeting:'',notes:''}};
+const app={configured:false,requesting:false,planController:null,lastInput:null,lastResult:null,showAll:false,hasChangedMode:false,baseResult:null,hashLoaded:false,decisionStyle:'balanced',ballots:{},compare:{left:'',right:''},venueChecks:{},feedback:{},workspaceObserver:null,lookupBusy:false,agenda:{choiceId:'',date:'',time:'19:00',duration:'120',meeting:'',notes:''}};
 const escape=value=>{const element=document.createElement('span');element.textContent=String(value??'');return element.innerHTML.replace(/\"/g,'&quot;').replace(/'/g,'&#39;');};
 const number=value=>Number.isFinite(value)?String(Math.round(value)):null;
 const initial=value=>String(value||'?').trim().slice(0,1).toUpperCase();
@@ -740,9 +740,15 @@ async function submitPlan(input,{preserveScroll=false}={}){
   if(app.requesting)return;
   const problem=validate(input);if(problem){showError(problem);focusBriefProblem(problem);return;}
   showError();app.requesting=true;app.lastInput=input;submitBtn.disabled=true;$('#submit-label').textContent='Finding the overlap…';
-  results.setAttribute('aria-busy','true');results.innerHTML='<div class="loader" role="status"><span class="spinner" aria-hidden="true"></span><strong>Looking for common ground</strong><p>Checking preferences, comparing options and finding the fairest supported shortlist…</p></div>';
+  const controller=new AbortController();
+  app.planController=controller;
+  // The upstream call may keep running on the server after a client-side abort.
+  // The limit only prevents a browser from waiting indefinitely.
+  const timeout=setTimeout(()=>controller.abort('timeout'),180_000);
+  results.setAttribute('aria-busy','true');results.innerHTML='<div class="loader" role="status"><span class="spinner" aria-hidden="true"></span><strong>Looking for common ground</strong><p>Checking preferences, comparing options and finding the fairest supported shortlist…</p><button type="button" id="cancel-plan" class="cancel-plan">Stop waiting</button><small>Stopping here does not guarantee that a Qloo request already on the server will stop or avoid API quota.</small></div>';
+  results.querySelector('#cancel-plan')?.addEventListener('click',()=>controller.abort('cancelled'));
   try{
-    const response=await fetch('/api/plan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(input)});
+    const response=await fetch('/api/plan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(input),signal:controller.signal});
     let data;try{data=await response.json();}catch{throw new Error('The planner returned an unexpected response. Please try again.');}
     if(!response.ok){const failure=new Error(data.error||'We could not create this plan.');failure.status=response.status;throw failure;}
     app.ballots={};
@@ -754,13 +760,18 @@ async function submitPlan(input,{preserveScroll=false}={}){
     render(app.decisionStyle==='balanced'?data:applyVetoLocally(data,[],app.decisionStyle));
     if(!preserveScroll&&window.innerWidth<821)$('#results-heading').scrollIntoView({behavior:'smooth',block:'start'});
   }catch(e){
-    showError(e.message);
-    const help=planningRecovery(e.status||0,e.message,{mode:input.mode,domain:input.domain});
+    const interruption=controller.signal.aborted?controller.signal.reason:null;
+    // A different group brief has replaced this request. Never display an old
+    // response/error over the newly selected preset.
+    if(interruption==='brief-changed')return;
+    const message=interruption==='cancelled'?'Stopped waiting for this request.':interruption==='timeout'?'The planning request timed out.':String(e?.message||'The planning request failed.');
+    showError(message);
+    const help=planningRecovery(e?.status||0,message,{mode:input.mode,domain:input.domain,interruption});
     results.innerHTML=`<section class="plan-recovery" aria-labelledby="recovery-title">
       <span class="eyebrow">YOUR BRIEF IS SAFE · NO FALLBACK DATA USED</span>
       <h3 id="recovery-title" tabindex="-1">${escape(help.title)}</h3>
       <p>${escape(help.detail)}</p>
-      <details><summary>Technical error details</summary><p>${escape(e.message||'Request failed')} ${e.status?'(HTTP '+escape(e.status)+')':''}</p></details>
+      <details><summary>Technical error details</summary><p>${escape(message)} ${e?.status?'(HTTP '+escape(e.status)+')':''}</p></details>
       <h4>Suggested next steps</h4>
       <ul>${help.suggestions.map(item=>`<li>${escape(item)}</li>`).join('')}</ul>
       <div class="recovery-actions">
@@ -770,7 +781,7 @@ async function submitPlan(input,{preserveScroll=false}={}){
     </section>`;
     results.querySelector('#recovery-edit')?.addEventListener('click',()=>{
       form.scrollIntoView({behavior:'smooth',block:'start'});
-      const field=e.status===422&&/city/i.test(e.message)?$('#city'):people.querySelector('[data-field=favorite]');
+      const field=e?.status===422&&/city/i.test(e.message)?$('#city'):people.querySelector('[data-field=favorite]');
       field?.focus({preventScroll:true});
     });
     results.querySelector('#recovery-demo')?.addEventListener('click',()=>{
@@ -781,10 +792,12 @@ async function submitPlan(input,{preserveScroll=false}={}){
       results.querySelector('.recovery-explainer').textContent='Demo mode selected. Submit your group brief to generate clearly labeled fictional recommendations, with no Qloo requests.';
     });
     results.querySelector('#recovery-title')?.focus();
-  }finally{app.requesting=false;submitBtn.disabled=false;$('#submit-label').textContent=currentDomain()==='places'?'Find our common ground':'Find our movie night';results.setAttribute('aria-busy','false');}
+  }finally{clearTimeout(timeout);if(app.planController===controller)app.planController=null;app.requesting=false;submitBtn.disabled=false;$('#submit-label').textContent=currentDomain()==='places'?'Find our common ground':'Find our movie night';results.setAttribute('aria-busy','false');}
 }
 form.addEventListener('submit',event=>{event.preventDefault();const input=brief();input.vetoes=[];app.showAll=false;submitPlan(input);});
 function applyBrief(raw){
+  // Preset/share changes supersede any in-flight response from an old brief.
+  if(app.requesting&&app.planController)app.planController.abort('brief-changed');
   const input=normalizeBrief(raw);
   const source=starterGroups.find(p=>p.id===raw.id);
   form.querySelector('input[name=domain][value='+input.domain+']').checked=true;
