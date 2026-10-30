@@ -80,6 +80,22 @@ test('desktop: full demo workflow, votes, weighting, archive, report and calenda
 
     assert.equal(calls.length,1,'one-click demo must make exactly one planning request');
     assert.equal(JSON.parse(calls[0].body).mode,'demo');
+    // Anonymous outcome research only exists in this browser. Demo ratings
+    // must be clearly separated from real field evidence and not call Qloo.
+    const study=page.locator('#outcome-study');
+    assert.equal(await study.count(),1);
+    await study.locator('[data-feedback-stage="expected"]').first().selectOption('3');
+    assert.match(await study.locator('#outcome-summary').innerText(),/No matched before-and-after ratings/);
+    await study.locator('[data-feedback-stage="experienced"]').first().selectOption('4');
+    assert.match(await study.locator('#outcome-summary').innerText(),/1 of 3 participants/);
+    const feedbackDownloadEvent=page.waitForEvent('download');
+    await study.locator('#export-outcomes').click();
+    const feedbackDownload=await feedbackDownloadEvent;
+    assert.equal(feedbackDownload.suggestedFilename(),'unison-anonymous-outcome-feedback.csv');
+    const feedbackText=await readFile(await feedbackDownload.path(),'utf8');
+    assert.match(feedbackText,/FICTIONAL DEMO - NOT FIELD EVIDENCE/);
+    assert.match(feedbackText,/"Participant 1","3","4","1"/);
+    assert.doesNotMatch(feedbackText,/Maya|Jon|Priya/);
     await page.screenshot({path:'browser-tests/screenshots/desktop-demo.png',fullPage:true});
 
     const before=calls.length;
