@@ -63,3 +63,6 @@
   .nav-links{gap:13px}
 }
 @media(max-width:390px){.nav-links a:first-child{display:none}}
+
+/* Explainability pathway from the marketing section to product help. */
+.method-guide-link{font-weight:850;color:#6653ce;text-decoration:underline;text-underline-offset:3px}.method-guide-link:hover{color:#4a3aa7}
