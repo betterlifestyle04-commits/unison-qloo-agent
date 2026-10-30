@@ -449,3 +449,39 @@ test('stop waiting and changing a brief never show a stale live result',async()=
     assert.deepEqual(scriptErrors,[]);
   }finally{await context.close();}
 });
+
+
+test('discovery studio: search, filter, edit fictional brief and track on-device saves',async()=>{
+  const context=await browser.newContext({viewport:{width:1280,height:860}});
+  const page=await context.newPage();
+  trackErrors(page);
+  const requests=[];
+  page.on('request',request=>{if(request.url().includes('/api/plan')||request.url().includes('/api/taste-lookup'))requests.push(request.url());});
+  try{
+    await page.goto(origin+'/',{waitUntil:'networkidle'});
+    assert.equal(await page.locator('#explore-gallery .explore-card').count(),9);
+    assert.equal(await page.locator('#workspace-scenarios-number').innerText(),'9');
+    assert.equal(await page.locator('#workspace-saved-number').innerText(),'0');
+    await page.locator('[data-explore-domain="movies"]').click();
+    assert.equal(await page.locator('[data-explore-domain="movies"]').getAttribute('aria-pressed'),'true');
+    assert.equal(await page.locator('#explore-gallery .explore-card').count(),3);
+    await page.locator('#explore-search').fill('film club');
+    assert.equal(await page.locator('#explore-gallery .explore-card').count(),1);
+    await page.locator('#explore-gallery [data-preset="cineclub"]').click();
+    assert.equal(await page.locator('#people .person').count(),4);
+    assert.equal(await page.locator('input[name="domain"]:checked').inputValue(),'movies');
+    assert.equal(await page.locator('input[name="mode"]:checked').inputValue(),'demo');
+    assert.equal(requests.length,0,'exploring and opening a brief must not invoke any API');
+    await page.locator('#submit-plan').click();
+    await waitForResults(page);
+    assert.equal(requests.length,1,'only explicit plan submission invokes the planning API');
+    assert.match(await page.locator('.source-banner').innerText(),/Fictional demonstration/);
+    await page.locator('#save-plan').click();
+    assert.equal(await page.locator('#workspace-saved-number').innerText(),'1');
+    await page.locator('#device-plans [data-delete-device]').click();
+    assert.equal(await page.locator('#workspace-saved-number').innerText(),'0');
+    await page.locator('#explore-clear').click();
+    assert.equal(await page.locator('#explore-gallery .explore-card').count(),9);
+    await page.screenshot({path:'browser-tests/screenshots/discovery-studio.png',fullPage:true});
+  }finally{await context.close();}
+});

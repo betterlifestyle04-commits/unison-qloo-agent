@@ -41,6 +41,58 @@ export const starterGroups = [
       {name:'Alex', favorites:['Jazz']},
       {name:'Sam', favorites:['Anthony Bourdain']}
     ]
+  },
+  {
+    id:'team',label:'Team social',description:'Four colleagues with different cultural interests',domain:'places',city:'London',budget:'any',
+    people:[
+      {name:'Hana',favorites:['David Bowie','Jazz']},
+      {name:'Leo',favorites:['Anthony Bourdain','Travel']},
+      {name:'Noor',favorites:['Studio Ghibli','Museum']},
+      {name:'Mika',favorites:['The Grand Budapest Hotel','Design']}
+    ]
+  },
+  {
+    id:'family',label:'Family film night',description:'A five-person group with mixed film preferences',domain:'movies',city:'',budget:'any',
+    people:[
+      {name:'Ava',favorites:['Toy Story','Animation']},
+      {name:'Ben',favorites:['Star Wars','Science fiction']},
+      {name:'Chloe',favorites:['Paddington','Comedy']},
+      {name:'Dani',favorites:['The Lord of the Rings','Fantasy']},
+      {name:'Eli',favorites:['Knives Out','Mystery']}
+    ]
+  },
+  {
+    id:'weekend',label:'Weekend explorers',description:'An adventurous group in a big city',domain:'places',city:'New York City',budget:'mid',
+    people:[
+      {name:'Riley',favorites:['Anthony Bourdain','Street food']},
+      {name:'Morgan',favorites:['Jazz','Live music']},
+      {name:'Avery',favorites:['Studio Ghibli','Art']},
+      {name:'Casey',favorites:['Travel','Architecture']}
+    ]
+  },
+  {
+    id:'quiet',label:'A quieter outing',description:'Low-key culture and conversation',domain:'places',city:'Oslo',budget:'low',
+    people:[
+      {name:'Iris',favorites:['Museums','Architecture']},
+      {name:'Robin',favorites:['Jazz','Coffee']}
+    ]
+  },
+  {
+    id:'cineclub',label:'Film club',description:'Four film genres and one decision',domain:'movies',city:'',budget:'any',
+    people:[
+      {name:'Zoe',favorites:['Interstellar','Sci-fi']},
+      {name:'Amir',favorites:['Knives Out','Mystery']},
+      {name:'Luca',favorites:['Spirited Away','Animation']},
+      {name:'Nina',favorites:['The Grand Budapest Hotel','Comedy']}
+    ]
+  },
+  {
+    id:'creatives',label:'Creative meet-up',description:'Three creative interests, one London afternoon',domain:'places',city:'London',budget:'any',
+    people:[
+      {name:'Em',favorites:['Design','Architecture']},
+      {name:'Kai',favorites:['Museum','Photography']},
+      {name:'Fran',favorites:['Anthony Bourdain','Food']}
+    ]
   }
 ];
 
