@@ -528,9 +528,11 @@ test('private workspace: saved plans search, JSON backup export and safe restore
     await page.locator('#device-plans [data-delete-device]').click();
     assert.equal(await page.locator('#workspace-saved-number').innerText(),'0');
     await page.locator('#library-import-file').setInputFiles({name:'unison-private-plan-backup.json',mimeType:'application/json',buffer:Buffer.from(backup)});
+    await page.waitForFunction(()=>document.querySelector('#workspace-saved-number')?.textContent==='1',null,{timeout:5000});
     assert.equal(await page.locator('#workspace-saved-number').innerText(),'1');
     assert.match(await page.locator('#library-message').innerText(),/1 plan imported/);
     await page.locator('#library-import-file').setInputFiles({name:'invalid.json',mimeType:'application/json',buffer:Buffer.from('{"format":"not-unison"}')});
+    await page.waitForFunction(()=>document.querySelector('#library-message')?.textContent.startsWith('Nothing imported:'),null,{timeout:5000});
     assert.equal(await page.locator('#workspace-saved-number').innerText(),'1');
     assert.match(await page.locator('#library-message').innerText(),/Nothing imported/);
     assert.equal(requests.length,1,'local search, export and import must not request planning or spend Qloo quota');
