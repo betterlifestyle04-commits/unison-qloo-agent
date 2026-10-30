@@ -301,3 +301,19 @@ test('first-party personal workspace is routable with CSP and no server analytic
   const absent=await request('/api/workspace');
   assert.equal(absent.response.status,404,'workspace data must not be served from a user-account API');
 });
+
+
+test('taste inspiration examples are local, same-origin and clearly separate from real Qloo lookup',async()=>{
+  const [page,js,css]=await Promise.all([
+    request('/'),request('/taste-library.js'),request('/taste-library.css')
+  ]);
+  assert.equal(page.response.status,200);
+  assert.match(page.body,/id="taste-shelf"/);
+  assert.match(page.body,/Not Qloo-verified entity matches/);
+  assert.match(page.body,/id="taste-shelf-person"/);
+  assert.match(js.response.headers.get('content-type'),/javascript/);
+  assert.match(js.body,/appendTasteReference/);
+  assert.match(js.body,/TASTE_REFERENCES/);
+  assert.doesNotMatch(js.body,/fetch\s*\(/);
+  assert.match(css.response.headers.get('content-type'),/text\/css/);
+});
