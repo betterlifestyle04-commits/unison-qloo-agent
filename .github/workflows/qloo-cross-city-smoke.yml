@@ -28,14 +28,18 @@ jobs:
           echo "## Live mixed-cultural-taste plan: $TARGET_CITY" >> "$GITHUB_STEP_SUMMARY"
           echo "Fictional participants, one public movie and one artist; no private group data. One live plan attempt, no retries." >> "$GITHUB_STEP_SUMMARY"
           for term in Interstellar Radiohead; do
-            code=$(curl --silent --show-error --max-time 55 --retry 0 --get --data-urlencode "q=$term" --output "/tmp/$term.json" --write-out '%{http_code}' "$BASE/api/taste-lookup")
-            if [ "$code" != "200" ] || ! jq -e '.matches|type=="array"' "/tmp/$term.json" >/dev/null 2>&1; then
-              echo "❌ Search for $term failed (HTTP $code or unsupported JSON); no group plan submitted." >> "$GITHUB_STEP_SUMMARY"
+            file="/tmp/$term.json"
+            code=$(curl --silent --show-error --max-time 55 --retry 0 --get --data-urlencode "q=$term" --output "$file" --write-out '%{http_code}' "$BASE/api/taste-lookup")
+            bytes=$(wc -c < "$file")
+            echo "Lookup $term: HTTP $code, response bytes $bytes" >> "$GITHUB_STEP_SUMMARY"
+            if [ "$code" != "200" ] || ! jq -e 'type=="object" and (.matches|type=="array")' "$file" >/dev/null 2>&1; then
+              echo "❌ Lookup for $term did not return a valid matches-array JSON response; no plan submitted." >> "$GITHUB_STEP_SUMMARY"
+              echo "Response prefix (sanitized): $(head -c 60 "$file" | tr -cd '[:alnum:] ._-')" >> "$GITHUB_STEP_SUMMARY"
               exit 1
             fi
           done
-          MOVIE=$(jq -r '[.matches[] | select(.name|ascii_downcase=="interstellar") | select(.type=="urn:entity:movie") | .id][0] // empty' /tmp/Interstellar.json)
-          ARTIST=$(jq -r '[.matches[] | select(.name|ascii_downcase=="radiohead") | select(.type=="urn:entity:artist") | .id][0] // empty' /tmp/Radiohead.json)
+          MOVIE=$(jq -r '[.matches[] | select((.name | ascii_downcase)=="interstellar") | select(.type=="urn:entity:movie") | .id][0] // empty' /tmp/Interstellar.json)
+          ARTIST=$(jq -r '[.matches[] | select((.name | ascii_downcase)=="radiohead") | select(.type=="urn:entity:artist") | .id][0] // empty' /tmp/Radiohead.json)
           if [[ ! "$MOVIE" =~ ^[0-9a-fA-F-]{36}$ ]] || [[ ! "$ARTIST" =~ ^[0-9a-fA-F-]{36}$ ]]; then
             echo '❌ Exact movie+artist entities not both returned; cannot claim mixed-domain planning verified.' >> "$GITHUB_STEP_SUMMARY"
             exit 1
